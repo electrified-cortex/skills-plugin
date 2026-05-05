@@ -1,0 +1,3 @@
+# Build output — populated by pwsh build/build.ps1
+# Do not commit; consumers install the whole plugin repo as a submodule.
+skills/
