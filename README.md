@@ -1,6 +1,6 @@
-# electrified-cortex-skills (plugin host)
+# skills-plugin
 
-Thin Claude Code plugin host for the [electrified-cortex/skills](https://github.com/electrified-cortex/skills) library.
+A human-curated collection of agent skills for Claude Code — Claude Code plugin host for the [electrified-cortex/skills](https://github.com/electrified-cortex/skills) library.
 
 ## Structure
 
