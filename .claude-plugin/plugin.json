@@ -1,0 +1,12 @@
+{
+  "name": "electrified-cortex-skills",
+  "version": "0.1.0",
+  "description": "Curated skill library by Electrified Cortex — compression, spec writing, skill writing, code review, and more.",
+  "author": {
+    "name": "electricessence",
+    "url": "https://github.com/electrified-cortex"
+  },
+  "repository": "https://github.com/electrified-cortex/skills-plugin",
+  "license": "MIT",
+  "keywords": ["skills", "compression", "code-review", "spec-writing", "skill-writing", "electrified-cortex"]
+}
