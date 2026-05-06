@@ -1,3 +1,8 @@
+---
+name: publish
+description: Cut a new tagged release of skills-plugin. Bumps plugin.json version, rebuilds skills/ dist via build.ps1, updates CHANGELOG, commits, tags, pushes. Triggers - publish skills-plugin, cut new release, bump plugin version, tag release, release skills plugin, ship plugin update.
+---
+
 # publish
 
 Orchestrates a new release of the skills-plugin. Bumps the plugin version,
