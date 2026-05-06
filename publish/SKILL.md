@@ -10,7 +10,7 @@ description: Cut a new tagged release of skills-plugin. Bumps plugin.json versio
 `<description>` = `Publish: <version_bump>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Follow `dispatch` skill. See `../../skills/dispatch/SKILL.md`.
+Follow `dispatch` skill. See `electrified-cortex/skills/dispatch/SKILL.md`.
 
 Inputs:
 
