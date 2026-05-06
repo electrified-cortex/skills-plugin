@@ -20,8 +20,8 @@ The publish skill does NOT decide WHEN to release. It executes a release the cal
 
 - **release branch** — the git branch the skill operates on. Default `main`. Configurable via `build/config.yaml` `release_branch` key.
 - **plugin version** — the SemVer string in `plugin.json` `version` field. The unit of release.
-- **build** — invocation of `pwsh build/build.ps1`, which crawls the source skill tree (per `build/config.yaml`) and writes the dist tree under `skills/`.
-- **deny list** — patterns from `build/deny-list.ps1` that must NOT appear in the dist `skills/` tree.
+- **build** — agent-performed procedure: walk source tree, mirror SKILL.md-bearing folders to dist, apply Stage 2 reference resolution, apply deny patterns. No external script.
+- **deny list** — files that must NEVER appear in dist. Operator-locked patterns embedded in the instructions (not loaded from file).
 - **dry run** — execute every step EXCEPT the final commit/tag/push. Caller inspects the planned outcome.
 - **release commit** — the single commit produced by this skill, containing the bumped `plugin.json`, prepended `CHANGELOG.md`, and regenerated `skills/`.
 
@@ -79,11 +79,10 @@ R12. **No force-push.** Force-push is forbidden. On push divergence, surface to 
 
 ## Dependencies
 
-- `build/build.ps1` exists and exits 0 on success.
-- `build/config.yaml` defines a valid `source` block, optionally a `release_branch` key.
-- `build/deny-list.ps1` is loaded by `build.ps1` and applied during validation.
+- Source skills root exists and contains SKILL.md-bearing directories.
+- Agent has file system read/write access.
+- Plugin repo has valid `plugin.json` with SemVer `version`.
 - Git working tree is on the configured release branch.
-- `pwsh` (PowerShell 7+) on PATH.
 
 ## Bailout
 
