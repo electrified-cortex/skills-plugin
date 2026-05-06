@@ -1,0 +1,4 @@
+.: Post, edit, or delete inline code review comments on PR diff lines. Routes to sub-skills by operation, gh cli pr inline comment, gh cli pr inline comment skill, gh cli pr inline comment workflow
+gh-cli-pr-inline-comment-delete: Delete an existing inline PR review comment by comment ID via GitHub CLI, gh cli pr inline comment delete, gh cli pr inline comment delete skill, gh cli pr inline comment delete workflow
+gh-cli-pr-inline-comment-edit: Edit the body of an existing inline PR review comment by comment ID via GitHub CLI, gh cli pr inline comment edit, gh cli pr inline comment edit skill, gh cli pr inline comment edit workflow
+gh-cli-pr-inline-comment-post: Post a single or multi-line inline review comment on a PR diff line via GitHub CLI. Handles SHA lookup, diff verification, deduplication, and POST, gh cli pr inline comment post, gh cli pr inline comment post skill, gh cli pr inline comment post workflow

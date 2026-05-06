@@ -1,0 +1,50 @@
+GH CLI Setup — install, authenticate, configure `gh`. Prerequisite all other gh-cli skills depend on.
+
+Check installed:
+```bash
+gh --version
+```
+
+Install:
+Windows: `winget install --id GitHub.cli`
+macOS: `brew install gh`
+Linux (Debian/Ubuntu):
+```bash
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
+sudo apt update && sudo apt install gh
+```
+
+Auth — interactive (browser available):
+```bash
+gh auth login
+```
+
+Auth — automated/CI (no browser):
+```bash
+echo "$GH_TOKEN" | gh auth login --with-token
+```
+Never hard-code token. Set `GH_TOKEN` as env var or CI secret before invoking.
+
+Verify auth — confirms hostname, username, token scopes:
+```bash
+gh auth status
+```
+
+Config for automation:
+```bash
+gh config set git_protocol ssh
+gh config set prompt disabled
+```
+
+Set default repo — suppresses `--repo` on every command:
+```bash
+gh repo set-default owner/repo
+```
+
+GitHub Enterprise:
+```bash
+gh auth login --hostname enterprise.internal
+```
+
+Scope: `gh auth`, `gh config`, `gh repo set-default` only. Excludes domain-specific subcommands, token mgmt beyond `gh auth`, CI/CD pipeline config.

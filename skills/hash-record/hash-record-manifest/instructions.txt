@@ -1,0 +1,80 @@
+## Dispatch Parameters
+
+- `repo_root` (required): absolute path to the repository root. Used to compute repo-relative paths.
+- `files` (required): list of file paths to include. May be absolute or repo-relative; the skill normalizes all to repo-relative. Comma-separated or newline-separated both accepted.
+
+## Procedure
+
+Run every step with the named tool. Do not summarize or plan.
+
+1. **Guard — validate inputs.** Check that `repo_root` is a non-empty string and that `files` is non-empty after parsing. If `repo_root` is absent or empty, output `ERROR: missing repo_root` and stop. If `files` is empty or missing, output `ERROR: empty file set` and stop. Use the Bash tool to verify `repo_root` exists: `test -d "<repo_root>"`. If the directory does not exist, output `ERROR: repo_root not found` and stop.
+
+2. **Per file — resolve and hash.** For each path in `files`:
+
+   a. Resolve to repo-relative form:
+      - If the path starts with `repo_root`, strip the `repo_root` prefix (and any leading `/` or `\`).
+      - Canonicalize path separators to `/` (replace all `\` with `/`).
+      - Do NOT follow symlinks.
+
+   b. Compute the absolute path: if the original path was already absolute, use it; otherwise join `repo_root` and the repo-relative path.
+
+   c. Use the Bash tool to get the git blob hash:
+
+      ```bash
+      git hash-object "<absolute-path>"
+      ```
+
+      The output is a 40-char hex string. If the command fails (file missing, unreadable, or git reports an error), output `ERROR: missing: <repo-relative-path>` and stop immediately.
+
+3. **Sort.** Collect all (repo-relative-path, blob-hash) pairs. Sort them lexically by repo-relative path (ascending, byte order).
+
+4. **Build manifest text.** Construct a string with one line per pair in the sorted order:
+
+   ```
+   <repo-relative-path> <blob-hash>
+   ```
+
+   Each line ends with `\n`. The final line MUST also end with `\n` (no trailing newline omission).
+
+5. **Compute manifest hash.** Use the Bash tool to pipe the manifest text through `git hash-object --stdin`:
+
+   ```bash
+   printf '%s' "<manifest-text>" | git hash-object --stdin
+   ```
+
+   Or write to a temp file and pipe:
+
+   ```bash
+   printf '%s\n' <line1> <line2> ... | git hash-object --stdin
+   ```
+
+   The output is the 40-char manifest hash.
+
+6. **Output.** Print exactly one line to stdout:
+
+   ```
+   manifest: <40-char-hash>
+   ```
+
+   Then stop. Do not write any file to disk. Do not invoke any other skill.
+
+## Output Format
+
+One line only:
+
+- `manifest: <40-char-hash>` — success.
+- `ERROR: <reason>` — failure (missing input, file not found, git error).
+
+## Rules
+
+- Only `git` is permitted as an external tool. No other commands may be used for hashing.
+- Do NOT include file metadata (mtime, mode, size) in the manifest. Content hash is the only signal.
+- Do NOT follow symlinks when resolving file paths.
+- Do NOT silently skip missing files. Missing input -> `ERROR:` and stop immediately.
+- Do NOT deduplicate paths. Duplicate paths in the input produce duplicate manifest lines; that is a caller bug, not this skill's concern.
+- Do NOT cache this skill's own output.
+- Do NOT write any record file. The manifest hash returns via stdout only.
+- Do NOT invoke any other hash-record sub-skill or consumer skill.
+- Path separators in manifest text MUST always be `/` regardless of host OS.
+- Sorting MUST be lexical by repo-relative path before building manifest text.
+- Trailing newline after the final manifest line is MANDATORY.

@@ -1,0 +1,9 @@
+.: GitHub CLI operations — routes to domain-specific sub-skills via dispatch, gh cli, gh cli skill, gh cli workflow
+gh-cli-actions: Trigger, monitor, manage GitHub Actions workflows, runs, secrets, variables via CLI, gh cli actions, gh cli actions skill, gh cli actions workflow
+gh-cli-api: Make authenticated REST and GraphQL calls to the GitHub API via the CLI. Use when no dedicated gh subcommand covers the operation, gh cli api, gh cli api skill, gh cli api workflow
+gh-cli-issues: Manage GitHub issues using the gh issue subcommand. Full lifecycle: create, list, view, edit, comment, close, gh cli issues, gh cli issues skill, gh cli issues workflow
+gh-cli-pr/: Entry point for pull request management via the GitHub CLI. Handles common PR inspection and routes write operations to sub-skills, gh cli pr, gh cli pr skill, gh cli pr workflow
+gh-cli-projects: Create, manage GitHub Projects v2 boards, items, fields via CLI, gh cli projects, gh cli projects skill, gh cli projects workflow
+gh-cli-releases: Manage GitHub releases via gh release. Full lifecycle: create, publish, upload assets, edit, delete, gh cli releases, gh cli releases skill, gh cli releases workflow
+gh-cli-repos: Create, clone, fork, sync, edit, delete GitHub repositories via CLI, gh cli repos, gh cli repos skill, gh cli repos workflow
+gh-cli-setup: Install, authenticate, and configure the GitHub CLI. Prerequisite for all other gh-cli skills, gh cli setup, gh cli setup skill, gh cli setup workflow

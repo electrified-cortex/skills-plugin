@@ -1,0 +1,51 @@
+GH CLI Releases — full release lifecycle via `gh release`: create, publish, upload assets, edit, delete.
+
+List:
+```bash
+gh release list
+gh release list --exclude-drafts --limit 1
+```
+`gh release view` without tag returns empty if latest is draft — use `--exclude-drafts` to reliably find latest published.
+
+Create — direct publish from existing tag:
+```bash
+gh release create v1.0.0 --title "v1.0.0" --notes "Release notes" --target main
+gh release create v1.0.0 --notes-file CHANGELOG.md
+```
+`gh release create` uses existing Git tag — ensure tag exists and pushed before running.
+
+Create — draft then publish:
+```bash
+gh release create v1.0.0 --draft --notes "..."
+gh release edit v1.0.0 --draft=false
+```
+
+Pre-release:
+```bash
+gh release create v1.0.0-rc1 --prerelease --notes "..."
+```
+
+Upload assets:
+```bash
+gh release upload v1.0.0 ./dist/app.tar.gz ./dist/app.zip
+```
+
+Edit published release:
+```bash
+gh release edit v1.0.0 --title "new title" --notes "updated notes"
+gh release edit v1.0.0 --prerelease=false
+```
+
+Delete:
+```bash
+gh release delete v1.0.0 --yes
+gh release delete-asset v1.0.0 app.tar.gz
+```
+
+Download assets:
+```bash
+gh release download v1.0.0 --pattern "*.tar.gz" --dir ./downloads
+gh release download v1.0.0 --archive zip
+```
+
+Scope: `gh release` only. Excludes: direct Git tag mgmt, auto-changelog from commits, release attestations/signing, CI/CD release automation.
