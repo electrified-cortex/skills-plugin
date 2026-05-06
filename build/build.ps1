@@ -1,7 +1,8 @@
-# build.ps1 — Stage 1 mechanical crawler
-# Reads build/config.yaml for source root; walks it for SKILL.md-bearing folders;
-# mirrors folder structure to skills/ applying deny list.
-# Stage 2 reference resolver (T4) will prune further. Stage 1 copies all files.
+# build.ps1 — Stage 1 mechanical crawler + Stage 2 reference resolver
+# Stage 1: reads build/config.yaml for source root; walks it for SKILL.md-bearing
+#          folders; mirrors folder structure to skills/ applying deny list.
+# Stage 2: parses SKILL.md (and transitively referenced files) for backtick file
+#          references; copies any missing referenced files into the dist output.
 #
 # Usage: pwsh build/build.ps1 [--dry-run]
 # Run from the plugin repo root.
@@ -70,6 +71,96 @@ if (-not (Test-Path $SourceRoot)) {
 # ---------------------------------------------------------------------------
 . (Join-Path $PSScriptRoot 'deny-list.ps1')
 
+# ---------------------------------------------------------------------------
+# Stage 2 — Reference resolver helper
+# ---------------------------------------------------------------------------
+function Resolve-SkillRefs {
+    param(
+        [string]$SourceSkillDir,   # absolute path to skill in source
+        [string]$DestSkillDir,     # absolute path to skill in dist
+        [string]$FilePath,         # file to parse (absolute path)
+        [int]$Depth = 0,
+        [hashtable]$Visited = $null
+    )
+
+    if ($null -eq $Visited) { $Visited = @{} }
+    if ($Depth -gt 4) { return @() }
+    if (-not (Test-Path -LiteralPath $FilePath)) { return @() }
+
+    # Prevent exponential re-traversal of the same source file
+    if ($Visited.ContainsKey($FilePath)) { return @() }
+    $Visited[$FilePath] = $true
+
+    $content = Get-Content $FilePath -Raw -ErrorAction SilentlyContinue
+    if (-not $content) { return @() }
+
+    $resolved = [System.Collections.Generic.List[string]]::new()
+
+    # Pattern: backtick-wrapped paths with file extensions (skip pure code/model names)
+    $backtickRefs = [regex]::Matches($content, '`([^`\n]+\.[a-zA-Z]{2,6})`')
+    foreach ($match in $backtickRefs) {
+        $ref = $match.Groups[1].Value.Trim()
+
+        # Skip wildcard deny patterns (e.g., `*.spec.md`)
+        if ($ref -match '^\*\.') { continue }
+
+        # Skip cross-skill refs (../other/) — warn but don't follow
+        if ($ref -match '^\.\./') {
+            Write-Host "[build] Stage 2: cross-skill ref (skipped): $ref in $FilePath" -ForegroundColor Yellow
+            continue
+        }
+
+        # Template path: `<var>/file.ext` — expand to all matching files in source skill tree
+        if ($ref -match '<[^>]+>') {
+            $leafName = ($ref -split '[/\\]')[-1]
+            $expandedFiles = Get-ChildItem -Path $SourceSkillDir -Recurse -File -Filter $leafName -ErrorAction SilentlyContinue
+            foreach ($expanded in $expandedFiles) {
+                if (Test-Denied $expanded) { continue }
+                if (Test-DotFile $expanded) { continue }
+                $relFromSkill = $expanded.FullName.Substring($SourceSkillDir.Length).TrimStart([IO.Path]::DirectorySeparatorChar, '/')
+                $destFile = Join-Path $DestSkillDir $relFromSkill
+                # Always recurse for transitive refs; only copy if not already in dest
+                Resolve-SkillRefs -SourceSkillDir $SourceSkillDir -DestSkillDir $DestSkillDir -FilePath $expanded.FullName -Depth ($Depth + 1) -Visited $Visited | ForEach-Object { [void]$resolved.Add($_) }
+                if (-not (Test-Path -LiteralPath $destFile)) {
+                    $destSubDir = Split-Path $destFile -Parent
+                    New-Item -ItemType Directory -Force -Path $destSubDir | Out-Null
+                    Copy-Item -LiteralPath $expanded.FullName -Destination $destFile -Force
+                    [void]$resolved.Add($destFile)
+                }
+            }
+            continue
+        }
+
+        # Direct path: resolve relative to the file's directory
+        $fileDir = Split-Path $FilePath -Parent
+        $absRef = Join-Path $fileDir $ref
+        $absRef = [System.IO.Path]::GetFullPath($absRef)
+
+        # Must be inside the source skill tree
+        if (-not $absRef.StartsWith($SourceSkillDir)) { continue }
+        if (-not (Test-Path -LiteralPath $absRef)) { continue }
+
+        $refInfo = Get-Item -LiteralPath $absRef
+        if ($refInfo -isnot [System.IO.FileInfo]) { continue }
+        if (Test-Denied $refInfo) { continue }
+        if (Test-DotFile $refInfo) { continue }
+
+        $relFromSkill = $absRef.Substring($SourceSkillDir.Length).TrimStart([IO.Path]::DirectorySeparatorChar, '/')
+        $destFile = Join-Path $DestSkillDir $relFromSkill
+
+        # Always recurse for transitive refs; only copy if not already in dest
+        Resolve-SkillRefs -SourceSkillDir $SourceSkillDir -DestSkillDir $DestSkillDir -FilePath $absRef -Depth ($Depth + 1) -Visited $Visited | ForEach-Object { [void]$resolved.Add($_) }
+        if (-not (Test-Path -LiteralPath $destFile)) {
+            $destSubDir = Split-Path $destFile -Parent
+            New-Item -ItemType Directory -Force -Path $destSubDir | Out-Null
+            Copy-Item -LiteralPath $absRef -Destination $destFile -Force
+            [void]$resolved.Add($destFile)
+        }
+    }
+
+    return $resolved.ToArray()
+}
+
 # Workspace-level extras from config (add to shared deny set)
 foreach ($extra in $config['deny-extra']) {
     if ($extra) { [void]$DenyFiles.Add($extra) }
@@ -130,6 +221,25 @@ foreach ($skillDir in $SkillFolders) {
 }
 
 # ---------------------------------------------------------------------------
+# Stage 2 — Reference resolver
+# ---------------------------------------------------------------------------
+$stage2Copied = 0
+$stage2Warnings = [System.Collections.Generic.List[string]]::new()
+
+foreach ($skillDir in $SkillFolders) {
+    $relPath = $skillDir.FullName.Substring($SourceRoot.Length).TrimStart([IO.Path]::DirectorySeparatorChar, '/')
+    $destDir = Join-Path $OutputRoot $relPath
+
+    $skillMd = Join-Path $skillDir.FullName 'SKILL.md'
+    if (-not (Test-Path $skillMd)) { continue }
+
+    if (-not $DryRun) {
+        $newFiles = @(Resolve-SkillRefs -SourceSkillDir $skillDir.FullName -DestSkillDir $destDir -FilePath $skillMd -Depth 0)
+        $stage2Copied += $newFiles.Count
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Build report
 # ---------------------------------------------------------------------------
 Write-Host ""
@@ -137,6 +247,14 @@ Write-Host "[build] ── Stage 1 Report ────────────�
 Write-Host "[build]   SKILL.md folders : $($SkillFolders.Count)"
 Write-Host "[build]   Files copied     : $totalCopied"
 Write-Host "[build]   Files denied     : $totalDenied"
+if ($DryRun) { Write-Host "[build]   (DRY RUN — no files written)" }
+Write-Host "[build] ─────────────────────────────────────────────"
+Write-Host "[build] ── Stage 2 Report ──────────────────────────"
+Write-Host "[build]   Transitively resolved : $stage2Copied"
+if ($stage2Warnings.Count -gt 0) {
+    Write-Host "[build]   Warnings: $($stage2Warnings.Count)" -ForegroundColor Yellow
+    foreach ($w in $stage2Warnings) { Write-Host "[build]     $w" -ForegroundColor Yellow }
+}
 if ($DryRun) { Write-Host "[build]   (DRY RUN — no files written)" }
 Write-Host "[build] ─────────────────────────────────────────────"
 
