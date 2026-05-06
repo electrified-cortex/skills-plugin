@@ -76,3 +76,18 @@ gh api --method DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}
 ```bash
 gh issue transfer 123 --repo owner/other-repo
 ```
+
+## Constraints
+
+- Requires write access for state transitions (close/reopen).
+- Labels and milestones must exist before assigning.
+
+## Error Handling
+
+- Auth failure: re-run `gh-cli-setup`.
+- Issue not found: verify repo and issue number.
+- Permission denied: confirm repo access.
+
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed

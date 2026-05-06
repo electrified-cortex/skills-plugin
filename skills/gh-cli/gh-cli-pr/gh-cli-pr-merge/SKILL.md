@@ -42,3 +42,14 @@ CI check: `gh pr checks 123` — covered by `gh-cli-prs` inspection skill, not t
 
 Scope:
 Covers `gh pr merge`, `gh pr update-branch`, `gh pr revert`, `gh pr close`. Doesn't cover PR review before merge (see `gh-cli-prs-review`) or git ops post-merge.
+
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed
+
+## Error Handling
+
+- Auth failure: re-run gh-cli-setup.
+- Merge conflict: resolve conflicts before merging.
+- Required checks failing: wait for CI or use --admin flag only if authorized.
+- Permission denied: confirm merge rights.

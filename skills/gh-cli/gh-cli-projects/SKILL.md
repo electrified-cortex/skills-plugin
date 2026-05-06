@@ -3,6 +3,10 @@ name: gh-cli-projects
 description: Create, manage GitHub Projects v2 boards, items, fields via CLI. Triggers - github projects, manage project board, add item to project, project board, github project v2.
 ---
 
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed
+
 Commands use project numbers, not names. Resolve name -> number first:
 
 ```bash
@@ -52,5 +56,11 @@ Delete project: `gh project delete PROJECT_NUM --owner owner`
 
 Scope:
 Covers `gh project` only. Doesn't cover: Projects v1 (classic boards), automation rules. Item-add is the link mechanism.
+
+## Error Handling
+
+- Auth failure: re-run gh-cli-setup.
+- Project not found: verify project number and org/user scope.
+- Permission denied: confirm project membership.
 
 Related: `gh-cli-issues`, `gh-cli-api`

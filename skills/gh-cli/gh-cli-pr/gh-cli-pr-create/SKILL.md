@@ -48,5 +48,23 @@ Add/remove reviewers, labels after PR is open:
 gh pr edit 123 --add-reviewer user3 --add-label bug --remove-label wip
 ```
 
-Scope:
+## Inputs
+
+- `base_branch` — target branch for the PR (default: repo default branch).
+- `head_branch` — source branch.
+- `title` — PR title.
+- `body` — optional PR description.
+
+## Dependencies
+
+- `gh-cli-setup/SKILL.md` — required pre-check: auth + CLI installed
+
+## Error Handling
+
+- Auth failure: re-run `gh-cli-setup`.
+- Branch not found: verify branch names.
+- Duplicate PR: a PR from this branch already exists.
+
+## Scope
+
 Covers `gh pr create`, `gh pr ready`, `gh pr edit`. Doesn't cover branch creation or `git push` — branch must exist on remote first. Reviewing and merging → respective sub-skills.

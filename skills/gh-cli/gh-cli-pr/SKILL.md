@@ -53,4 +53,4 @@ Use `--repo owner/name` when not in local clone of target repo.
 `gh pr checks --watch` blocks until CI completes.
 Covers `gh pr` commands only. Git ops, branch protection, CODEOWNERS out of scope.
 
-Related: `gh-cli-prs-create`, `gh-cli-prs-review`, `gh-cli-prs-comments`, `gh-cli-prs-merge`
+Related: `gh-cli-pr-create`, `gh-cli-pr-review`, `gh-cli-pr-comments`, `gh-cli-pr-merge`

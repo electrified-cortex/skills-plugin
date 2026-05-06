@@ -62,3 +62,14 @@ Suppresses `--repo` per-command in specific repo context.
 GitHub Enterprise: add `--hostname enterprise.internal` to `gh auth login`.
 
 Scope: covers `gh auth`, `gh config`, `gh repo set-default` only. Doesn't cover domain-specific subcommands, token mgmt beyond `gh auth`, or CI/CD pipeline config.
+
+## Outputs
+
+- Verification result: authenticated user display name + scopes.
+- Exit status: 0 = success, non-zero = failure.
+
+## Error Handling
+
+- Wrong token: `gh auth status` will fail — re-run `gh auth login`.
+- Network error: check connectivity, then retry.
+- Stale token: scopes may have changed — re-authenticate.

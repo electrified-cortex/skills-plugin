@@ -3,9 +3,36 @@ name: swarm
 description: Multi-personality review infrastructure — selects personalities, gates availability, dispatches in parallel, arbitrates, and synthesizes a verdict. Triggers — swarm review, multi-reviewer, parallel personalities, run all reviewers, arbitrate findings.
 ---
 
-Inputs: `problem` (required artifact), `personality_filter` (inclusion list, bypasses triggers), `model_overrides` (model class only, not backend).
+## Goal
+
+Multi-personality review infrastructure — runs parallel reviewers, arbitrates conflicts, and synthesizes a verdict from multiple perspectives.
+
+## When to Use
+
+Use when reviewing any artifact (code, plan, design, spec) where single-model bias is a risk and parallel perspectives add value. Not for single-reviewer dispatch or non-review tasks.
+
+## Inputs
+
+`problem` (required artifact), `personality_filter` (inclusion list, bypasses triggers), `model_overrides` (model class only, not backend).
 
 Caller tier: **sonnet-class minimum**. Host must build review packet, evaluate trigger conditions inline, and synthesize findings — haiku-class is insufficient.
+
+## Runtime Capability Matrix
+
+Before dispatching a swarm, determine the runtime environment:
+
+| Environment | Detection | Swarm mechanism |
+|---|---|---|
+| VS Code with Copilot | `runSubagent()` tool available | Dispatch subagents to alternate models directly — no CLI needed |
+| Claude Code + Copilot CLI | Check capability cache → `result: available` | Dispatch via `gh copilot` CLI per model in cache |
+| Claude Code, no CLI | Check capability cache → `result: unavailable` | Single-model degraded swarm: multiple passes with self, different temperature/prompt framing |
+
+**Capability cache check (always first):**
+
+1. Read `capability-cache/SKILL.md` — check cache before any CLI call.
+2. Cache HIT `available` → use cached model list for dispatch.
+3. Cache HIT `unavailable` → degraded mode immediately (no CLI attempt).
+4. Cache MISS → probe once, cache result, proceed.
 
 ## Step Sequence
 
@@ -29,6 +56,12 @@ No speculative, low-confidence, or duplicate items. If empty: state "No actionab
 S7. Aggregate. Collect findings from arbitrator's action list. Record per item: personality indices, summary, evidence. Identify disagree set: items where arbitrator flagged contradictory conclusions from different members on same point.
 
 S8. Synthesize. Speak as host only — don't dump raw member or arbitrator output. Synthesize from arbitrator's action list only. Output template: `**Summary**: … / **Disagreements**: … / **Dropped personalities**: … / **Confidence rating**: High|Medium|Low — <rationale>`. Cap: 2000 words. If over: truncate — disagreements first, then high-severity, then medium, then low; note truncation.
+
+## Outputs
+
+Synthesis message to caller. Template: `**Summary**: <overall verdict> / **Disagreements**: <divergent items> / **Dropped personalities**: <names + reason> / **Confidence rating**: High|Medium|Low — <rationale>`. Max 2000 words.
+
+Degraded mode (single-model): same template; note in Summary: "Degraded — single-model review only."
 
 ## Confidence Rating
 
@@ -59,6 +92,12 @@ P5. 2000-word cap overrides completeness.
 
 Don't load prompts before swarm finalized. Don't use fixed roster. Don't fail-stop on unavailable personality. Don't dump raw output. Don't merge with/replace code-review. Don't dispatch sequentially. Don't use bare model names. Don't use CLI-as-dispatch until task 10-0845 lands. Don't expand registry without spec amendment + audit pass. Don't allow `model_overrides` to change backend. Don't allow custom entries to replace built-in entries. Don't treat `personality_filter` as exclusion list. Don't have host parse raw member output — arbitrator's job. Don't add arbitrator to registry. Don't implement `local-llm` in v1. Don't embed normative registry as static table — registry is `reviewers/` dir. Don't fail swarm on monoculture — best-effort only. Don't register `reviewers/*.md` files with invalid frontmatter.
 
+## Constraints
+
+- MUST check capability cache before invoking Copilot CLI.
+- MUST NOT invoke Copilot CLI directly when cache HIT exists (available or unavailable).
+- Degraded mode (single-model) is valid — document it as a first-class output mode, not an error.
+
 ## Personality Metadata Schema
 
 Frontmatter required fields: `name` (unique), `trigger` ("always" or condition string), `required` (bool), `suggested_models` (preference-ordered model-class list), `suggested_backends` (preference-ordered backend list), `scope` (review limiter). Optional: `vendor` (diversity signal for B8). Missing/malformed → silently skipped.
@@ -70,6 +109,11 @@ Valid backends: `dispatch-sonnet`, `dispatch-haiku`, `dispatch-opus`, `copilot-c
 ## Scope
 
 Applies to any agent/skill needing multi-perspective review of any artifact. Does NOT cover: consumer skill internals, reviewer prompt authoring, non-review dispatch, side-effecting personality operations, CLI-as-dispatch (pending 10-0845), local-llm v1.
+
+## Dependencies
+
+- `capability-cache/SKILL.md`
+- `copilot-cli/SKILL.md` (when CLI path is taken)
 
 ## Related
 

@@ -21,6 +21,14 @@ Execution, flag assembly, prompt framing, and output parsing live inside the dis
 4. Task spans multiple operations → run the primary operation; report remaining operations to the caller without dispatching them.
 5. Return the sub-skill's structured result unchanged to the caller.
 
+## Cache Integration
+
+Before dispatching any sub-skill, check the capability cache (see `capability-cache/SKILL.md`):
+
+- Cache HIT with `result: unavailable` → skip all CLI invocations; return `Status: UNAVAILABLE` to the caller immediately.
+- Cache HIT with `result: available` → use cached model list without re-probing.
+- Cache MISS → proceed to dispatch; the probe happens inside the sub-skill; cache is populated by the sub-skill on first run.
+
 ## Rules
 
 - Do NOT execute any `copilot` command. All execution is inside sub-skills.
@@ -29,7 +37,7 @@ Execution, flag assembly, prompt framing, and output parsing live inside the dis
 - Do NOT attempt installation or auth recovery if `copilot` is unavailable — surface the sub-skill's error and stop.
 - Sub-skill missing → report that and stop; do not improvise.
 
-Related: `copilot-cli-review`, `copilot-cli-ask`, `copilot-cli-explain`
+Related: `copilot-cli-review`, `copilot-cli-ask`, `copilot-cli-explain`, `capability-cache`
 
 ## Skill Index
 
