@@ -1,0 +1,2 @@
+﻿.: Tiered code review on a change set. Read-only — never modifies code. Triggers — review this diff, code review, code review, code review skill, code review workflow
+code-review-setup: Preflight readiness check — verify the host environment can run code-review. Inline. Returns structured ready, code review setup, code review setup skill, code review setup workflow

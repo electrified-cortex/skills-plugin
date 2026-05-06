@@ -1,6 +1,6 @@
 source:
   mode: sibling              # or "url"
-  path: ../electrified-cortex/skills    # for sibling mode
-  url: https://github.com/electrified-cortex/skills    # for url mode (commented out unless used)
+  path: ../skills    # for sibling mode
+  url: https://github.com/electrified-cortex/skills-plugin    # for url mode (commented out unless used)
 output: ./skills
 deny-extra: []               # workspace-level additions to deny list
