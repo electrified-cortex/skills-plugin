@@ -21,7 +21,8 @@ $script:DenyFiles = [System.Collections.Generic.HashSet[string]]([System.StringC
 ) | ForEach-Object { [void]$script:DenyFiles.Add($_) }
 
 # Wildcard patterns (evaluated per file via -like)
-$script:DenyPatterns = @('*.spec.md', '*.sha256')
+# *spec.md catches any file ending in spec.md regardless of separator (e.g. foo-spec.md, foo.spec.md, spec.md)
+$script:DenyPatterns = @('*spec.md', '*.sha256')
 
 function Test-Denied {
     param([System.IO.FileInfo]$File)
