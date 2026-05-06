@@ -2,3 +2,4 @@
 # Do not commit; consumers install the whole plugin repo as a submodule.
 skills/
 .worktrees/
+.hash-record/
