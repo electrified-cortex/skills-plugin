@@ -66,40 +66,13 @@ if (-not (Test-Path $SourceRoot)) {
 }
 
 # ---------------------------------------------------------------------------
-# Deny list (operator-locked)
+# Deny list (loaded from shared module)
 # ---------------------------------------------------------------------------
-$DenyFiles = [System.Collections.Generic.HashSet[string]]([System.StringComparer]::OrdinalIgnoreCase)
-@(
-    'spec.md'
-    'uncompressed.md'
-    'instructions.uncompressed.md'
-    'instructions.uncompressed.md.compressed'
-    'optimize-log.md'
-    'eval.md'
-    'PLAN.md'
-    'RESULTS.md'
-) | ForEach-Object { [void]$DenyFiles.Add($_) }
+. (Join-Path $PSScriptRoot 'deny-list.ps1')
 
-# Wildcard patterns (evaluated per file)
-$DenyPatterns = @('*.spec.md', '*.sha256')
-
-# Workspace-level extras from config
+# Workspace-level extras from config (add to shared deny set)
 foreach ($extra in $config['deny-extra']) {
     if ($extra) { [void]$DenyFiles.Add($extra) }
-}
-
-function Test-Denied {
-    param([System.IO.FileInfo]$File)
-    if ($DenyFiles.Contains($File.Name)) { return $true }
-    foreach ($pat in $DenyPatterns) {
-        if ($File.Name -like $pat) { return $true }
-    }
-    return $false
-}
-
-function Test-DotDir {
-    param([System.IO.DirectoryInfo]$Dir)
-    return $Dir.Name.StartsWith('.')
 }
 
 # ---------------------------------------------------------------------------
@@ -143,6 +116,7 @@ foreach ($skillDir in $SkillFolders) {
     # Copy direct files (non-recursive — subdirs handled by their own skill folder iteration)
     Get-ChildItem -Path $skillDir.FullName -File | ForEach-Object {
         $file = $_
+        if (Test-DotFile $file) { $totalDenied++; return }
         if (Test-Denied $file) {
             $totalDenied++
             return
@@ -165,4 +139,28 @@ Write-Host "[build]   Files copied     : $totalCopied"
 Write-Host "[build]   Files denied     : $totalDenied"
 if ($DryRun) { Write-Host "[build]   (DRY RUN — no files written)" }
 Write-Host "[build] ─────────────────────────────────────────────"
+
+# ---------------------------------------------------------------------------
+# Post-copy dist validation (AC4 — error on any denied file in output)
+# ---------------------------------------------------------------------------
+if (-not $DryRun) {
+    $distViolations = [System.Collections.Generic.List[string]]::new()
+    Get-ChildItem -Path $OutputRoot -Recurse -File | ForEach-Object {
+        $file = $_
+        if (Test-Denied $file) {
+            $distViolations.Add($file.FullName)
+        }
+        if (Test-DotFile $file) {
+            $distViolations.Add($file.FullName)
+        }
+    }
+    if ($distViolations.Count -gt 0) {
+        Write-Host ""
+        Write-Host "[build] ERROR: deny-pattern files found in dist output:" -ForegroundColor Red
+        foreach ($v in $distViolations) {
+            Write-Host "  $v" -ForegroundColor Red
+        }
+        exit 1
+    }
+}
 
