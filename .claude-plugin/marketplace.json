@@ -1,0 +1,11 @@
+{
+  "name": "electrified-cortex",
+  "owner": { "name": "Electrified Cortex" },
+  "plugins": [
+    {
+      "name": "electrified-cortex-skills",
+      "source": "./",
+      "description": "Curated skill library by Electrified Cortex"
+    }
+  ]
+}
