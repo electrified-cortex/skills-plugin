@@ -85,6 +85,12 @@ Frontmatter:
 
 (A-FM-1) Name matches folder — `name` MUST equal skill's folder name exactly. Check both `uncompressed.md` and `SKILL.md`; mismatch in either → FAIL.
 
+(A-FM-4) Valid frontmatter fields — SKILL.md frontmatter MUST contain ONLY `name` and `description`. Any additional YAML key (version, inputs, outputs, type, model, tools, etc.) → FAIL.
+
+(A-FM-11) Trigger phrases — all skills — ALL skills (inline AND dispatch): `description` MUST contain `Triggers -` (case-insensitive). Absence → HIGH. Dispatch skills additionally validated by DS-3.
+
+(A-FM-12) `uncompressed.md` frontmatter mirror — if `uncompressed.md` exists, it MUST have YAML frontmatter. `name` and `description` MUST match SKILL.md exactly (case-sensitive). Missing frontmatter → FAIL. Mismatched `name` or `description` → FAIL.
+
 (A-FM-3) H1 per artifact — applies ONLY to `.md` files. `.txt` files (e.g. `instructions.txt`) are NOT markdown; the H1 rule does NOT apply to them — never flag a `.txt` file under A-FM-3. For `.md` files, a "real H1" is a line that starts at column 0 and matches `^# ` literally. H1 markers INSIDE fenced code blocks (```...```), inline code (`# ...`), or quoted prose are TEMPLATE / EXAMPLE content — never count them as real H1s. To detect: scan for `^# ` AND verify the line is not inside a ``` fence (track fence toggles). Rule: `SKILL.md` MUST NOT contain a real H1. `uncompressed.md` (if present) MUST contain a real H1. `instructions.uncompressed.md` (if present) MUST contain a real H1. Violation in `SKILL.md` → HIGH. Missing H1 in `uncompressed.md` or `instructions.uncompressed.md` is out of scope — markdown-hygiene covers H1 enforcement. Absence of `uncompressed.md` is not a finding — it is optional.
 
 No duplication:

@@ -20,7 +20,7 @@ The publish skill does NOT decide WHEN to release. It executes a release the cal
 
 - **release branch** — the git branch the skill operates on. Default `main`.
 - **plugin version** — the SemVer string in `plugin.json` `version` field. The unit of release.
-- **build** — agent-performed procedure: walk source tree, mirror SKILL.md-bearing folders to dist, apply Stage 2 reference resolution, apply deny patterns. No external script.
+- **build** — agent-performed procedure: walk source tree, mirror ALL files in each SKILL.md-bearing folder to dist (deny-filtered), then apply Stage 2 cross-folder reference resolution, apply deny patterns. No external script.
 - **deny list** — files that must NEVER appear in dist. Operator-locked patterns embedded in the instructions (not loaded from file).
 - **dry run** — execute every step EXCEPT the final commit/tag/push. Caller inspects the planned outcome.
 - **release commit** — the single commit produced by this skill, containing the bumped `plugin.json`, prepended `CHANGELOG.md`, and regenerated `skills/`.
@@ -54,7 +54,7 @@ R4. **Pre-flight refusal — bad prior version.** If the most recent tag's versi
 
 R5. **Version computation.** The skill MUST parse `plugin.json` for `version` and compute the new version per `version_bump` strictly per SemVer rules.
 
-R6. **Build (agent-procedural).** The skill MUST execute the build procedure inline (mirror source SKILL.md-bearing directories to `skills/`, apply Stage 2 reference resolution, apply embedded deny patterns) per `instructions.uncompressed.md`. If any deny-pattern file is found in the produced dist tree, the skill MUST stop with status `build_validation_failed` and surface the offending paths.
+R6. **Build (agent-procedural).** The skill MUST execute the build procedure inline (mirror ALL files from each source SKILL.md-bearing directory to `skills/` with deny-pattern filtering, then apply Stage 2 cross-folder reference resolution, apply embedded deny patterns) per `instructions.uncompressed.md`. If any deny-pattern file is found in the produced dist tree, the skill MUST stop with status `build_validation_failed` and surface the offending paths.
 
 R7. **plugin.json update.** Set `version` to the new SemVer. Set `built` to today's UTC date in `YYYY-MM-DD`.
 

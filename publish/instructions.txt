@@ -16,7 +16,7 @@ Caller decides WHEN to release. This skill executes the release.
 Deny any file matching ANY of these patterns (case-insensitive, any depth):
 - `*spec.md` — spec files (bare `spec.md`, named `foo.spec.md`, hyphenated `canonical-format-spec.md`, etc.)
 - `*.sha256` — hash checksums
-- `*.uncompressed.md` — uncompressed source files
+- `*uncompressed.md` — uncompressed source files (matches bare `uncompressed.md` and prefixed `<name>.uncompressed.md`)
 - Any filename beginning with `.` (dot-files)
 - Any directory beginning with `.` (dot-dirs — skip entire subtree)
 
@@ -52,14 +52,16 @@ Perform the build yourself — no script invocation.
 **2c. Mirror Stage 1.** For each skill folder discovered:
 - Determine the skill's relative path from the source root (e.g., `system/session-logging`).
 - Create the matching directory under `skills/` (e.g., `skills/system/session-logging/`).
-- Copy `SKILL.md` to `skills/<rel-path>/SKILL.md` — ONLY if it does not match any deny pattern.
+- Walk every file directly in the source skill folder (non-recursive into sub-folders; sub-folders that are themselves skill folders are handled by their own discovery entry).
+- For each file: apply deny patterns. If the file matches any deny pattern, skip it. Otherwise copy it to `skills/<rel-path>/<filename>`.
+- This flat-copy approach ensures convention-named scripts (e.g., `manifest.ps1`, `prune.sh`) are included without requiring an explicit backtick reference in `SKILL.md`.
 
-**2d. Stage 2 — Reference resolution.** For each copied `SKILL.md`:
+**2d. Stage 2 — Cross-folder reference resolution.** For each copied `SKILL.md`:
 - Parse it for backtick file references: any `` `path/to/file.ext` `` **or bare** `` `file.ext` `` (filename only, no path separator) where the path ends in a file extension (2–6 chars).
 - Skip patterns beginning with `*/` (wildcard deny markers).
 - Skip cross-skill refs beginning with `../` — log a warning, do not follow.
 - For template paths (containing `<...>`): find all files in the source skill directory matching the leaf filename; include each (recursively resolve their refs too, depth cap 4).
-- For direct paths (including bare filenames with no `/`): resolve relative to the source skill directory. The resolved absolute path must be within the source skill directory (no escaping). Copy the file to the mirrored location in dist if not already there. Recursively resolve its backtick refs (depth cap 4).
+- For direct paths (including bare filenames with no `/`): resolve relative to the source skill directory. If the resolved absolute path is within the source skill directory, it was already copied in Stage 1 — skip (already present). If it resolves outside the source skill directory (cross-folder reference), copy the file to the appropriate mirrored location in dist if not already there; recursively resolve its backtick refs (depth cap 4).
 - Apply deny patterns at every copy step — never copy a denied file.
 
 **2e. Copy skill.index files.** If `skill.index` exists in the source root, copy to `skills/skill.index`. If `skill.index.md` exists, copy to `skills/skill.index.md`.
