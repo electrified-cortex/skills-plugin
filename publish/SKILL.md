@@ -5,6 +5,8 @@ description: Cut a new tagged release of skills-plugin. Bumps plugin.json versio
 
 Caller decides WHEN to release. This skill executes the release.
 
+**Pre-dispatch:** ensure the skills-plugin working directory is on the `main` branch before invoking. R2 will abort if it isn't.
+
 ## Definitions
 
 - **release branch** — branch skill operates on; default `main`; set in `build/config.yaml` `release_branch`.
