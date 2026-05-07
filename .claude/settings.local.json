@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth *)",
+      "Bash(gh pr *)",
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "Bash(bash verify-line-in-diff.sh electricessence MergeIncludes 2 README.md 45 RIGHT)",
+      "Bash(bash verify-line-in-diff.sh electricessence MergeIncludes 2 README.md 1 RIGHT)",
+      "Bash(bash verify-line-in-diff.sh electricessence MergeIncludes 2 src/nonexistent.cs 10 RIGHT)",
+      "Bash(bash verify-line-in-diff.sh electricessence MergeIncludes 2 docs/sections/002-installation-usage.md 10 RIGHT)",
+      "Bash(bash verify-line-in-diff.sh electricessence MergeIncludes 2 README.md 45 BOTH)"
+    ]
+  }
+}
