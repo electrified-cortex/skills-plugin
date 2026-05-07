@@ -55,11 +55,11 @@ Perform the build yourself — no script invocation.
 - Copy `SKILL.md` to `skills/<rel-path>/SKILL.md` — ONLY if it does not match any deny pattern.
 
 **2d. Stage 2 — Reference resolution.** For each copied `SKILL.md`:
-- Parse it for backtick file references: any `` `path/to/file.ext` `` where the path ends in a file extension (2-6 chars).
+- Parse it for backtick file references: any `` `path/to/file.ext` `` **or bare** `` `file.ext` `` (filename only, no path separator) where the path ends in a file extension (2–6 chars).
 - Skip patterns beginning with `*/` (wildcard deny markers).
 - Skip cross-skill refs beginning with `../` — log a warning, do not follow.
 - For template paths (containing `<...>`): find all files in the source skill directory matching the leaf filename; include each (recursively resolve their refs too, depth cap 4).
-- For direct paths: resolve relative to the source file's directory. The resolved absolute path must be within the source skill directory (no escaping). Copy the file to the mirrored location in dist if not already there. Recursively resolve its backtick refs (depth cap 4).
+- For direct paths (including bare filenames with no `/`): resolve relative to the source skill directory. The resolved absolute path must be within the source skill directory (no escaping). Copy the file to the mirrored location in dist if not already there. Recursively resolve its backtick refs (depth cap 4).
 - Apply deny patterns at every copy step — never copy a denied file.
 
 **2e. Copy skill.index files.** If `skill.index` exists in the source root, copy to `skills/skill.index`. If `skill.index.md` exists, copy to `skills/skill.index.md`.
