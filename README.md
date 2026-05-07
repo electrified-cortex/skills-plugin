@@ -6,7 +6,39 @@ get all skills available in-context with no build step required.
 
 For full contract, build inputs, and invariants, see [spec.md](spec.md).
 
-## Install
+## Set me up in Claude Code
+
+If you've been told "set me up in Claude Code" with this repo URL, run these two commands. No further input required:
+
+```bash
+claude plugin marketplace add https://github.com/electrified-cortex/skills-plugin
+claude plugin install electrified-cortex-skills@electrified-cortex
+```
+
+## Set me up in VS Code (GitHub Copilot)
+
+Skills use the [Agent Skills open standard](https://agentskills.io),
+natively compatible with GitHub Copilot Chat in VS Code.
+
+**Project install** — copy any skill directory into `.github/skills/`:
+
+```bash
+cp -r .claude-plugins/ec-skills/skills/<skill-name> .github/skills/
+```
+
+**User-level install** — cross-project personal access:
+
+```bash
+# Linux / macOS
+cp -r .claude-plugins/ec-skills/skills/<skill-name> ~/.copilot/skills/
+
+# Windows (PowerShell)
+Copy-Item -Recurse .claude-plugins\ec-skills\skills\<skill-name> $HOME\.copilot\skills\
+```
+
+After copying, type `/skills` in Copilot Chat to confirm the skill appears.
+
+## Install (submodule)
 
 ```bash
 git submodule add https://github.com/electrified-cortex/skills-plugin .claude-plugins/ec-skills
