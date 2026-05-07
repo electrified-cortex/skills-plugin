@@ -28,7 +28,7 @@ Variables:
 `<description>` = `Auditing tool: <tool_path>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Follow `dispatch` skill. See `../dispatch/SKILL.md`.
+Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
 Should return: `PASS: <path>` | `PASS_WITH_FINDINGS: <path>` | `FAIL: <path>` | `ERROR: <reason>`
 If returns `ERROR: <reason>` -> stop, surface reason.
 

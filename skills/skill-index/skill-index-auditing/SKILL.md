@@ -12,7 +12,7 @@ description: Validator for a skill-index cascade. Returns ok, rebuild-needed, or
 `<description>` = `Skill Index Audit: <path>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Follow `dispatch` skill. See `../../dispatch/SKILL.md`.
+Import the `dispatch` skill from `../../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
 Should return: audit report at `result_file` with verdict `ok` | `rebuild-needed` | `inconclusive`
 
 `root` (required): abs path to cascade's invocation root.

@@ -23,8 +23,7 @@ description: Write tool scripts with companion specs. Bash is the default; Power
 4. **Place it**: Skill-embedded (inside skill dir) if skill-specific.
    Standalone (`tools/`) if general-purpose.
 5. **Hygiene**: run `markdownlint` on the spec. Zero errors before committing.
-6. **Audit**: dispatch `tool-auditing` to check spec alignment. Fix all
-   findings, re-audit. **Repeat until PASS.**
+6. **Audit**: load `tool-auditing/SKILL.md` and follow its dispatch pattern to check spec alignment. Fix all findings, re-audit. **Repeat until PASS.**
 
 ## Conventions
 

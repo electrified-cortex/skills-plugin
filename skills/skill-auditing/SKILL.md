@@ -22,7 +22,7 @@ Variables:
 `<description>` = `Auditing skill: <skill_dir>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Follow `dispatch` skill. See `../dispatch/SKILL.md`.
+Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
 Should return: `CLEAN: <path>` | `PASS: <path>` | `NEEDS_REVISION: <path>` | `FAIL: <path>` | `ERROR: <reason>`
 If returns `ERROR: <reason>` -> stop, surface reason.
 
@@ -39,6 +39,5 @@ Branch on stdout (last line):
 
    ```text
 
-   To fix, dispatch a sub-agent with this report as input instructing it to fix all the issues.
-   Keep track of the number of revision rounds. If it has been 3, stop here and surface the report.
+   To fix, load `../dispatch/SKILL.md` and use the `dispatch` skill to launch a standard-tier sub-agent; pass this report as input instructing it to fix all the issues. Keep track of revision rounds. Stop at 3 and surface the report.
    ```

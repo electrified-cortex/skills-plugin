@@ -43,14 +43,14 @@ Smoke pass (`tier=smoke`):
 `<tier>` = `fast-cheap`
 `<description>` = `Code Review Smoke: <change_set>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
-Follow `dispatch` skill. See `../dispatch/SKILL.md`.
+Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
 
 Substantive pass (`tier=substantive`):
 `<input-args>` = `change_set=<form> tier=substantive prior_findings=<json> [focus=<csv>] [context_pointer=<path>]`
 `<tier>` = `standard`
 `<description>` = `Code Review Substantive: <change_set>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
-Follow `dispatch` skill. See `../dispatch/SKILL.md`.
+Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
 
 Orchestration:
 
