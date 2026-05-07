@@ -4,7 +4,7 @@ Caller decides WHEN to release. This skill executes the release.
 
 ## Definitions
 
-- **source root** — directory tree containing the source skills. Passed as `source_root` arg, or default from `build/config.yaml` `source.path`.
+- **source root** — directory tree containing the source skills. Required `source_root` arg.
 - **dist root** — `skills/` subdirectory of the plugin repo root. Output of the build step.
 - **plugin version** — SemVer string in `plugin.json` `version` field.
 - **deny list** — files that must NEVER appear in dist. Operator-locked patterns (embedded below).
@@ -24,7 +24,7 @@ Deny any file matching ANY of these patterns (case-insensitive, any depth):
 
 **R1 dirty_working_tree** — if uncommitted changes exist outside `skills/`, `plugin.json`, `CHANGELOG.md`: stop, list offending paths.
 
-**R2 wrong_branch** — if current branch != release branch (default `main`; read from `build/config.yaml` `release_branch` if file still exists, else default `main`): stop, surface current branch.
+**R2 wrong_branch** — if current branch != release branch (default `main`): stop, surface current branch.
 
 **R3 bad_source** — if source root does not exist or contains no `SKILL.md`-bearing directories: stop with `bad_source`.
 
@@ -119,7 +119,7 @@ Push branch and tag. Force-push forbidden. Push failure -> stop `push_failed`, l
 
 ## Constraints
 
-- Must NOT invoke `build/build.ps1` or any external build script.
+- Must NOT invoke any external build script.
 - Must NOT decide whether to release.
 - Must NOT auto-generate `release_notes`.
 - Must NOT modify `skills/` by hand outside of Step 2.
