@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2026-05-07
+
+Fix (markdown-hygiene-lint): step 3 result-check now invokes `result.sh`/`result.ps1` directly instead of "dispatching" another skill. Sub-agents are forbidden from dispatching other skills (skill-writing rule); the wording was misleading even though behavior was working.
+
 ## [0.1.5] - 2026-05-07
 
 Skills update: dispatch-wording disambiguation across 9 skills.

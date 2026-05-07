@@ -9,7 +9,9 @@ Hard prohibition: don't author scripts, helper files, or any file other than `<l
    Bash: `bash <skill-dir>/lint.sh <markdown_file_path>`
    PS7: `pwsh <skill-dir>/lint.ps1 <markdown_file_path>`
 2. Run installed linter — if available, run its auto-fix pass on `<markdown_file_path>`. Don't install if absent. Best-effort.
-3. Run result check — dispatch `markdown-hygiene-result` with `<markdown_file_path> lint`.
+3. Run result check — `result.sh` / `result.ps1` from sibling `markdown-hygiene-result/`.
+   Bash: `bash <skill-dir>/../markdown-hygiene-result/result.sh <markdown_file_path> lint`
+   PS7: `pwsh <skill-dir>/../markdown-hygiene-result/result.ps1 <markdown_file_path> lint`
    `MISS: <abs-path>` -> rebind `<lint_path>` = `<abs-path>`, continue.
    Anything else -> return verbatim, stop.
 4. Run verify — covers MD010, MD041 (MD009/MD012/MD047 already fixed).
