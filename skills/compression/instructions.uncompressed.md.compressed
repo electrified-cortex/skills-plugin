@@ -1,0 +1,30 @@
+# Compression Process
+
+Input: `<file-path>` [`--tier <lite|full|ultra>`] [`--source <src> --target <dst>`] (default: ultra)
+Blurb → skip gate, step 4
+
+Modes:
+
+**Source→Target:** `--source X --target Y` → read X, compress, write Y. No git check. X untouched.
+**In-place (default):** compress file directly. Git check required.
+**Fallback:** untracked/dirty + no `--target` → target = `<file>.compressed`.
+
+Steps:
+
+1. Parse path + tier (default ultra) + mode. Blurb → step 4.
+2. Gate (skip if `--source`/`--target` provided):
+   - cd file's parent dir, `git status --porcelain -- <basename>`.
+   - Clean (`  ` or `M `) → in-place.
+   - Untracked (`??`) or dirty (`M`, `A`, etc.) → fallback: `<file>.compressed`.
+   - `REJECTED` on conflict/deleted only.
+3. Resolve tier: `--tier` or ultra.
+4. Load tier rules: `<tier>/rules.txt` (this directory). Apply.
+5. Verify (file mode only, not blurb): compare compressed vs original. Every fact, rule, constraint must survive.
+   - Recoverable (single dropped item or collapsed qualifier) → fix in-place, report + suggest prevention.
+   - Unrecoverable (multi-element loss, structural damage, meaning reversal) → restore, `REJECTED: content lost — <details>`.
+6. Write to target (in-place, `.compressed`, or `--target` path).
+
+Output (required): `<before>→<after> bytes | <N>% reduction | <tier> | <mode>`
+Mode = `in-place`, `alongside (<file>.compressed)`, or `source→target (<dst>)`
+If fixed: append `Fixed: <what>` + `Suggest: <prevention>`
+Blurb: compressed text, then `---`, then reduction line.

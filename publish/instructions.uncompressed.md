@@ -16,7 +16,7 @@ Caller decides WHEN to release. This skill executes the release.
 Deny any file matching ANY of these patterns (case-insensitive, any depth):
 - `*spec.md` — spec files (bare `spec.md`, named `foo.spec.md`, hyphenated `canonical-format-spec.md`, etc.)
 - `*.sha256` — hash checksums
-- `*.uncompressed.md` — uncompressed source files
+- `*uncompressed.md` — uncompressed source files (matches bare `uncompressed.md` and prefixed `<name>.uncompressed.md`)
 - Any filename beginning with `.` (dot-files)
 - Any directory beginning with `.` (dot-dirs — skip entire subtree)
 
