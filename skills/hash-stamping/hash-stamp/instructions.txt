@@ -1,0 +1,23 @@
+Input: `<path>` | `<glob>` | `--tree <root>` [`--force`]
+
+Modes:
+
+File/glob: one or more explicit paths or a glob pattern. Stamp each resolved file.
+Tree: `--tree <root>` → find all files under root matching: (a) already have a `.sha256` companion, OR (b) extension in `.md .txt .ps1 .sh`, OR (c) exact filename `skill.index`. Stamp all resolved files.
+
+Steps:
+
+1. Resolve target list from input mode. Empty list → warn "No targets resolved", exit zero.
+2. Filter out `.sha256` files from target list. Log any filtered as SKIPPED.
+3. For each target:
+   a. Compute SHA-256 of file content.
+   b. Construct companion path: `<same-dir>/<filename>.sha256`.
+   c. If companion exists and `--force` not set: read stored hash. Match → UNCHANGED, skip write.
+   d. Write companion: `{hash}  {filename}` (two spaces, filename only, no path, no trailing newline, UTF-8 NoBOM).
+   e. Status: WRITTEN (new companion), UPDATED (replaced existing), UNCHANGED (skipped — matched).
+4. Build output table. Columns: relative path (from invocation dir) | status.
+5. Print table.
+6. Print summary: `{N} processed | {W} written | {U} updated | {X} unchanged`.
+7. Exit non-zero if any ERROR. Zero otherwise.
+
+Constraints: never modify the target file. Never stamp `.sha256` files. Never create new directories.
