@@ -1,0 +1,6 @@
+# Markdown lint exclusions
+
+**/.hash-record/**
+**/.tests/**
+**/.worktrees/**
+**/agents/transcripts/**
