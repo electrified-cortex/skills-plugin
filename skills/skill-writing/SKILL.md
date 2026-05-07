@@ -1,6 +1,6 @@
 ---
 name: skill-writing
-description: Use when writing a skill, authoring SKILL.md, creating a new skill from a spec, drafting a skill file, implementing SKILL.md against a spec, or when a skill needs to be written. Decision tree for inline vs dispatch, structure, quality criteria. Triggers - write a skill, author SKILL.md, create new skill, draft skill file, implement skill spec.
+description: How to write skills. Decision tree for inline vs dispatch, structure, quality criteria. Triggers — write a skill, author SKILL.md, create new skill, draft skill file, implement skill spec.
 ---
 
 Create skills agents can discover, invoke, rely on.
@@ -40,7 +40,6 @@ Revising: update spec first. Exception: non-normative changes (README, examples,
 
 Inline = needs caller's context, judgment, creative intent. Inline skills don't need dispatch mechanics.
 Dispatch = mechanical processing against rules. Use Dispatch agent (zero context).
-This skill: decides whether a skill dispatches + how to structure it. Dispatch mechanics (decision tree, model tiers, prompt construction, footguns) → read the `dispatch` skill.
 
 ## Skill Folder Convention
 
@@ -63,8 +62,6 @@ SKILL.md IS the full instruction set. Agent reads and applies directly.
 SKILL.md = minimal routing card. `instructions.txt` holds procedure.
 Dispatch via Dispatch agent: "Read and follow `instructions.txt`. Input: `<params>`"
 Parameters: types, required/optional, defaults. Output format specified.
-
-Don't rely on repo-local fallback filenames — those belong in skill-specific auditors, not universal spec-auditing rules.
 
 Dispatch instruction file must be in same dir or known path.
 Compressed `instructions.txt`: only instructions — no title headers, no descriptions, no preamble. `instructions.uncompressed.md` MAY include H1 title for markdown-hygiene (MD041); strip after compression. When running markdown-hygiene on `SKILL.md`, pass `--ignore MD041` (no H1 sanctioned per R-FM-3).

@@ -11,3 +11,18 @@ gh api --method PATCH repos/{OWNER}/{REPO}/pulls/comments/{COMMENT_ID} \
 ```
 
 Note: endpoint is `/pulls/comments/{id}`, not `/issues/comments/{id}`.
+
+## When to Use
+
+When a previously posted PR inline review comment needs correction or updating. Prefer editing over deleting when the content can be revised.
+
+## Constraints
+
+- Only the comment author can edit their own comments.
+- Large content edits may require JSON body escaping.
+
+## Error Handling
+
+- Comment not found: verify comment ID is correct.
+- Permission denied: confirm you are the comment author.
+- Parse error: ensure body content is properly escaped.

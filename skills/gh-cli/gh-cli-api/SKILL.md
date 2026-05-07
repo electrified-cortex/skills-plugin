@@ -76,3 +76,13 @@ Covers `gh api` for REST and `gh api graphql` for GraphQL. Doesn't replace domai
 ## See Also
 
 `gh-cli-issues`, `gh-cli-prs`, `gh-cli-prs-comments`, `gh-cli-releases`, `gh-cli-repos`, `gh-cli-actions`
+
+## Error Handling
+
+- Auth failure: re-run `gh-cli-setup` to verify token.
+- Rate limit: wait and retry.
+- Invalid endpoint: check `gh api --help` for valid paths.
+
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed

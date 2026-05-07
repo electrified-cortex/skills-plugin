@@ -1,0 +1,18 @@
+code-review/: Tiered code review on a change set. Read-only — never modifies code. Triggers — review this diff, code review, code review, code review skill, code review workflow
+compression: Compress .md and text files via subagent dispatch. Triggers — compress this file, reduce tokens, shrink instru, compression skill, compression workflow
+copilot-cli/: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execu, copilot cli, copilot cli skill, copilot cli workflow
+dispatch/: Decision tree for whether, how, and at what model tier to dispatch sub-agents, dispatch skill, dispatch workflow
+gh-cli/: GitHub CLI operations — routes to domain-specific sub-skills via dispatch, gh cli, gh cli skill, gh cli workflow
+hash-record/: Content-hash-keyed durable record store. Probe / Read / Write / Invalidate API. Replaces .audit-reports/ and, hash record, hash record skill, hash record workflow
+hash-stamping/: SHA-256 integrity stamp suite. Verify stamp drift or write/update stamps. Triggers — verify stamp, check integ, hash stamping, hash stamping skill, hash stamping workflow
+iteration-safety: Rules for iterating audit, compression, hygiene, or review passes. Reference this skill from callers; do not e, iteration safety, iteration safety skill, iteration safety workflow
+markdown-hygiene/: Full markdown hygiene pass on a .md file — lint fixes, MD rule scan, semantic advisory analysis. Triggers — lint markdown, fix markdown, MD violations, markdownlint pass, hygiene check, markdown hygiene, markdown hygiene skill, markdown hygiene workflow
+skill-auditing: Audit a skill for quality, classification, cost, and compliance with the skill-writing spec. Triggers — audit, skill auditing, skill auditing skill, skill auditing workflow
+skill-index/: Root skill for the skill-index toolkit. Governs sub-skills that let agents discover available skills by readin, skill index, skill index skill, skill index workflow
+skill-optimize: Analyzes single skill for architectural and structural improvement. Dispatches topic analysis to sub-agents. Triggers — optimize skill, skill review, architectural review, skill improvement, find skill issues, analyze skill structure, skill optimize, skill optimize skill, skill optimize workflow
+skill-writing: How to write skills — decision tree for inline vs dispatch, structure, quality criteria, skill writing, skill writing skill, skill writing workflow
+spec-auditing: Audit a spec/companion pair or a spec alone. Dispatch instructions.txt — don't audit inline, spec auditing, spec auditing skill, spec auditing workflow
+spec-writing: Write precise, testable, auditable specification documents with explicit scope, stable terminology, and enforc, spec writing, spec writing skill, spec writing workflow
+swarm: Multi-personality review infrastructure — selects personalities, gates availability, dispatches in parallel, a, swarm skill, swarm workflow
+tool-auditing: Audit tool scripts for companion spec, conventions, and error handling. Triggers — audit tool, check tool scri, tool auditing, tool auditing skill, tool auditing workflow
+tool-writing: Write tool scripts with companion specs. Bash is the default; PowerShell is a legitimate alternative. Spec fir, tool writing, tool writing skill, tool writing workflow

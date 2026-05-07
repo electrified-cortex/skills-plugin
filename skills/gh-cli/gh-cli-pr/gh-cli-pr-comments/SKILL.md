@@ -72,6 +72,16 @@ gh api graphql -f query='
   }'
 ```
 
+## Dependencies
+
+- `gh-cli-setup/SKILL.md` — required pre-check: auth + CLI installed
+
+## Error Handling
+
+- Auth failure: re-run `gh-cli-setup` to verify token.
+- PR not found: verify repository and PR number.
+- Comment not found: verify comment ID.
+
 ## Scope
 
 Covers `gh pr comment` only. Review-level comments

@@ -3,6 +3,10 @@ name: gh-cli-releases
 description: Manage GitHub releases via gh release. Full lifecycle: create, publish, upload assets, edit, delete. Triggers - create release, github release, publish release, upload release asset, manage releases.
 ---
 
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed
+
 ## Listing
 
 ```bash
@@ -57,6 +61,12 @@ gh release delete-asset v1.0.0 app.tar.gz
 gh release download v1.0.0 --pattern "*.tar.gz" --dir ./downloads
 gh release download v1.0.0 --archive zip
 ```
+
+## Error Handling
+
+- Auth failure: re-run gh-cli-setup.
+- Tag already exists: use `--draft` or delete existing tag first.
+- Asset upload failed: verify file path and size limits.
 
 ## Scope
 

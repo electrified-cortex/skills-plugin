@@ -84,3 +84,13 @@ gh cache delete --all
 Scope: `gh run`, `gh workflow`, `gh secret`, `gh variable`, `gh cache`. Doesn't cover workflow YAML, self-hosted runners, or OIDC trust configs.
 
 Related: `gh-cli-prs` (CI checks on PRs), `gh-cli-api` (custom Actions API calls)
+
+## Error Handling
+
+- Auth failure: re-run `gh-cli-setup` to verify token.
+- CLI not found: ensure `gh` is installed.
+- Action not found: verify workflow name and repository.
+
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed

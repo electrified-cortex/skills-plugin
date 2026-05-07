@@ -132,3 +132,13 @@ $pr.files | ForEach-Object {
 ## Scope
 
 Covers `markFileAsViewed` and `unmarkFileAsViewed` GraphQL mutations only. Does not submit PR reviews, post comments, or manage review threads — see `gh-cli-pr-review/` and `gh-cli-pr-inline-comment/`.
+
+## Inputs
+
+- `pr_number` — the PR number.
+- `file_path` — file to mark as viewed.
+- `repo` — optional; defaults to current repo.
+
+## Dependencies
+
+- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed

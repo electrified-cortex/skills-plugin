@@ -35,8 +35,7 @@ Example: `.claude-plugins/ec-skills/skills/compression/SKILL.md`
 
 ```text
 skills-plugin/
-  publish/        # meta-skill: version-bump, changelog, tag, push
-  build/          # build tooling (Stage 1 crawler)
+  publish/        # meta-skill: agent-procedural build, version-bump, changelog, tag, push
   skills/         # distributed output tree (build output — never edit by hand)
   plugin.json     # version: mono SemVer
   CHANGELOG.md
