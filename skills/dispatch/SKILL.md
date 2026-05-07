@@ -71,5 +71,8 @@ If the requested model is not available: stop and inform the caller; suggest an 
 Return:
 Return (passthrough) sub-agent output to caller.
 
+Concurrency:
+When dispatching multiple instructions simultaneously, default max concurrent = 3. Use a rolling window: start up to 3, then as each returns dispatch the next pending instruction. Only exceed 3 if instructed by the caller.
+
 See also:
 `supplemental.md` — context inheritance, CLI dispatch, hash-record. `dispatch-pattern.md` — design rationale. `installation.md` — agent install. `dispatch-setup/SKILL.md` — VS Code/Cursor setup.

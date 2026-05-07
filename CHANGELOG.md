@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2026-05-07
+
+Rebuild distribution — sync updated skills from electrified-cortex/skills (swarm skill, code-review skill, dispatch rolling-window, hash-record rekey, skill-auditing improvements, and other fixes)
+
 ## [0.1.7] - 2026-05-06
 
 copilot-cli skill bundle — 3 dogfood findings fixed (task 10-1033):

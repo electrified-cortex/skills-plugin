@@ -28,7 +28,7 @@ Worker chooses mode based on time/token budget. All modes are first-class.
 `change_set` (required): inline unified diff, absolute file path list, or git ref/range (refs require shell access in dispatched agent).
 `tier` (tiered mode only, required): `smoke` or `substantive`.
 `prior_findings` (substantive pass only, required): all prior-pass findings forwarded unmodified.
-`focus` (optional): comma-separated focus areas (e.g. `security,concurrency`). Reorders priority; doesn't reduce depth — `blocker` and `major` outside focus must still surface.
+`focus` (optional): comma-separated focus areas (e.g. `security,concurrency`). Reorders priority; doesn't reduce depth — `critical` and `high` outside focus must still surface.
 `context_pointer` (optional): path to CLAUDE.md, README, or style guide for local conventions.
 
 ## Procedure
@@ -37,6 +37,10 @@ Worker chooses mode based on time/token budget. All modes are first-class.
 
 `<instructions>` = `instructions.txt` (this folder; NEVER READ)
 `<instructions-abspath>` = absolute path to `<instructions>`
+
+Pre-dispatch: if `context_pointer` not supplied by caller, check repo root for these files (in order): `CLAUDE.md`, `README.md`, `.cursorrules`, `copilot-instructions.md`. Use the first found as `context_pointer`. If none found, omit.
+
+Optional blast-radius gate (git-range input only): if `change_set` is a git ref/range (contains `..` or `...` or looks like `HEAD~N`), run `git diff --name-only <change_set>` to get the affected-file list. Restrict review context to those files. Reduces context cost by up to 6.8x on large change sets. Skip if `change_set` is an inline diff or explicit file list.
 
 Smoke pass (`tier=smoke`):
 `<input-args>` = `change_set=<form> tier=smoke [focus=<csv>] [context_pointer=<path>]`
@@ -91,7 +95,7 @@ Output:
 
 ### Tiered Mode
 
-Per-pass result: `{tier, pass_index, verdict, findings[]}`. Verdict: `clean`, `findings`, `error`. Severity: `blocker`, `major`, `minor`, `nit`.
+Per-pass result: `{tier, pass_index, verdict, findings[]}`. Verdict: `clean`, `findings`, `error`. Severity: `critical`, `high`, `medium`, `low`, `info`.
 
 Aggregated result (caller builds after both passes complete):
 
@@ -99,7 +103,7 @@ Aggregated result (caller builds after both passes complete):
 | --- | --- |
 | `passes` | Array of per-pass results, ordered by `pass_index`. |
 | `sign_off_pass_index` | Index of most recent successful standard pass (authoritative sign-off). `null` if no successful standard pass yet. |
-| `severity_aggregate` | Count of findings by severity (`blocker`, `major`, `minor`, `nit`) from sign-off pass only. |
+| `severity_aggregate` | Count of findings by severity (`critical`, `high`, `medium`, `low`, `info`) from sign-off pass only. |
 | `verdict` | Sign-off pass verdict propagated (`clean`, `findings`, or `error` if no successful standard pass). |
 | `preserved_contradictions` | Findings where smoke and substantive disagree — surface as-is, do not resolve. |
 
@@ -117,7 +121,7 @@ Summary: 1-3 sentences — top concern + overall verdict.
 - When time/token budget is tight: use single-adversary mode.
 - When comprehensive coverage is required: use tiered or swarm mode.
 - Both tiered and single-adversary modes MUST check capability-cache before using non-host models.
-- Finding severity in tiered mode: `blocker`, `major`, `minor`, `nit`. In single-adversary mode: `critical`, `high`, `medium`, `low`, `info`.
+- Finding severity (all modes): `critical`, `high`, `medium`, `low`, `info`.
 
 ## Error Handling
 

@@ -1,6 +1,6 @@
 ---
 name: copilot-cli
-description: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execute copilot commands itself. Triggers - ask copilot, copilot ask, explain with copilot, copilot explain, copilot review, copilot code review.
+description: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execute copilot commands itself. Triggers - use copilot CLI, copilot command, run copilot, ask copilot, explain with copilot, copilot review.
 ---
 
 Execution, flag assembly, prompt framing, and output parsing live inside the dispatched sub-skill — not here.
