@@ -1,0 +1,59 @@
+## Prerequisites
+
+```bash
+copilot --version   # must resolve; fail-fast if not
+```
+
+Fails → return `Status: UNAVAILABLE`; surface stderr; stop. Do NOT attempt installation.
+
+## Invocation
+
+```bash
+copilot -p "<prompt>" -s --allow-all-tools
+```
+
+Add `--model <model>` only when caller explicitly supplied model name. Omit otherwise; do not pin model inside skill.
+
+> **Note:** Named models (e.g. `gpt-4o`, `gpt-4.5`) may be unavailable via `--model`. Use default (no flag) unless caller requires named model. Named model rejected → return `Status: ERROR` with "model not available: `<model>`"; stop.
+
+Constrain working directory to neutral path — never `/`, `~`, or directory containing secrets.
+
+## Prompt Construction
+
+Pass caller's question directly. Prepend context if supplied:
+
+```text
+<context if any>
+
+<caller's question>
+```
+
+No framing or instructions — prompt pass-through is verbatim.
+
+## Output Shape
+
+```text
+Status: OK | ERROR | UNAVAILABLE
+Answer: <Copilot's plain text response>
+```
+
+| Status | Condition |
+| --- | --- |
+| `OK` | Copilot returned a response |
+| `ERROR` | Binary returned non-zero exit code |
+| `UNAVAILABLE` | `copilot --version` failed before invocation |
+
+## Error Handling
+
+| Condition | Action |
+| --- | --- |
+| `copilot --version` fails | `Status: UNAVAILABLE`; set `Answer:` to stderr; stop |
+| Caller-supplied model unsupported | `Status: ERROR`; set `Answer:` to "model not available: `<model>`"; stop |
+| `copilot -p ...` exits non-zero | `Status: ERROR`; set `Answer:` to stderr; stop |
+| `copilot -p ...` exits zero with empty stdout | `Status: OK`; set `Answer:` to empty string |
+
+## Rules
+
+- Do not interpret or filter Copilot's answer — return verbatim in `Answer` field.
+- One question per invocation; do not chain questions.
+- Do not pin model; only pass `--model` when caller explicitly supplies one.

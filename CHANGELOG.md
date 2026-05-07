@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.7] - 2026-05-06
+
+copilot-cli skill bundle — 3 dogfood findings fixed (task 10-1033):
+
+- A1 HIGH: add instructions.txt + instructions.uncompressed.md to all 3 sub-skills (copilot-cli-ask, copilot-cli-review, copilot-cli-explain); sub-skills now dispatch via proper routing cards
+- A2 MED: document --model flag constraint in instructions files; named models may be unavailable; graceful error handling already present
+- A5 MED: fix triggers mismatch in router (removed non-routing triggers); add NEEDS_CLARIFICATION status + result envelope to router; convert sub-skill SKILL.md to dispatch routing cards (NEVER READ guard, Variables block); rewrite sub-skill uncompressed.md to match routing card format; remove non-instructional Skill Index section from router
+
+All 4 skills (router + 3 sub-skills) audited PASS. Seal records written.
+
 ## [0.1.6] - 2026-05-07
 
 Fix (markdown-hygiene-lint): step 3 result-check now invokes `result.sh`/`result.ps1` directly instead of "dispatching" another skill. Sub-agents are forbidden from dispatching other skills (skill-writing rule); the wording was misleading even though behavior was working.

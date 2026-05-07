@@ -1,6 +1,6 @@
 ---
 name: copilot-cli
-description: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execute copilot commands itself. Triggers - use copilot CLI, copilot command, run copilot, ask copilot, explain with copilot, copilot review.
+description: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execute copilot commands itself. Triggers - ask copilot, copilot ask, explain with copilot, copilot explain, copilot review, copilot code review.
 ---
 
 Execution, flag assembly, prompt framing, and output parsing live inside the dispatched sub-skill — not here.
@@ -16,10 +16,20 @@ Execution, flag assembly, prompt framing, and output parsing live inside the dis
 ## How to Route
 
 1. Parse the task → identify operation from the table above.
-2. Operation unclear → ask the caller before proceeding.
+2. Operation unclear → ask the caller; in non-interactive flows return `Status: NEEDS_CLARIFICATION`.
 3. Load + dispatch the identified sub-skill; pass the full task and all caller-supplied context.
 4. Task spans multiple operations → run the primary operation; report remaining operations to the caller without dispatching them.
 5. Return the sub-skill's structured result unchanged to the caller.
+
+## Result Envelope
+
+```text
+Status: CLEAN | FINDINGS | OK | ERROR | UNAVAILABLE | NEEDS_CLARIFICATION
+<sub-skill result fields>
+Source: <sub-skill name>
+```
+
+`UNAVAILABLE` and `NEEDS_CLARIFICATION` originate from the router. All other statuses pass through from sub-skills unchanged.
 
 ## Cache Integration
 
@@ -38,7 +48,3 @@ Before dispatching any sub-skill, check the capability cache (see `capability-ca
 - Sub-skill missing → report that and stop; do not improvise.
 
 Related: `copilot-cli-review`, `copilot-cli-ask`, `copilot-cli-explain`, `capability-cache`
-
-## Skill Index
-
-`skill.index` and `skill.index.md` — machine-readable search index for this skill bundle and all sub-skills.

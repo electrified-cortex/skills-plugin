@@ -27,5 +27,5 @@ Variables:
 `<description>` = `Compressing: <file-path>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Follow `dispatch` skill. See `../dispatch/SKILL.md`.
+Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
 Returns: `<before>-><after> bytes | <N>% reduction | <tier> | <mode> | hygiene: clean|fixed N|N warning(s)`
