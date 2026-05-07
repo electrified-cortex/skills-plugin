@@ -1,3 +1,6 @@
+## [0.1.3] - 2026-05-06
+
+Fix: Stage 2 reference resolution now picks up bare filenames (e.g. \instructions.txt\, \esult.ps1\, \esult.sh\) in addition to path-qualified refs. Previously, skills that reference sibling files by bare name (no \/\) were not having those files included in the dist, causing 40+ skills to ship with only SKILL.md and missing their runtime backing files.
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -11,3 +14,4 @@ Drain skills dev: R-FM-11 hybrid + A-XR-1 parity, 21-ref path-style sweep, gh-cl
 Initial release: scaffold, Stage 1 mechanical crawler with deny-list filtering, publish skill (dispatch pattern), build/config.yaml sibling-mode default.
 
 - Scaffold landed: `publish/`, `build/build.ps1`, `build/config.yaml`, `plugin.json`, `CHANGELOG.md`, `README.md`.
+

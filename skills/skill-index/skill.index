@@ -1,0 +1,5 @@
+﻿.: Root skill for the skill-index toolkit. Governs sub-skills that let agents discover available skills by readin, skill index, skill index skill, skill index workflow
+skill-index-auditing: Validator for a skill-index cascade. Returns ok, rebuild-needed, or inconclusive. On PASS, writes skill.index, skill index auditing, skill index auditing skill, skill index auditing workflow
+skill-index-building: Dispatch skill. Creates or updates skill.index and skill.index.md at every indexed directory in a skill tree, skill index building, skill index building skill, skill index building workflow
+skill-index-crawling: Reads an existing skill-index cascade to locate the skill matching an agent's stated need — read-only, no file, skill index crawling, skill index crawling skill, skill index crawling workflow
+skill-index-integration: Wire a skill-index cascade into an agent's context: place the index pointer, write the discovery mandate, enfo, skill index integration, skill index integration skill, skill index integration workflow

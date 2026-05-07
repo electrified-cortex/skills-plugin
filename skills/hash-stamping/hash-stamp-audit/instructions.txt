@@ -1,0 +1,20 @@
+Input: `root=<path>` [`--git-only`]
+
+Steps:
+
+1. Validate `root` exists and is a directory. Missing or unreadable → exit non-zero immediately.
+2. Collect scope:
+   - Default: find all `.sha256` files under `root` recursively.
+   - `--git-only`: run `git -C <root> diff --name-only HEAD` + `git -C <root> ls-files --others --exclude-standard`. For each listed file, if `<file>.sha256` exists alongside it, include that `.sha256` in scope. Skip all others.
+3. For each `.sha256` file in scope:
+   a. Read content. Expected: `{64-hex-chars}  {filename}` (exactly two spaces). Non-conforming → MALFORMED.
+   b. Resolve companion: same dir as `.sha256`, filename from content.
+   c. Companion missing → MISSING.
+   d. Compute SHA-256 of companion. Compare to stored hash.
+   e. Match → PASS. Mismatch → FAIL (record stored[0:8] and computed[0:8]).
+4. Build output table. Columns: relative-path (from root) | status | notes (FAIL: `stored→computed` 8-char prefixes).
+5. Print table.
+6. Print summary: `{N} checked | {P} PASS | {F} FAIL | {M} MISSING` (append `| {X} MALFORMED` when non-zero).
+7. Exit non-zero if any FAIL, MISSING, or MALFORMED. Zero if all PASS.
+
+Constraints: read-only — no file writes, no stamp updates, no repairs.
