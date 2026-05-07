@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2026-05-07
+
+Skills update: dispatch-wording disambiguation across 9 skills.
+"Follow the dispatch skill" / "dispatch \`X\`" boilerplate replaced with
+explicit "load X/SKILL.md and follow the pattern it describes" form.
+Makes the READ step explicit so consuming agents don't fire the Skill
+tool blindly without first reading the dispatch skill's content.
+
+Affected: skill-writing, skill-auditing, spec-auditing, tool-writing,
+tool-auditing, code-review, compression, swarm, skill-index-auditing.
+
 ## [0.1.4] - 2026-05-07
 
 Fix (publish): Step 2c now flat-mirrors ALL non-denied files in each skill folder, instead of only files referenced in SKILL.md. Convention-named scripts (e.g. `manifest.ps1`, `prune.sh`, `rekey.ps1`, `check.sh`) that aren't explicitly referenced in SKILL.md are now correctly included. Stage 2 reference walk scoped down to cross-folder includes only.
