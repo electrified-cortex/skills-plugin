@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-05-08
+
+code-review skill: full optimization pass (Tier 1-3, 26 topics). Executor and dispatch card fully optimized. skill-auditing PASS on first attempt.
+
 ## [0.1.8] - 2026-05-07
 
 Rebuild distribution — sync updated skills from electrified-cortex/skills (swarm skill, code-review skill, dispatch rolling-window, hash-record rekey, skill-auditing improvements, and other fixes)

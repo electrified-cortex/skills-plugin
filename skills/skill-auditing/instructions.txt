@@ -7,7 +7,7 @@ HARD PROHIBITION: DON'T author scripts (`.ps1`, `.sh`, `.py`, etc.), helper file
 CHECK INVENTION PROHIBITION: only evaluate checks explicitly named and defined here. Don't invent, infer, or apply unlisted checks — even if pattern looks suspicious. No named check = no finding.
 
 Procedure:
-1. Enumerate files in `skill_dir` recursively; skip dot-prefixed dirs and `optimize-log.md`. Tool files (`.sh`, `.ps1`) and tool-spec files (`*.spec.md` other than the skill's own `spec.md` co-located with `SKILL.md`) are out of scope for Steps 1–3 AND excluded from the manifest `file_paths` — they belong to the tool manifest (audited separately by tool-auditing). Skill manifest covers only the skill bundle: `SKILL.md`, `instructions.txt`, `spec.md`, `uncompressed.md`, `instructions.uncompressed.md` (whichever exist). Include tool/.spec.md files in A-FS-1 enumeration only.
+1. Enumerate files in `skill_dir` recursively; skip dot-prefixed dirs. Tool files (`.sh`, `.ps1`) and tool-spec files (`*.spec.md` other than the skill's own `spec.md` co-located with `SKILL.md`) are out of scope for Steps 1–3 AND excluded from the manifest `file_paths` — they belong to the tool manifest (audited separately by tool-auditing). Skill manifest covers only the skill bundle: `SKILL.md`, `instructions.txt`, `spec.md`, `uncompressed.md`, `instructions.uncompressed.md` (whichever exist). Include tool/.spec.md files in A-FS-1 enumeration only.
 2. Read `SKILL.md`. Determine skill type (inline or dispatch) by file-system evidence: any allowed dispatch instruction file present (`instructions.txt`, `<name>.md`, or file explicitly referenced by `SKILL.md`) → dispatch; none → inline. Locate companion `spec.md` co-located with `skill_dir`.
 3. Run Per-file basic checks (always; findings → separate Per-file section; don't block Steps 1–3).
 4. Run Step 1 → Step 2 → Step 3. Collect ALL findings before assigning verdict. Don't stop on first finding.
@@ -47,7 +47,7 @@ Procedure:
    - `ERROR: <reason>`
 
 Per-file Basic Checks:
-Run against all `.md` and `*.spec.md` files in `skill_dir` (recursively; skip dot-prefixed dirs and `optimize-log.md`). Tool files (`.sh`, `.ps1`) out of scope.
+Run against all `.md` and `*.spec.md` files in `skill_dir` (recursively; skip dot-prefixed dirs). Tool files (`.sh`, `.ps1`) out of scope.
 Findings → Per-file section; don't block Steps 1–3.
 
 `.md` files:
@@ -98,7 +98,7 @@ Not duplicating existing capability. If similar exists, recommend merge or disti
 
 (A-FS-1) Orphan files:
 Scan all files in `<skill_dir>` recursively; skip dot-prefixed dirs.
-For each file NOT a well-known role file (`spec.md`, `*.sh`, `*.ps1`, `*.spec.md`, `eval.txt`, `*.uncompressed.md`, `SKILL.md`, `uncompressed.md`, `instructions.txt`, `optimize-log.md`):
+For each file NOT a well-known role file (`spec.md`, `*.sh`, `*.ps1`, `*.spec.md`, `eval.txt`, `*.uncompressed.md`, `SKILL.md`, `uncompressed.md`, `instructions.txt`):
 - Check if referenced by name or relative path in any of: `SKILL.md`, `uncompressed.md`, `spec.md`, `instructions.uncompressed.md`. Not referenced → LOW.
 
 Special case: `instructions.txt` present where file-system evidence shows NOT dispatch (no dispatch invocation in `SKILL.md` or `uncompressed.md`) → HIGH. Instructions file with no dispatch wiring is an orphan.

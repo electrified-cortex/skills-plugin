@@ -1,138 +1,86 @@
 ---
 name: code-review
-description: Tiered code review on a change set. Read-only — never modifies code. Triggers — security, correctness, code-quality, change-review, architectural-risk.
+description: Tiered code review on a change set. Read-only. Never modifies code. Triggers - security, correctness, code-quality, change-review, architectural-risk. Not for: specs, docs, config-only changes, lockfiles (use spec-auditing or markdown-hygiene).
 ---
 
-## Goal
+## Cache Probe
 
-Adversarial code review on a change set. Two first-class modes: tiered (smoke+substantive) for comprehensive coverage, single-adversary for fast targeted passes. Read-only — never modifies code.
+Before dispatching any pass:
+1. Compute canonical manifest hash: SHA-256 of sorted `change_set` file paths + their content hashes + `tier` + `focus` (if set) + `context_pointer` hash (if set) + `prior_findings` hash (substantive, if set).
+2. Check `.hash-record/XX/HASH/code-review/vN[/<model>]/report.md` (caller: SKILL.md owns probe + write; dispatched agents don't cache).
+3. Cache hit → return cached report, skip dispatch.
+4. Cache miss → proceed to dispatch. After receiving result, write to cache path.
 
-## When to Use
+## Dispatch
 
-- Reviewing a PR diff, file list, or git range for correctness, security, or quality issues.
-- Need sign-off before merge (tiered mode) or a quick adversarial pass (single-adversary mode).
-- Triggers: security, correctness, code-quality, change-review, architectural-risk.
+`<instructions>` = `<absolute-path>/code-review/instructions.txt` (NEVER READ)
+`<instructions-abspath>` = absolute path to `<instructions>`
 
-## Review Modes
+**Smoke pass:**
+`<description>` = `code-review smoke — fast surface scan`
+`<input-args>` = `change_set=<form> tier=smoke [focus=<csv>] [context_pointer=<path>]`
+`<tier>` = `fast-cheap` (shallow scan; surface-level findings only)
+`<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
+Follow dispatch skill. See `../dispatch/SKILL.md`
+Should return: JSON findings report `{tier, pass_index, verdict, findings[], failure_reason?}`
 
-| Mode | When to use | Cost/time profile | Model |
-| --- | --- | --- | --- |
-| **Swarm** | Comprehensive review: multiple model passes, consensus | High cost, high quality, ~3-5x longer | All available models (see `swarm` skill) |
-| **Tiered** | Standard review: smoke pass then substantive sign-off | Medium cost, medium time, two passes | Haiku (smoke) + Sonnet (substantive) |
-| **Single-adversary** | Quick targeted review: one pass, focused finding list | Low cost, fast, single model | One model (see capability-cache for selection) |
-
-Worker chooses mode based on time/token budget. All modes are first-class.
+**Substantive pass:**
+`<description>` = `code-review substantive — full depth pass`
+`<input-args>` = `change_set=<form> tier=substantive prior_findings=<json> [focus=<csv>] [context_pointer=<path>]`
+`<tier>` = `standard` (full depth; design, correctness, security, architectural risk)
+`<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
+Follow dispatch skill. See `../dispatch/SKILL.md`
+Should return: JSON findings report `{tier, pass_index, verdict, findings[], failure_reason?}`
 
 ## Inputs
 
-`change_set` (required): inline unified diff, absolute file path list, or git ref/range (refs require shell access in dispatched agent).
-`tier` (tiered mode only, required): `smoke` or `substantive`.
-`prior_findings` (substantive pass only, required): all prior-pass findings forwarded unmodified.
-`focus` (optional): comma-separated focus areas (e.g. `security,concurrency`). Reorders priority; doesn't reduce depth — `critical` and `high` outside focus must still surface.
-`context_pointer` (optional): path to CLAUDE.md, README, or style guide for local conventions.
+`change_set` (required): inline unified diff, absolute file path list, or git ref/range.
+`tier` (required): `smoke`, `substantive`, or `single-adversary`.
+`prior_findings` (substantive only, required): the `findings[]` array from all prior passes, forwarded unmodified.
+`focus` (optional): comma-separated focus areas. Reorders priority; doesn't reduce depth.
+`context_pointer` (optional): path to CLAUDE.md, README, or style guide.
+`model` (optional): model override. Affects cache path subfolder (`.../vN/<model>/report.md`). Applies to all tiers.
 
-## Procedure
+## Returns
 
-### Tiered Mode
+RESULT: aggregated review result `{passes[], sign_off_pass_index, severity_aggregate, verdict, preserved_contradictions[]}`
+ERROR: <reason>
 
-`<instructions>` = `instructions.txt` (this folder; NEVER READ)
-`<instructions-abspath>` = absolute path to `<instructions>`
+Calling agent assembles aggregated result from per-pass reports. Aggregation rules in `instructions.txt`.
+SARIF severity map: `critical`/`high` → error, `medium` → warning, `low`/`info` → note.
 
-Pre-dispatch: if `context_pointer` not supplied by caller, check repo root for these files (in order): `CLAUDE.md`, `README.md`, `.cursorrules`, `copilot-instructions.md`. Use the first found as `context_pointer`. If none found, omit.
+## Examples
 
-Optional blast-radius gate (git-range input only): if `change_set` is a git ref/range (contains `..` or `...` or looks like `HEAD~N`), run `git diff --name-only <change_set>` to get the affected-file list. Restrict review context to those files. Reduces context cost by up to 6.8x on large change sets. Skip if `change_set` is an inline diff or explicit file list.
+**change_set forms:**
+- Inline diff: `change_set="""--- a/src/foo.ts\n+++ b/src/foo.ts ..."""`
+- File list: `change_set="/abs/src/foo.ts /abs/src/bar.ts"`
+- Git ref: `change_set="HEAD~3..HEAD"` (requires shell in dispatched agent)
 
-Smoke pass (`tier=smoke`):
-`<input-args>` = `change_set=<form> tier=smoke [focus=<csv>] [context_pointer=<path>]`
-`<tier>` = `fast-cheap`
-`<description>` = `Code Review Smoke: <change_set>`
+**focus values:** `security`, `correctness`, `concurrency`, `performance`, `architecture`, `testing` (comma-separated; e.g. `focus="security,correctness"`)
+
+## Orchestration
+
+Smoke always runs before substantive. Two-pass policy applies regardless of change-set size — no single-pass shortcut. Single-Adversary Mode is explicitly exempt: one pass only, no `prior_findings`.
+
+## Single-Adversary Mode
+
+`<description>` = `code-review single-adversary — focused adversarial pass`
+`<input-args>` = `change_set=<file_path|pr_number> tier=single-adversary [model=<model>] [focus=<csv>] [context_pointer=<path>]`
+`<tier>` = `fast-cheap` (focused adversarial pass; catches obvious logic errors; may miss subtle security flaws — use `model=standard` for security-critical code)
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
-Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
+Follow dispatch skill. See `../dispatch/SKILL.md`
+Should return: JSON findings report `{tier, pass_index, verdict, findings[], failure_reason?}`
 
-Substantive pass (`tier=substantive`):
-`<input-args>` = `change_set=<form> tier=substantive prior_findings=<json> [focus=<csv>] [context_pointer=<path>]`
-`<tier>` = `standard`
-`<description>` = `Code Review Substantive: <change_set>`
-`<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
-Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
+Inputs: `file_path` OR `pr_number` as `change_set`, optional `focus`.
+Output: same JSON schema as tiered passes — `{tier: "single-adversary", pass_index, verdict, findings[{severity, location, snippet, description, recommended_action}], failure_reason?}`
 
-Orchestration:
+## Anti-patterns
 
-1. Dispatch smoke pass (Haiku/fast-cheap). Receive per-pass result.
-2. Dispatch substantive pass (Sonnet/standard). Forward all smoke findings unmodified as `prior_findings`.
-3. Collect both per-pass results. Build aggregated result.
+- **Smoke as sign-off:** smoke `verdict: clean` does NOT approve. Only substantive with `verdict: clean` signs off. Check `sign_off_pass_index` — must be non-null.
+- **prior_findings to smoke:** silently ignored. Only forward to substantive.
+- **Single-adversary on security-critical code:** fast-cheap may miss subtle flaws. Add `model=standard` for auth, crypto, data access, payment paths.
+- **Same inputs twice expecting new results:** cache is deterministic. Change a dimension (model, focus, content) to force fresh analysis.
 
-Caller obligations:
-Smoke is not sign-off. Always dispatch substantive before acting on results.
-Forward `prior_findings` to substantive unmodified — no filtering, no summarizing.
-Tier substitution is prohibited: smoke must use fast-cheap, substantive must use standard.
+## Related
 
-### Single-Adversary Mode
-
-#### When to choose
-- Time/token budget is limited.
-- Reviewer needs a quick adversarial pass on a specific file or PR (not full coverage).
-- Swarm-grade thoroughness is not required.
-
-#### Interface
-Input:
-- `file_path` OR `pr_number` — target of the review.
-- `model` — which model to use. If omitted, read capability-cache for available models and use the first listed, or fall back to the host model.
-- `focus` — optional. Specific concern to focus on (e.g., "security", "logic errors", "API surface").
-
-Output:
-- Finding list: each finding as `{file, line_or_range, severity, description}`.
-- Summary: 1-3 sentences: top concern + overall verdict.
-
-#### Procedure
-1. Check capability cache (see `capability-cache` skill) to determine available models.
-2. If `model` specified -> use it. If not -> use first available from cache (fall back to host model if cache MISS or unavailable).
-3. Read the target (file contents or PR diff).
-4. Produce ONE adversarial review pass: assume the author is wrong and look for problems.
-5. Return finding list + summary.
-
-## Outputs
-
-### Tiered Mode
-
-Per-pass result: `{tier, pass_index, verdict, findings[]}`. Verdict: `clean`, `findings`, `error`. Severity: `critical`, `high`, `medium`, `low`, `info`.
-
-Aggregated result (caller builds after both passes complete):
-
-| Field | Description |
-| --- | --- |
-| `passes` | Array of per-pass results, ordered by `pass_index`. |
-| `sign_off_pass_index` | Index of most recent successful standard pass (authoritative sign-off). `null` if no successful standard pass yet. |
-| `severity_aggregate` | Count of findings by severity (`critical`, `high`, `medium`, `low`, `info`) from sign-off pass only. |
-| `verdict` | Sign-off pass verdict propagated (`clean`, `findings`, or `error` if no successful standard pass). |
-| `preserved_contradictions` | Findings where smoke and substantive disagree — surface as-is, do not resolve. |
-
-### Single-Adversary Mode
-
-Finding list: each item as `{file, line_or_range, severity, description}`. Severity: `critical | high | medium | low | info`.
-Summary: 1-3 sentences — top concern + overall verdict.
-
-## Constraints
-
-- Read-only: never modifies code, never commits.
-- Smoke is not sign-off — always dispatch substantive before acting on tiered results.
-- MUST NOT run multiple passes in single-adversary mode (that is tiered/swarm mode).
-- MUST check capability-cache before dispatching to any non-host model.
-- When time/token budget is tight: use single-adversary mode.
-- When comprehensive coverage is required: use tiered or swarm mode.
-- Both tiered and single-adversary modes MUST check capability-cache before using non-host models.
-- Finding severity (all modes): `critical`, `high`, `medium`, `low`, `info`.
-
-## Error Handling
-
-- Smoke pass fails (dispatch error) -> abort; do not proceed to substantive. Return `{verdict: "error", passes: [{tier: "smoke", verdict: "error", ...}]}`.
-- Substantive pass fails -> return partial aggregated result with `verdict: "error"` and `sign_off_pass_index: null`.
-- Single-adversary: capability cache MISS or unavailable -> fall back to host model; note in summary.
-- Single-adversary: target file/PR not found -> return `{verdict: "error", summary: "Target not found: <path/pr>"}`.
-
-## Dependencies
-
-- `capability-cache` skill
-- `dispatch` skill
-- `swarm` skill (for swarm mode)
-- `spec-auditing`, `skill-auditing`, `compression` (related skills)
+`dispatch` (`../dispatch/SKILL.md`), `swarm` (`../swarm/SKILL.md`), `code-review-setup` (`./code-review-setup/SKILL.md`)

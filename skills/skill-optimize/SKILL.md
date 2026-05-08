@@ -25,11 +25,11 @@ Read all from `<skill-path>` in order; don't analyze yet.
 
 None found → `ERROR: no skill source files found at <skill-path>`.
 
-Allowed write targets (inside the **target skill's** directory): `<skill-path>/optimize-log.md` (5a), `<skill-path>/.optimization/<slug>.md` (5b). Read scope: `<skill-path>` and `<skill-optimize-root>/topics/` only.
+Allowed write targets (inside the **target skill's** directory): `<skill-path>/.optimization/.log.md` (5a), `<skill-path>/.optimization/<slug>.md` (5b). Read scope: `<skill-path>` and `<skill-optimize-root>/topics/` only.
 
 Step 2 — Check Optimize Log:
 
-Log: `<skill-path>/optimize-log.md`. Read if exists. Exclude from 3a: any topic with status `qualified` (no), `clean`, `acted`, `deferred`, `rejected`, or `audit-candidate`. Topics with no log entry are candidates. `yes`/`maybe` results are never logged — those topics re-enter the pool each pass. No log → first pass.
+Log: `<skill-path>/.optimization/.log.md`. Read if exists. Exclude from 3a: any topic with status `qualified` (no), `clean`, `acted`, `deferred`, `rejected`, or `audit-candidate`. Topics with no log entry are candidates. `yes`/`maybe` results are never logged — those topics re-enter the pool each pass. No log → first pass.
 
 ```markdown
 (H1) Optimize Log: <skill-name>
@@ -40,6 +40,8 @@ Log: `<skill-path>/optimize-log.md`. Read if exists. Exclude from 3a: any topic 
 | DISPATCH | 2026-04-29 | Sonnet | 1 | pending | — |
 | CACHING  | 2026-04-29 | Sonnet | 0 | clean   | No change. |
 ```
+
+File location: `<skill-path>/.optimization/.log.md`
 
 Status: `qualified` (verdict in Action) | `pending` | `acted` | `deferred` | `rejected` | `clean`
 
@@ -123,9 +125,9 @@ Step 5 — Record Results:
 After 3b: append `qualified` rows **for `no` results only** (Haiku-class, Action: `no — <reason>`). `yes`/`maybe` held in memory, not logged until analyzer completes.
 After 4: append final row for analyzed topic.
 
-5a: `| <TOPIC> | <date> | <model> | <N> | <status> | <action> |`
+5a: Append to `<skill-path>/.optimization/.log.md`: `| <TOPIC> | <date> | <model> | <N> | <status> | <action> |`
 
-Status: `qualified` | `acted` | `deferred` | `rejected` | `clean` | `audit-candidate`. No log → create with Step 2 header.
+Status: `qualified` | `acted` | `deferred` | `rejected` | `clean` | `audit-candidate`. No log → create `.optimization/` dir if needed, create `.log.md` with Step 2 header.
 
 5b: Write `<skill-path>/.optimization/<slug>.md`:
 
