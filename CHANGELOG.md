@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-05-08
+
+add messaging skill; add skill-manifest dispatch skill; fix premature gate violations in spec-writing, skill-index-building
+
 ## [0.2.0] - 2026-05-08
 
 code-review skill: full optimization pass (Tier 1-3, 26 topics). Executor and dispatch card fully optimized. skill-auditing PASS on first attempt.

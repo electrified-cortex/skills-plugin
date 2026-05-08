@@ -12,7 +12,7 @@ Every indexed dir gets exactly two files from builder:
 | File | Description |
 | --- | --- |
 | `skill.index` | Plain-text raw index. Three lines per entry (key heading, triggers, path), plus one blank line between entries. Deterministic for mechanical portion. |
-| `skill.index.md` | Markdown metadata overlay. H1 + one `## name` section per entry. Trigger-shaped prose: when to load, not what the skill does. Requires compression pass before write. |
+| `skill.index.md` | Markdown metadata overlay. H1 + one `## name` section per entry. Trigger-shaped prose: when to load, not what the skill does. |
 
 Absent stamp = unaudited since last build, not needs-rebuild.
 
@@ -26,7 +26,7 @@ Absent stamp = unaudited since last build, not needs-rebuild.
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
 Follow `dispatch` skill. See `../../dispatch/SKILL.md`.
-Should return: change manifest (nodes created, updated, unchanged, blocked, broken-shortcut, skipped)
+Should return: change manifest (nodes created, updated, unchanged, broken-shortcut, skipped)
 
 Parameters:
 `root` (required): absolute path to invocation root.

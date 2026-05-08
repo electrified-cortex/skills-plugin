@@ -11,7 +11,7 @@ Every indexed dir receives exactly two files. No other filenames permitted.
 | File | Description |
 | --- | --- |
 | `skill.index` | Plain-text raw index. One entry per line. No header, no footer, no blank lines. |
-| `skill.index.md` | Markdown metadata overlay. H1 + one `## name` section per entry. Requires compression pass before write. |
+| `skill.index.md` | Markdown metadata overlay. H1 + one `## name` section per entry. |
 
 Don't write `skill.index.sha256`. Stamp written by auditor after PASS verdict. Absent stamp after build = "unaudited since last build", not "needs rebuild."
 
@@ -40,7 +40,6 @@ Optional preamble: ≤2 sentences between H1 and first section heading. Must hel
 One `## name` section per entry key, same order as raw index. Self entry's section uses dir's own name, not `.`.
 Each section body: single paragraph. One sentence preferred.
 Mustn't describe trailing slashes, dot entries, navigation mechanics, shortcut entries, or any index artifact structure.
-Must pass full compression pass before write. If compression fails: abort node, record as blocked in change manifest, leave all prior artifacts unchanged, continue with siblings.
 
 Build Logic:
 
@@ -54,11 +53,11 @@ For each node:
 5. Compute SHA-256 of serialized content.
 6. Compare against SHA-256 of currently stored `skill.index` bytes. Never consult `skill.index.sha256` for change detection — it's auditor's sign-off artifact, not builder freshness marker.
 7. Hashes match: no writes. Record as unchanged.
-8. Hashes differ (or no stored `skill.index`): generate overlay in memory → run compression check → on success, write in strict order: `skill.index` first, then `skill.index.md`. Don't terminate normally between two writes.
+8. Hashes differ (or no stored `skill.index`): generate overlay in memory → write in strict order: `skill.index` first, then `skill.index.md`. Don't terminate normally between two writes.
 
 Full-Rebuild Mode (`--rebuild`):
 
-Regenerates all nodes regardless of stored raw index content. Same write order and compression gate as incremental.
+Regenerates all nodes regardless of stored raw index content. Same write order as incremental.
 
 Write Order (strict):
 
@@ -98,14 +97,12 @@ Curator keyword lists in preserved shortcuts are authoritative even if non-confo
 Error Handling:
 
 Unreadable dir: skip, record as skipped in change manifest, continue with siblings.
-Overlay compression failure: record node as `blocked`, leave all prior artifacts unchanged, continue.
 Partial-write protection: don't terminate normally between two writes of single node.
 Change manifest not producible: emit non-zero exit signal; don't silently succeed.
 
 Fail-Fast Rules:
 
 `root` missing or unreadable: stop immediately, return non-zero exit signal.
-Node overlay fails compression: don't write any artifact; record as blocked, continue.
 Never write `skill.index` with `.md` extension.
 Never embed navigation or mechanical explanation in overlay sections.
 Never emit overlay before raw index.
@@ -116,7 +113,7 @@ Builder output: change manifest. Return as structured text, one entry per node.
 
 Fields per node:
 `path`: dir path
-`status`: `created` | `updated` | `unchanged` | `blocked` | `drifted` | `skipped`
+`status`: `created` | `updated` | `unchanged` | `drifted` | `skipped`
 `notes`: free text for broken-shortcut, orphan, phantom findings
 
 Include `ok` summary line at end if run completed without non-zero exit.
@@ -133,12 +130,12 @@ mode: incremental | rebuild
 
 | Path | Status | Notes |
 | --- | --- | --- |
-| <path> | created/updated/unchanged/blocked/drifted/skipped | <notes or blank> |
+| <path> | created/updated/unchanged/drifted/skipped | <notes or blank> |
 
 ### Summary
 
 Nodes processed: N
-Created: N  Updated: N  Unchanged: N  Blocked: N  Drifted: N  Skipped: N
+Created: N  Updated: N  Unchanged: N  Drifted: N  Skipped: N
 Broken shortcuts: N  Orphans: N
 ```
 

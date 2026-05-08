@@ -3,8 +3,6 @@ name: skill-optimize
 description: Analyzes single skill for architectural and structural improvement. Dispatches topic analysis to sub-agents, records findings in optimize-log. NEVER modifies source files. Triggers — optimize skill, skill review, architectural review, skill improvement, find skill issues, analyze skill structure.
 ---
 
-Prerequisite: audit the target skill using `../skill-auditing/SKILL.md`
-
 Inputs:
 
 Required: `<skill-path>` — path to the **target skill being analyzed** (not this skill's own directory). Contains SKILL.md, spec.md, uncompressed.md, etc.
@@ -47,9 +45,9 @@ Status: `qualified` (verdict in Action) | `pending` | `acted` | `deferred` | `re
 
 Action for `qualified` rows: `yes — <reason>` / `maybe — <what tips it>` / `no — <reason>`
 
-Step 2a — Pre-flight Audit Check:
+Step 2a — Audit Probe (informational, non-blocking):
 
-Run `pwsh result.ps1 <skill-path>` from `skill-auditing/` dir. Note verdict; proceed regardless.
+Run `pwsh result.ps1 <skill-path>` from `skill-auditing/` dir. Note verdict; always proceed. Optimization does not require a clean audit — audit is a sealing step, not an entry gate.
 
 Step 2b — Explicit Topic Guard:
 
@@ -65,7 +63,7 @@ Pick best next topic. Skip if `<topic>` provided — verify `topics/<topic>.md` 
 2. Remove any topic already in the optimize-log (any status, including `qualified`)
 3. Take top 3 remaining in order
 
-None remaining → `No unqualified topics remaining — all topics logged.`
+None remaining → emit `No unqualified topics remaining — all topics logged.` Seal sequence: skill-audit → compression pass (if uncompressed.md exists) → markdown-hygiene.
 
 3b — Qualifier (Haiku-class, one call):
 
@@ -165,7 +163,14 @@ CONVERGENCE: tier-1+2 topics complete — <N acted>, <M clean>, <K deferred>
 Next: re-run with higher model tier to verify.
 ```
 
-Stop. Caller re-runs if needed.
+All tiers complete (no topics remaining) → emit:
+
+```text
+CONVERGED: all topics complete — ready to seal.
+Seal sequence: skill-audit → compress (if uncompressed.md exists) → markdown-hygiene.
+```
+
+Stop. Caller re-runs or seals.
 
 Topic slugs: `dispatch` `caching` `determinism` `composition` `model-selection` `compressability` `wording` `less-is-more` `reuse` `output-format` `examples` `chain-of-thought` `tool-signatures` `self-critique` `convergence` `iteration-safety` `progressive-optimization` `antipatterns` `error-handling` `interface-clarity` `observability` `temporal-decay` `context-sensitivity` `autonomy-level` `activation-discipline` `context-budget` `failure-mode` `verification-strategy` `evaluation-harness`
 

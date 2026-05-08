@@ -93,12 +93,11 @@ Derivation Workflow:
 Before writing any artifact derived from spec (skill, agent, or tool), spec must pass full audit.
 
 1. Write spec.
-2. Dispatch `markdown-hygiene` on spec; ensure zero lint errors.
-3. Dispatch spec-auditor: fast-cheap iterations first, standard for final pass.
-4. Fix all findings.
-5. Re-audit until PASS.
-6. Write derived artifact only after PASS.
-7. Dispatch appropriate artifact auditor on derived artifact as separate pass.
+2. Dispatch spec-auditor: fast-cheap iterations first, standard for final pass.
+3. Fix all findings (including any formatting issues flagged).
+4. Re-audit until PASS.
+5. Write derived artifact only after PASS.
+6. Dispatch appropriate artifact auditor on derived artifact as separate pass.
 
 Completion Gate:
 NOT done until `spec-auditing` returns PASS. No exceptions. Never derive artifacts, commit, or hand off without PASS in hand. Receiving FAIL and stopping is a workflow violation.
