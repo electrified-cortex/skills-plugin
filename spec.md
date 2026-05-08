@@ -37,7 +37,6 @@ list is defined in `build/build.ps1` and covers the following categories:
 - `uncompressed.md`
 - `instructions.uncompressed.md`
 - `instructions.uncompressed.md.compressed`
-- `optimize-log.md`
 - `eval.md`
 - `PLAN.md`
 - `RESULTS.md`
