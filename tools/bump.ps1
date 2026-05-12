@@ -22,8 +22,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$pluginRoot  = Split-Path -Parent $PSScriptRoot
-$pluginJson  = Join-Path $pluginRoot 'plugin.json'
+$pluginRoot       = Split-Path -Parent $PSScriptRoot
+$pluginJson       = Join-Path $pluginRoot 'plugin.json'
+$claudePluginJson = Join-Path $pluginRoot '.claude-plugin\plugin.json'
 
 if (-not (Test-Path $pluginJson)) {
     Write-Error "plugin.json not found: $pluginJson"
@@ -64,6 +65,15 @@ $json.built   = (Get-Date -Format 'yyyy-MM-dd')
 $jsonOut = $json | ConvertTo-Json -Depth 10
 [System.IO.File]::WriteAllText($pluginJson, $jsonOut + "`n")
 Write-Host "Wrote $pluginJson"
+
+# .claude-plugin/plugin.json is the consumer-facing manifest Claude Code reads
+# when the plugin is installed. Move in lockstep with root plugin.json.
+if (Test-Path $claudePluginJson) {
+    $cpJson = Get-Content $claudePluginJson -Raw | ConvertFrom-Json
+    $cpJson.version = $newVersion
+    [System.IO.File]::WriteAllText($claudePluginJson, ($cpJson | ConvertTo-Json -Depth 10) + "`n")
+    Write-Host "Synced .claude-plugin/plugin.json -> $newVersion"
+}
 
 # ── Tag ───────────────────────────────────────────────────────────────────────
 if ($Tag) {
