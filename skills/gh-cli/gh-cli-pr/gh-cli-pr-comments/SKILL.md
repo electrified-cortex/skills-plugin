@@ -1,89 +1,35 @@
 ---
 name: gh-cli-pr-comments
-description: Add, edit, delete pull request comments via GitHub CLI. Triggers - add PR comment, comment on pull request, edit PR comment, delete PR comment, pull request discussion.
+description: Add, edit, delete, and list pull request comments via GitHub CLI. Triggers - add pr comment, edit pr comment, delete pr comment, list pr comments, resolve review thread.
 ---
 
-Add, edit, delete PR comments via `gh pr comment`.
+GH CLI PR Comments
 
-## Adding
+Inputs:
 
-Add comment to PR:
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| OWNER | yes | GitHub org or user name |
+| REPO | yes | Repository name |
+| PR_NUMBER | yes | Integer PR number |
+| BODY | cond | Required for add and edit |
+| COMMENT_ID | cond | Required for edit and delete |
 
-```bash
-gh pr comment 123 --body "text"
-```
+Route by shell — read and follow:
+- bash 4+ → `instructions.bash.txt` in this folder
+- pwsh 7+ → `instructions.pwsh.txt` in this folder
 
-## Viewing
+Host executes directly. No sub-agent dispatch.
 
-`gh pr view --comments` truncates output and misses later pages.
-For a complete list of all review comments, use the paginated API:
+Return: add → comment URL; edit/delete → exit 0; list → JSON array.
 
-```bash
-# All inline/review comments (paginated — all pages)
-gh api --paginate /repos/{owner}/{repo}/pulls/{pull_number}/comments
+Safety:
 
-# All review-level submissions (paginated)
-gh api --paginate /repos/{owner}/{repo}/pulls/{pull_number}/reviews
-```
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh pr comment (add) | Destructive | Operator approval required |
+| gh api PATCH (edit) | Destructive | Operator approval required |
+| gh api DELETE | Destructive | Operator approval required |
+| gh api --paginate (GET) | Safe | Read-only |
 
-For general PR (issue) comments, also paginate:
-
-```bash
-gh api --paginate /repos/{owner}/{repo}/issues/{pull_number}/comments
-```
-
-Use `gh pr view --comments` only for a quick human-readable glance —
-never for exhaustive comment checks.
-
-## Editing
-
-`gh pr comment` has no `--edit` flag. Use REST API — find comment ID,
-PATCH:
-
-```bash
-# List ALL comments to find the comment ID (--paginate collects all)
-gh api --paginate /repos/{owner}/{repo}/issues/{issue_number}/comments
-
-# Edit the comment
-gh api --method PATCH \
-  /repos/{owner}/{repo}/issues/comments/{comment_id} \
-  --field body="updated text"
-```
-
-## Deleting
-
-`gh pr comment` has no `--delete` flag. Use REST API:
-
-```bash
-gh api --method DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}
-```
-
-## Resolving Review Threads
-
-No `gh pr` command for resolving threads. Use
-`resolveReviewThread` GraphQL mutation via `gh-cli-api`:
-
-```bash
-gh api graphql -f query='
-  mutation {
-    resolveReviewThread(input: {threadId: "THREAD_ID"}) {
-      thread { isResolved }
-    }
-  }'
-```
-
-## Dependencies
-
-- `gh-cli-setup/SKILL.md` — required pre-check: auth + CLI installed
-
-## Error Handling
-
-- Auth failure: re-run `gh-cli-setup` to verify token.
-- PR not found: verify repository and PR number.
-- Comment not found: verify comment ID.
-
-## Scope
-
-Covers `gh pr comment` only. Review-level comments
-(approve/request-changes verdict) → `gh-cli-prs-review`. Viewing also in
-`gh-cli-prs` inspection.
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

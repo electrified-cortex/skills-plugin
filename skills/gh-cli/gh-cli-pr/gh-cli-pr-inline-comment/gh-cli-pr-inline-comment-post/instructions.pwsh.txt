@@ -1,0 +1,102 @@
+GH CLI PR Inline Comment — Post (pwsh 7+; PS5.1 NOT supported)
+
+Prereq: `gh auth status 2>&1`
+
+Step 1: Fetch commit SHA
+ALWAYS fetch fresh — stale SHAs cause 422 errors.
+```powershell
+$COMMIT_SHA = gh pr view $PR_NUMBER --repo "$OWNER/$REPO" --json headRefOid --jq '.headRefOid'
+```
+
+Step 2: Verify file is in diff
+```powershell
+gh pr diff $PR_NUMBER --repo "$OWNER/$REPO" --name-only
+```
+If FILE_PATH not listed, stop: file has no changes in this PR.
+
+Step 3: Verify line is in diff
+Use bundled tool — don't parse diff manually.
+If SIDE not provided, default to `RIGHT` before invoking.
+```powershell
+$verifyOutput = pwsh verify-line-in-diff.ps1 -owner $OWNER -repo $REPO -pr_number $PR_NUMBER -file_path $FILE_PATH -line_number $LINE_NUMBER -side $SIDE
+$VERIFY_EXIT = $LASTEXITCODE
+```
+Exit codes: 0 (IN_DIFF) → proceed; 1 (NOT_IN_DIFF) → outside hunk ranges, stop, surface valid ranges to caller; 2 (FILE_NOT_IN_DIFF) → file has no changes, stop; 3 (USAGE_ERROR) → invalid args; 4 (API_ERROR) → `gh pr diff` failed, surface error output.
+
+WINDOWS: NEVER use leading `/` in `gh api` paths — use `repos/...` not `/repos/...`.
+
+Step 4: Check for existing comment (dedup)
+
+4a — Positional match (primary):
+```powershell
+$existing = gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" `
+  --jq ".[] | select(.path == \`"$FILE_PATH\`" and .side == \`"$SIDE\`" and (
+    (\`"$SIDE\`" == \`"RIGHT\`" and .line == $LINE_NUMBER) or
+    (\`"$SIDE\`" == \`"LEFT\`"  and .original_line == $LINE_NUMBER)
+  )) | {id, body, author: .user.login}"
+```
+
+4b — Body-content fallback (eventual-consistency guard). GitHub's PR comments index is eventually consistent; after a timed-out post + retry the just-posted comment may not yet be returned by the positional query (2–5s window). Only run when 4a is empty. Scope to same path + side.
+```powershell
+if ([string]::IsNullOrWhiteSpace($existing)) {
+  $bodyTrimmed = $BODY.Trim()
+  $allComments = gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" | ConvertFrom-Json
+  $existing = $allComments |
+    Where-Object { $_.path -eq $FILE_PATH -and $_.side -eq $SIDE -and ($_.body ?? '').Trim() -eq $bodyTrimmed } |
+    Select-Object -First 1 |
+    ForEach-Object { [pscustomobject]@{ id = $_.id; body = $_.body; author = $_.user.login } } |
+    ConvertTo-Json -Compress
+}
+```
+
+Match found (4a or 4b) → return: `{ "status": "duplicate", "comment_id": <existing_id>, "comment_url": "https://github.com/{OWNER}/{REPO}/pull/{PR_NUMBER}#discussion_r<existing_id>", "message": "comment already exists at {FILE_PATH}:{LINE_NUMBER}" }`
+
+Step 5: Post comment
+Write BODY to temp file — inline interpolation corrupts bodies with backticks, `$VAR` refs, double quotes, code fences. `WriteAllText` = UTF-8 no-BOM, no shell expansion.
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+```
+Invoke local post tool. `post.ps1` uses kebab-case flags parsed manually — pass as double-dash flags, not PS-style params.
+```powershell
+$POST_URL = pwsh post.ps1 `
+  --owner $OWNER `
+  --repo $REPO `
+  --pr $PR_NUMBER `
+  --commit-sha $COMMIT_SHA `
+  --file $FILE_PATH `
+  --line $LINE_NUMBER `
+  --side $SIDE `
+  --body-file $bodyFile
+$POST_EXIT = $LASTEXITCODE
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+
+Step 6: Parse and return
+`post.ps1` emits comment URL as single stdout line (exit 0) or nothing on error.
+```powershell
+switch ($POST_EXIT) {
+  0 {
+    $COMMENT_URL = $POST_URL.Trim()
+    if ($COMMENT_URL -match '#discussion_r(\d+)') {
+      $COMMENT_ID = $Matches[1]
+    }
+  }
+  3 {
+    Write-Output "{ `"status`": `"error`", `"comment_id`": null, `"comment_url`": null, `"message`": `"Line $LINE_NUMBER is not in the diff for $FILE_PATH`" }"
+    exit 0
+  }
+  4 {
+    Write-Output '{ "status": "error", "comment_id": null, "comment_url": null, "message": "gh api error — see stderr" }'
+    exit 0
+  }
+  2 {
+    Write-Output '{ "status": "error", "comment_id": null, "comment_url": null, "message": "internal error: bad args to post.ps1" }'
+    exit 0
+  }
+  default {
+    Write-Output ('{ "status": "error", "comment_id": null, "comment_url": null, "message": "post.ps1 exited with unexpected code ' + $POST_EXIT + '" }')
+    exit 0
+  }
+}
+```

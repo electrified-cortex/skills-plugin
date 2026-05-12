@@ -12,12 +12,7 @@ Inputs:
 
 ## Inline hash check
 
-- Bash: `bash ../hash-record/hash-record-check/check.sh <target-path> spec-auditing/v1 report.md`
-- PS7:  `pwsh ../hash-record/hash-record-check/check.ps1 <target-path> spec-auditing/v1 report.md`
-
-- `HIT: <abs-path>` → emit `PATH: <abs-path>`, stop.
-- `MISS: <abs-path>` → bind `<report_path>` = `<abs-path>`, jump to Dispatch.
-- `ERROR: <reason>` → surface the error, stop.
+Uses `hash-record-manifest` cache substrate; host resolves HIT/MISS/ERROR before dispatch.
 
 ## Dispatch
 
@@ -30,7 +25,7 @@ Variables:
 `<description>` = `Spec Audit: <target-path>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Import the `dispatch` skill from `../dispatch/SKILL.md`. Use the `dispatch` skill to launch the sub-agent.
+Follow dispatch skill. See `../dispatch/SKILL.md`.
 
 Returns: `Pass: <abs-path>` | `Pass with Findings: <abs-path>` | `Fail: <abs-path>` | `ERROR: <reason>`
 
@@ -42,4 +37,4 @@ If that result is a `MISS: <abs-path>` then something is wrong and report it as:
 
 If `Pass:`, return the result to the caller and stop here.
 
-To fix, load `../dispatch/SKILL.md` and use the `dispatch` skill (tier: standard) to launch a sub-agent; pass this report as input instructing it to fix all the issues. Then follow this skill again; stop at 3 rounds and surface the report.
+Fix iteration is caller-driven; this skill is single-pass read-only.

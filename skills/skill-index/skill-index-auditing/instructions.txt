@@ -1,57 +1,49 @@
-Inputs:
+Dispatch skill. Zero context. Validate existing skill-index cascade; return one of three verdicts: `ok`, `rebuild-needed`, or `inconclusive`. Don't rebuild. Don't invoke builder. Don't modify any files.
 
+Inputs:
 `root` (required): absolute path to invocation root of cascade. Audit restricted to subtree rooted here.
 `result_file` (required): absolute path where audit report must be written.
 `--dot-allow` (optional): comma-separated bare dot-folder names to traverse (e.g. `.hidden,.meta`). Must match list used by builder for same tree. Default: empty — all dot-prefixed dirs skipped.
 
-Outputs:
-
-Write audit report to `result_file`. See Report Format below.
-
 If audit report can't be written: emit non-zero exit signal. Don't silently succeed.
 
 Verdicts:
-
 | Verdict | Condition |
 | --- | --- |
-| `ok` | Walk completed; no fail-fast failures; no malformed-line findings at any node. |
-| `rebuild-needed` | Fail-fast check failed, OR walk completed with malformed-line finding (after clean fail-fast pass at that node). |
+| `ok` | Walk completed; no fail-fast failures; no malformed-line, overlay trigger-shape, or keyword-quality findings at any node. |
+| `rebuild-needed` | Any fail-fast check failed, OR walk completed with malformed-line finding (after clean fail-fast pass at that node). |
 | `inconclusive` | Invocation root unreadable, or one+ subtrees couldn't be evaluated. Precedence: over `ok` but not `rebuild-needed`. |
 
 Walk Order:
-
-Walk depth-first from invocation root, parent before children. Parent-level failure halts before descending into potentially invalid subtrees.
-
+Depth-first from invocation root, parent before children. Parent-level failure halts before descending into potentially invalid subtrees.
 Dot-prefixed dirs: skipped by default. `--dot-allow` provides bare names (no globs, no paths) to override.
 Symlinks: not followed.
 Shortcut entries: resolved by path-walk at declaring node, subject to loop detection per reference-loop check below.
 
 Per-Node Procedure:
 
-For each node reached during walk:
-
 A. Fail-fast checks (in order; halt on first failure):
 
 1. Entry targets resolve: every entry in raw index must resolve to on-disk target within current node's subtree.
-   - Plain leaf (no trailing `/`): target must be existing dir.
-   - Descent-marked (trailing `/`): target must be existing dir containing `skill.index`.
-   - Combo: target must satisfy both conditions.
-   - Shortcut (multi-segment key): walk path from current node to target; apply subtree-containment check (no `..`, no absolute paths, no escape above invocation root) at every step.
-   - Missing or out-of-subtree target → `rebuild-needed`; record reason + failing-node path; halt.
+   Plain leaf (no trailing `/`): target must be existing dir.
+   Descent-marked (trailing `/`): target must be existing dir containing `skill.index`.
+   Combo: target must satisfy both conditions.
+   Shortcut (multi-segment key): walk path from current node to target; apply subtree-containment check (no `..`, no absolute paths, no escape above invocation root) at every step.
+   Missing or out-of-subtree target → `rebuild-needed`; record reason + failing-node path; halt.
 
 2. No missing direct children: every manifest-bearing direct child dir must appear as entry in this node's raw index, unless reachable via shortcut elsewhere in cascade. Missing → `rebuild-needed`; record reason + failing-node path; halt.
 
-2a. No index at pure leaf: manifest-bearing dir with zero manifest-bearing children mustn't have `skill.index`. Stale/erroneous node builder shouldn't have produced → `rebuild-needed`; record reason + offending dir path; halt.
+2a. No index at pure leaf: manifest-bearing dir with zero manifest-bearing children mustn't have `skill.index`. Stale/erroneous node → `rebuild-needed`; record reason + offending dir path; halt.
 
-3. Combo self entry: combo node (has skill manifest + at least one manifest-bearing child) must have self entry (key `.`) in own raw index. Missing → `rebuild-needed`; record reason + failing-node path; halt.
+3. Combo self entry: combo node (skill manifest + ≥1 manifest-bearing child) must have self entry (key `.`) in own raw index. Missing → `rebuild-needed`; record reason + failing-node path; halt.
 
-4. Combo enumerates subdirs: combo node's raw index must enumerate all manifest-bearing subdirs (direct-child or shortcut entries). Missing → `rebuild-needed`; record reason + failing-node path; halt.
+4. Combo enumerates subdirs: combo node's raw index must enumerate all manifest-bearing subdirs (direct-child or shortcut). Missing → `rebuild-needed`; record reason + failing-node path; halt.
 
 5. Combo classified in parent: combo node must be classified as combo (sub-node-marked, key ending in `/`) in parent's raw index. Missing or wrong → `rebuild-needed`; record reason + failing-node path; halt.
 
-6. No reference loops: on every resolution path (direct-child descent, shortcut path-walk, combo sub-node descent), maintain ordered set of visited nodes. Before opening any node, check if dir already in set. If so: loop exists → `rebuild-needed`; record reason + ordered visited sequence; halt. Visited set scoped to current path; crossing into sibling subtree resets it.
+6. No reference loops: on every resolution path (direct-child descent, shortcut path-walk, combo sub-node descent), maintain ordered set of visited nodes. Before opening any node, check if dir already in set. If so: loop → `rebuild-needed`; record reason + ordered visited sequence; halt. Visited set scoped to current path; sibling subtree crossing resets it.
 
-On fail-fast failure: produce audit report with `verdict: rebuild-needed`, reason, failing-node path, then halt. Don't run continue-past checks at failing node.
+On fail-fast failure: produce audit report with `verdict: rebuild-needed`, reason, failing-node path; halt. Don't run continue-past checks at failing node.
 
 B. Continue-past checks (record, don't halt):
 
@@ -59,32 +51,31 @@ Findings recorded in audit report but don't halt walk or produce `rebuild-needed
 
 1. Orphans: `skill.index.md` present without corresponding `skill.index` in same dir. Record as janitorial signal.
 
-2. Malformed lines: raw index line with missing key, missing colon, or forbidden chars. Record line + node. If node completes all fail-fast checks without halting and malformed-line finding exists, raise final verdict to `rebuild-needed` when walk ends (R12 escalation).
+2. Malformed lines: raw index line with missing key, missing colon, or forbidden chars. Record line + node. If node completes all fail-fast checks and malformed-line finding exists, raise final verdict to `rebuild-needed` when walk ends (R12 escalation).
 
-3. Phantom indexes: `skill.index` within invocation root's subtree not reachable directly or transitively from root node's cascade. Record as janitorial signal.
+3. Phantom indexes: `skill.index` within invocation root's subtree not reachable from root node's cascade. Record as janitorial signal.
+
+4. Overlay trigger-shape (R24): for any `skill.index.md` at a node, inspect overlay sections. Non-conformant = reads as description/summary of what skill does without stating when/why to load it. Conformant sections express a triggering condition: operator phrase ("When asked to…") or agent-self-triggered imperative ("When the task requires…"). Record each non-conformant section as `trigger-shape` finding. Escalates final verdict to `rebuild-needed` per R19.
+
+5. Keyword quality (R25): for every raw-index entry, inspect keyword list. Flag if: fewer than three keywords; keyword exactly duplicates entry key verbatim; all keywords are single words (no multi-word phrases); or all keywords are only the skill's technical identifier with punctuation stripped. Record each failing entry as `keyword-quality` finding. Escalates final verdict to `rebuild-needed` per R19.
 
 Check Ordering:
-
-Within single node: fail-fast (A.1–A.6) before continue-past (B.1–B.3). On fail-fast failure, halt; don't run continue-past at that node.
+Within single node: fail-fast (A.1–A.6) before continue-past (B.1–B.5). On fail-fast failure, halt; don't run continue-past at that node.
 
 Visited-Node Tracking:
-
 Maintain ordered set of visited nodes on current resolution path. Append node before inspecting. Applies to every step: direct-child descent, shortcut path-walk endpoint, combo sub-node descent. Step lands on node already in set: loop detected, halt per A.6. Set scoped to current path; sibling subtree crossing resets it.
 
 Error Handling:
-
 Invocation root unreadable: `inconclusive`, reason, halt.
 Per-subtree unreadable dir: record as `inconclusive` for that subtree, continue with siblings. Aggregate into final verdict per precedence rules.
 Audit report can't be produced: emit non-zero exit signal; don't silently succeed.
 
 Precedence Rules:
-
 1. `rebuild-needed` > `ok`. Any fail-fast failure or malformed-line escalation downgrades otherwise-ok cascade.
 2. `inconclusive` > `ok`, not `rebuild-needed`. If any part triggered `rebuild-needed`, that's final verdict.
 3. Fail-fast failures > continue-past findings in report.
 
 Fail-Fast Rules:
-
 `root` missing or unreadable: `inconclusive`, halt.
 First fail-fast failure: `rebuild-needed`, halt immediately. Don't collect further failures.
 Never invoke builder.
@@ -92,8 +83,7 @@ Never modify any file.
 Never open skill contents.
 
 Audit Report Format:
-
-```
+```md
 ## Skill Index Audit Report
 
 root: <absolute path>
@@ -109,6 +99,8 @@ failing_node: <absolute path to first failing node, or blank if none>
 | orphan | <path> | <overlay, no corresponding raw index> |
 | malformed-line | <path> | <line content> |
 | phantom-index | <path> | <not reachable from cascade root> |
+| trigger-shape | <path> | <overlay section heading: reason non-conformant> |
+| keyword-quality | <path> | <entry key: specific violation> |
 (omit table if no findings)
 
 ### Visited Nodes (on failing path, if applicable)
@@ -118,10 +110,9 @@ failing_node: <absolute path to first failing node, or blank if none>
 ```
 
 Don'ts:
-
 Don't rebuild. Don't invoke builder.
 Don't modify any file.
-Don't open skill contents (any file other than `skill.index`, `skill.index.md`).
+Don't open skill contents (only `skill.index`, `skill.index.md` permitted).
 Don't keep walking after fail-fast check fails.
 Don't treat orphans or phantom indexes as `rebuild-needed` triggers by themselves.
 Don't judge curator intent, shortcut placement optimality, or aesthetic choices.

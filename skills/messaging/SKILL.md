@@ -54,7 +54,7 @@ Invoke `post`; generates filename, timestamp, nonce; writes atomically. Don't wr
 post --from <your-name> --to <recipient> --subject "<subject>" --body "<body>"
 ```
 
-All 4 flags required. `post` exits 0 on success, non-zero on failure (error on stderr). Check exit code.
+All 4 flags required. `post` exits 0 on success, non-zero on failure (error on `stderr`). Check exit code.
 
 Example:
 
@@ -112,7 +112,7 @@ drain --inbox <your-name>
 
 `drain` ALWAYS full sweep — one invocation collects all pending msgs, not just one. Exits 0 even if files skipped. Empty inbox returns `[]`.
 
-Don't drain another agent's inbox. Archives files even if unparsable; failure on stderr.
+Don't drain another agent's inbox. Archives files even if unparsable; failure on `stderr`.
 
 Processing:
 For each msg object in JSON array from `drain`:

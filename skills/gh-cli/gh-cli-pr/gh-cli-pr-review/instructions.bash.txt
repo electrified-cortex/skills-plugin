@@ -1,0 +1,60 @@
+GH CLI PR Review (Bash)
+
+Prereq: `gh auth status 2>&1`
+
+Submit review:
+Body file passed by path — tool NEVER reads body content.
+```bash
+review_args=(
+  --owner "$OWNER"
+  --repo "$REPO"
+  --pr "$PR_NUMBER"
+  --decision "$DECISION"
+)
+[[ -n "$BODY_FILE" ]] && review_args+=(--body-file "$BODY_FILE")
+[[ -n "$REVIEW_ID" ]] && review_args+=(--review-id "$REVIEW_ID")
+
+PR_URL=$(bash review.sh "${review_args[@]}")
+REVIEW_EXIT=$?
+```
+Exit codes from `review.sh`: 0 = submitted (PR_URL holds URL); 2 = usage error; 4 = gh error (stderr forwarded).
+
+Decision mapping:
+| DECISION value | gh flag passed |
+| --- | --- |
+| `approve` | `--approve` |
+| `request-changes` | `--request-changes` (requires BODY_FILE) |
+| `comment` | `--comment` (requires BODY_FILE) |
+| `dismiss` | `--dismiss` (requires REVIEW_ID) |
+
+`gh pr review` emits no URL. `review.sh` retrieves it via `gh pr view --json url --jq .url`. Success → exactly one stdout line: PR URL.
+
+Get review ID (for dismiss):
+```bash
+gh pr view "$PR_NUMBER" --repo "$OWNER/$REPO" --json reviews \
+  --jq '.reviews[] | {id, author: .author.login, state}'
+```
+
+List reviews:
+```bash
+gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews"
+```
+
+Resolve review threads:
+No `gh pr` command. Use `resolveReviewThread` GraphQL mutation via `gh-cli-api`:
+```bash
+gh api graphql -f query='
+  mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+```
+
+Safety:
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh pr review --approve | Destructive | Operator approval required |
+| gh pr review --request-changes | Destructive | Operator approval required |
+| gh pr review --comment | Destructive | Operator approval required |
+| gh pr review --dismiss | Destructive | Operator approval required |
+| gh pr view (GET) | Safe | Read-only |
+| gh api --paginate (GET) | Safe | Read-only |
+
+ALL destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

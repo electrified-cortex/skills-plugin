@@ -1,0 +1,105 @@
+GH CLI Issues (pwsh 7+; PS5.1 NOT supported)
+
+Prereq: `gh auth status 2>&1`
+
+Body temp-file pattern (inline interpolation corrupts backticks, `$VAR` refs, double quotes, code fences; `WriteAllText` = UTF-8 no-BOM, no shell expansion):
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+```
+Always `Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue` after use.
+
+Create issue (`create.ps1` uses kebab-case flags parsed manually — pass as double-dash flags, not pwsh-style params):
+```powershell
+$createArgs = @('--owner', $OWNER, '--repo', $REPO, '--title', $TITLE, '--body-file', $bodyFile)
+if ($LABELS) { $createArgs += '--label', $LABELS }
+$ISSUE_URL = pwsh create.ps1 @createArgs
+$CREATE_EXIT = $LASTEXITCODE
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+Exit codes from `create.ps1`: 0 = created ($ISSUE_URL holds URL); 2 = usage error; 4 = gh error (stderr forwarded).
+
+Comment on issue (`comment.ps1` — kebab-case flags, double-dash, not pwsh-style params):
+```powershell
+$COMMENT_URL = pwsh comment.ps1 `
+  --owner $OWNER --repo $REPO --issue $ISSUE_NUMBER --body-file $bodyFile
+$COMMENT_EXIT = $LASTEXITCODE
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+Exit codes from `comment.ps1`: 0 = posted ($COMMENT_URL holds URL); 2 = usage error; 4 = gh error (stderr forwarded).
+
+Edit metadata (title, labels, assignees, milestone — no body):
+```powershell
+gh issue edit $ISSUE_NUMBER --repo "$OWNER/$REPO" `
+  --title "new title" `
+  --add-label triage --remove-label stale `
+  --add-assignee user1 --remove-assignee user2 `
+  --milestone "v2.0"
+```
+
+Edit issue body (`--body-file` for replacement):
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+gh issue edit $ISSUE_NUMBER --repo "$OWNER/$REPO" --body-file $bodyFile
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+
+Edit comment (`gh issue comment` has no `--edit` flag — use REST API):
+Get COMMENT_ID via paginated list if unknown:
+```powershell
+gh api --paginate "repos/$OWNER/$REPO/issues/$ISSUE_NUMBER/comments" `
+  --jq '.[] | {id, body: .body[:80], author: .user.login}'
+```
+PATCH with body file:
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+gh api --method PATCH "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID" `
+  --field "body=@$bodyFile"
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+
+Delete comment: `gh api --method DELETE "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID"`
+
+View: `gh issue view $ISSUE_NUMBER --repo "$OWNER/$REPO" --comments`
+
+List (default state = open):
+```powershell
+gh issue list --repo "$OWNER/$REPO" `
+  --state all --assignee @me --label bug --milestone "v1.0" --limit 50
+gh issue list --repo "$OWNER/$REPO" `
+  --search "is:open label:stale" --json number,title --jq '.[].number'
+```
+
+Close / reopen:
+```powershell
+gh issue close $ISSUE_NUMBER --repo "$OWNER/$REPO" --comment "Fixed in #456"
+gh issue reopen $ISSUE_NUMBER --repo "$OWNER/$REPO"
+```
+
+Transfer: `gh issue transfer $ISSUE_NUMBER --repo "$OWNER/$REPO" owner/other-repo`
+
+Bulk:
+```powershell
+gh issue list --repo "$OWNER/$REPO" `
+  --search "label:stale" --json number --jq '.[].number' |
+  ForEach-Object { gh issue close $_ --repo "$OWNER/$REPO" --comment "Closing stale" }
+```
+
+Safety:
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh issue list | Safe | Read-only |
+| gh issue view | Safe | Read-only |
+| gh api --paginate (GET) | Safe | Read-only |
+| pwsh create.ps1 | Destructive | Operator approval required |
+| pwsh comment.ps1 | Destructive | Operator approval required |
+| gh issue edit | Destructive | Operator approval required |
+| gh issue close | Destructive | Operator approval required |
+| gh issue reopen | Destructive | Operator approval required |
+| gh issue transfer | Destructive | Operator approval required |
+| gh api PATCH (edit comment) | Destructive | Operator approval required |
+| gh api DELETE (delete comment) | Destructive | Operator approval required |
+
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

@@ -1,0 +1,62 @@
+GH CLI PR Comments (Bash)
+
+Prereq: `gh auth status 2>&1`
+
+Add comment:
+Write BODY to temp file — inline substitution corrupts bodies with backticks, `$VAR` refs, double quotes, code fences.
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+```
+Invoke local post tool:
+```bash
+COMMENT_URL=$(bash post.sh \
+  --owner "$OWNER" \
+  --repo "$REPO" \
+  --pr "$PR_NUMBER" \
+  --body-file "$BODY_FILE")
+POST_EXIT=$?
+rm -f "$BODY_FILE"
+```
+`post.sh` exit codes: 0 → posted (COMMENT_URL holds URL); 2 → usage error; 4 → gh error (stderr forwarded).
+
+Edit comment:
+`gh pr comment` has no `--edit` flag — use REST API. Get COMMENT_ID via paginated list if unknown:
+```bash
+gh api --paginate "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" \
+  --jq '.[] | {id, body: .body[:80], author: .user.login}'
+```
+Write BODY to temp file, then PATCH:
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+gh api --method PATCH "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID" \
+  --field "body=@$BODY_FILE"
+rm -f "$BODY_FILE"
+```
+
+Delete comment:
+```bash
+gh api --method DELETE "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID"
+```
+
+List comments:
+`gh pr view --comments` truncates + misses later pages. Use paginated API for exhaustive results:
+```bash
+# General PR (issue) comments — all pages
+gh api --paginate "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments"
+
+# Inline/review comments — all pages
+gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments"
+
+# Review-level submissions — all pages
+gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews"
+```
+`gh pr view --comments` = quick human-readable glance only.
+
+Resolve review threads:
+No `gh pr` command. Use `resolveReviewThread` GraphQL mutation via `gh-cli-api`:
+```bash
+gh api graphql -f query='
+  mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+```

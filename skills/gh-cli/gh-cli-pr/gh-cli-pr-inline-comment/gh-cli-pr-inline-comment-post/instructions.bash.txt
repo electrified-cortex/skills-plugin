@@ -1,0 +1,98 @@
+GH CLI PR Inline Comment — Post (Bash)
+
+Prereq: `gh auth status 2>&1`
+
+Step 1: Fetch commit SHA
+Always fetch fresh — stale SHAs cause 422 errors.
+```bash
+COMMIT_SHA=$(gh pr view "$PR_NUMBER" --repo "$OWNER/$REPO" --json headRefOid --jq '.headRefOid')
+```
+
+Step 2: Verify file is in diff
+```bash
+gh pr diff "$PR_NUMBER" --repo "$OWNER/$REPO" --name-only
+```
+If FILE_PATH not listed, stop: file has no changes in this PR.
+
+Step 3: Verify line is in diff
+Use bundled tool — don't parse diff manually.
+Default SIDE to `RIGHT` if not provided by caller.
+```bash
+bash verify-line-in-diff.sh "$OWNER" "$REPO" "$PR_NUMBER" "$FILE_PATH" "$LINE_NUMBER" "$SIDE"
+VERIFY_EXIT=$?
+```
+Exit codes: 0 (IN_DIFF) → proceed; 1 (NOT_IN_DIFF) → outside hunk ranges, stop, surface valid ranges to caller; 2 (FILE_NOT_IN_DIFF) → file has no changes, stop; 3 (USAGE_ERROR) → invalid args; 4 (API_ERROR) → `gh pr diff` failed, surface error.
+
+WINDOWS / Git Bash: NEVER use leading `/` in `gh api` paths — Git Bash rewrites `/repos/...` as filesystem path. Use `repos/...` not `/repos/...`.
+
+Step 4: Check for existing comment (dedup)
+
+4a — Positional match (primary):
+```bash
+EXISTING=$(gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" \
+  --jq ".[] | select(.path == \"$FILE_PATH\" and .side == \"$SIDE\" and (
+    (\"$SIDE\" == \"RIGHT\" and .line == $LINE_NUMBER) or
+    (\"$SIDE\" == \"LEFT\"  and .original_line == $LINE_NUMBER)
+  )) | {id, body, author: .user.login}")
+```
+
+4b — Body-content fallback (eventual-consistency guard). GitHub's PR comments index is eventually consistent; after a timed-out post + retry the just-posted comment may not yet be returned by the positional query (2–5s window). Only run when 4a is empty. Scope to same path + side.
+```bash
+if [ -z "$EXISTING" ]; then
+  BODY_TRIMMED=$(printf '%s' "$BODY" | awk '{$1=$1};1')
+  EXISTING=$(gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" \
+    --jq --arg body "$BODY_TRIMMED" --arg path "$FILE_PATH" --arg side "$SIDE" \
+    '.[] | select(.path == $path and .side == $side and ((.body // "") | gsub("^\\s+|\\s+$"; "")) == $body) | {id, body, author: .user.login}')
+fi
+```
+
+Match found (4a or 4b) → return: `{ "status": "duplicate", "comment_id": <existing_id>, "comment_url": "https://github.com/{OWNER}/{REPO}/pull/{PR_NUMBER}#discussion_r<existing_id>", "message": "comment already exists at {FILE_PATH}:{LINE_NUMBER}" }`
+
+Step 5: Post comment
+Write BODY to temp file — inline substitution corrupts bodies with backticks, `$VAR` refs, double quotes, code fences.
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+```
+Invoke local post tool:
+```bash
+POST_URL=$(bash post.sh \
+  --owner "$OWNER" \
+  --repo "$REPO" \
+  --pr "$PR_NUMBER" \
+  --commit-sha "$COMMIT_SHA" \
+  --file "$FILE_PATH" \
+  --line "$LINE_NUMBER" \
+  --side "$SIDE" \
+  --body-file "$BODY_FILE")
+POST_EXIT=$?
+rm -f "$BODY_FILE"
+```
+
+Step 6: Parse and return
+Tool emits comment URL as single stdout line (exit 0) or nothing on error.
+```bash
+case $POST_EXIT in
+  0)
+    COMMENT_ID=$(printf '%s' "$POST_URL" | grep -oP '#discussion_r\K\d+')
+    COMMENT_URL="$POST_URL"
+    ;;
+  3)
+    printf '{ "status": "error", "comment_id": null, "comment_url": null, "message": "Line %s is not in the diff for %s" }\n' \
+      "$LINE_NUMBER" "$FILE_PATH"
+    exit 0
+    ;;
+  4)
+    printf '{ "status": "error", "comment_id": null, "comment_url": null, "message": "gh api error — see stderr" }\n'
+    exit 0
+    ;;
+  2)
+    printf '{ "status": "error", "comment_id": null, "comment_url": null, "message": "internal error: bad args to post.sh" }\n'
+    exit 0
+    ;;
+  *)
+    printf '{ "status": "error", "comment_id": null, "comment_url": null, "message": "post.sh exited with unexpected code %s" }\n' "$POST_EXIT"
+    exit 0
+    ;;
+esac
+```

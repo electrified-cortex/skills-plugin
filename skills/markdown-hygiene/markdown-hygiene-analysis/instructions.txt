@@ -1,57 +1,82 @@
 Inputs:
 `<markdown_file_path>` (required) — absolute path to `.md` file.
-`--analysis-path <analysis_path>` (required) — absolute path to write analysis.md. Missing -> `ERROR: --analysis-path required`, stop.
+`--analysis-path <analysis_path>` (required) — absolute path to write analysis.md. Missing → `ERROR: --analysis-path required`, stop.
 
 Hard prohibition: don't author scripts (`.ps1`, `.sh`, etc.), helper files, or any file other than `<analysis_path>`. Target is read-only. Use Read/Bash/Grep only for inspection.
 
 1. Read `<markdown_file_path>`. Evaluate every SA rule below. Each entry uses `Note:` not `Fix:` — host LLM decides whether to act. SA032 and SA038 require semantic reasoning — flag only when clearly evident.
-3. SA rules:
-   SA001 [FAIL] — 3+ consecutive ALL CAPS words not an acronym/known term.
-   SA002 [FAIL] — entire sentence in ALL CAPS.
-   SA003 [WARN] — same ALL CAPS word 5+ times in document (signal collapse).
-   SA004 [WARN] — >~15% non-code body text is bold (emphasis diluted).
-   SA005 [WARN] — bold spans 3+ consecutive sentences in same section.
-   SA006 [FAIL] — single-item list (use a sentence instead).
-   SA007 [WARN] — two-item list that reads naturally as `X and Y`.
-   SA008 [WARN] — list nesting 3+ levels deep.
-   SA009 [WARN] — list items are multi-sentence paragraphs (consider sections).
-   SA010 [WARN] — file path, shell command, or env var in plain prose without backticks.
-   SA011 [FAIL] — ALL CAPS and bold on same word/phrase (e.g. `**NEVER**`) — redundant double-emphasis.
-   SA012 [WARN] — heading immediately followed by another heading, no content between.
-   SA013 [WARN] — heading introduces only a single sentence (use `**Label:**` instead).
-   SA014 [SUGGEST] — `never`/`must not`/`do not`/`always` unemphasized in instruction document.
-   SA015 [WARN] — document >400 words, zero headings.
-   SA016 [WARN] — heading >~60 chars.
-   SA017 [WARN] — heading phrased as question (ends `?`) outside FAQ context.
-   SA018 [WARN] — passive voice on directive sentence in instruction/spec document.
-   SA019 [WARN] — paragraph >8 sentences.
-   SA020 [WARN] — numbered list with no sequential dependency (use bullets).
-   SA021 [WARN] — link text is raw URL.
-   SA022 [WARN] — generic link text: "click here", "here", "this link", "read more".
-   SA023 [FAIL] — empty fenced code block.
-   SA024 [WARN] — backtick on plain prose word that is not code/path/command/literal.
-   SA025 [WARN] — strikethrough text in non-draft document.
-   SA026 [WARN] — `---`/`***` used as section divider where a heading should be used.
-   SA027 [WARN] — same word in every sibling heading within a section.
-   SA028 [WARN] — phrase of 5+ words or full sentence appears verbatim more than once.
-   SA029 [WARN] — positional reference: "see above", "see below", "as mentioned earlier", etc.
-   SA030 [WARN] — blockquote (`>`) used as callout/emphasis rather than quotation.
-   SA031 [WARN] — sibling headings mix Title Case and Sentence case.
-   SA032 [WARN] — same concept referred to by multiple distinct names (LLM-detected).
-   SA033 [FAIL] — negation stacking in directive (e.g. "do not fail to avoid") — rewrite as positive.
-   SA034 [WARN] — vague qualifier on directive ("sometimes", "usually", "often", "generally") without stating exception condition.
-   SA035 [WARN] — action stated before gate condition ("Delete X if Y" — prefer "If Y, delete X").
-   SA036 [WARN] — directive sentence has 3+ coordinating conjunctions — split into one instruction per sentence.
-   SA037 [WARN] — list mixes command items and observation/description items without a distinguishing signal.
-   SA038 [FAIL] — contradictory instructions present in document (LLM-detected).
-2. Determine overall result from advisory severity:
-   overall = `fail` if any FAIL-severity finding; `pass` if WARN/SUGGEST only; `clean` if none.
+
+SA rules:
+SA001 [FAIL] — 3+ consecutive ALL CAPS words not an acronym/known term.
+SA002 [FAIL] — entire sentence in ALL CAPS.
+SA003 [WARN] — same ALL CAPS word 5+ times in document (signal collapse).
+SA004 [WARN] — >~15% non-code body text is bold (emphasis diluted).
+SA005 [WARN] — bold spans 3+ consecutive sentences in same section.
+SA006 [FAIL] — single-item list (use a sentence instead).
+SA007 [WARN] — two-item list that reads naturally as `X and Y`.
+SA008 [WARN] — list nesting 3+ levels deep.
+SA009 [WARN] — list items are multi-sentence paragraphs (consider sections).
+SA010 [WARN] — file path, shell cmd, or env var in plain prose without backticks.
+SA011 [FAIL] — ALL CAPS and bold on same word/phrase (e.g. `**NEVER**`) — redundant double-emphasis.
+SA012 [WARN] — heading immediately followed by another heading, no content between.
+SA013 [WARN] — heading introduces only a single sentence (use `**Label:**` instead).
+SA014 [SUGGEST] — `never`/`must not`/`do not`/`always` unemphasized in instruction document.
+SA015 [WARN] — document >400 words, zero headings.
+SA016 [WARN] — heading >~60 chars.
+SA017 [WARN] — heading phrased as question (ends `?`) outside FAQ context.
+SA018 [WARN] — passive voice on directive sentence in instruction/spec document.
+SA019 [WARN] — paragraph >8 sentences.
+SA020 [WARN] — numbered list with no sequential dependency (use bullets).
+SA021 [WARN] — link text is raw URL.
+SA022 [WARN] — generic link text: "click here", "here", "this link", "read more".
+SA023 [FAIL] — empty fenced code block.
+SA024 [WARN] — backtick on plain prose word that is not code/path/cmd/literal.
+SA025 [WARN] — strikethrough text in non-draft document.
+SA026 [WARN] — `---`/`***` used as section divider where a heading should be.
+SA027 [WARN] — same word in every sibling heading within a section.
+SA028 [WARN] — phrase of 5+ words or full sentence appears verbatim more than once.
+SA029 [WARN] — positional reference: "see above", "see below", "as mentioned earlier", etc.
+SA030 [WARN] — blockquote (`>`) used as callout/emphasis rather than quotation.
+SA031 [WARN] — sibling headings mix Title Case and Sentence case.
+SA032 [WARN] — same concept referred to by multiple distinct names (LLM-detected).
+SA033 [FAIL] — negation stacking in directive (e.g. "do not fail to avoid") — rewrite as positive.
+SA034 [WARN] — vague qualifier on directive ("sometimes", "usually", "often", "generally") without stating exception condition.
+SA035 [WARN] — action stated before gate condition ("Delete X if Y" — prefer "If Y, delete X").
+SA036 [WARN] — directive sentence has 3+ coordinating conjunctions — split into one instruction per sentence.
+SA037 [WARN] — list mixes command items and observation/description items without a distinguishing signal.
+SA038 [FAIL] — contradictory instructions present in document (LLM-detected).
+
+2. Determine overall result:
+overall = `fail` if any FAIL-severity finding; `pass` if WARN/SUGGEST only; `clean` if none.
+
 3. Write `<analysis_path>`:
-   `mkdir -p $(dirname <analysis_path>)` first.
-   Frontmatter: `file_path: <repo-relative>`; `operation_kind: markdown-hygiene-analysis`; `result: clean` (none) or `result: pass` (WARN/SUGGEST only) or `result: fail` (any FAIL-severity).
-   Body:
-     No advisories: `# Result\n\nCLEAN`.
-     Advisories: `# Result\n\n## Advisory\n\n- <list>`. Each entry two lines:
-       `SA0XX [SEVERITY] line N: <description>` (omit line N for document-level)
-       Indented `Note: <observation>` — plain English, no imperative.
+`mkdir -p $(dirname <analysis_path>)` first.
+Frontmatter: `file_path: <repo-relative>`; `operation_kind: markdown-hygiene-analysis`; `result: clean` (none) or `result: pass` (WARN/SUGGEST only) or `result: fail` (any FAIL-severity).
+Body:
+  No advisories: `# Result\n\nCLEAN`.
+  Advisories: `# Result\n\n## Advisory\n\n- <list>`. Each entry two lines:
+    `SA0XX [SEVERITY] line N: <description>` (omit line N for document-level)
+    Indented `Note: <observation>` — plain English, no imperative.
+
 4. Return `clean` (no advisories), `pass: <analysis_path>` (WARN/SUGGEST only), or `findings: <analysis_path>` (any FAIL-severity). On failure: `ERROR: <reason>`.
+
+Output format:
+
+analysis.md — CLEAN:
+```text
+# Result
+
+CLEAN
+```
+
+analysis.md — with advisories (`result: pass`):
+```text
+# Result
+
+## Advisory
+
+- SA014 [SUGGEST] line 22: "never" unemphasized in instruction document
+  Note: consider bold or ALL CAPS to strengthen the constraint signal
+- SA035 [WARN] line 47: action stated before gate condition
+  Note: move "if the flag is set" to the front of the sentence
+```

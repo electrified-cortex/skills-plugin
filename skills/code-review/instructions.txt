@@ -1,59 +1,52 @@
-﻿---
+---
 name: code-review
 description: Tiered code review on a change set. Read-only. Never modifies code. Triggers - security, correctness, code-quality, change-review, architectural-risk.
 ---
 
-# Code Review Pass
+Code Review Pass. Produce structured findings report. Never edit, commit, push, or stage.
 
-| Tier | Model Class | Use For |
-| ---- | ----------- | ------- |
-| `fast-cheap` | Haiku-class | `smoke`, `single-adversary` |
-| `standard` | Sonnet-class | `substantive` |
-
+Tier vocabulary:
+fast-cheap — Haiku-class. Use for `smoke`, `single-adversary`.
+standard — Sonnet-class. Use for `substantive`.
 Tier substitution prohibited.
 
-Parameters:
-`change_set` (required): inline unified diff, list of absolute file paths, or git ref/range (refs require shell access in dispatched agent).
-`tier` (required): `smoke`, `substantive`, or `single-adversary`. Governs depth.
-`prior_findings` (substantive only, required): the `findings[]` array from all prior passes, forwarded unmodified. Required for substantive; smoke and single-adversary must not receive this.
-`focus` (optional): comma-separated focus areas (e.g. `security,concurrency`). Reorders priority; doesn't reduce depth — `critical` and `high` outside focus must still surface.
-`model` (optional): model override. If provided, use it; else use tier default.
-`context_pointer` (optional): path to CLAUDE.md/README/style guide for local conventions. Read for conventions only.
-
 Pre-dispatch:
-1. If `context_pointer` not supplied by caller, check repo root for these files in order: `CLAUDE.md`, `README.md`, `.cursorrules`, `copilot-instructions.md`. Use first found as `context_pointer`. If none found, omit.
-   If `context_pointer` supplied but file not found: continue without it; add `info` finding: `"context_pointer not found: <path>; proceeding without conventions"`.
-2. Blast-radius gate (git-range input only): if `change_set` is a git ref/range (contains `..`, `...`, or matches `HEAD~N`), run `git diff --name-only <change_set>` to enumerate affected files. Restrict review context to those files. Skip if `change_set` is inline diff or explicit file list.
+1. If `context_pointer` not supplied, check repo root in order: `CLAUDE.md`, `README.md`, `.cursorrules`, `copilot-instructions.md`. Use first found. If none, omit.
+2. Blast-radius gate (git-range only): if `change_set` is git ref/range (contains `..`, `...`, or matches `HEAD~N`), run `git diff --name-only <change_set>` to enumerate affected files. Restrict review context to those files. Skip if inline diff or explicit file list.
 
 Gates:
-1. Resolve `change_set`. If ANY file path is missing, ref unreachable, or PR not found — STOP (all-or-nothing): return `verdict: error`, `failure_reason: "change_set incomplete: <detail>"`.
-2. `tier=substantive` and `prior_findings` absent — STOP: return `verdict: error`, `failure_reason: "missing prior_findings"`.
-3. `change_set` empty (no files, no diff content, no refs resolving to changes) → return empty result: `verdict: clean`, `findings: []`, no `prior_findings_disposition`.
-4. Read all files in change set fully before judging. Partial read → STOP: return `verdict: error`, `failure_reason: "incomplete change set read"`.
+1. Resolve `change_set`. Path missing, ref unreachable, PR not found → STOP: return `verdict: error`, `failure_reason`.
+2. `tier=substantive` + `prior_findings` absent → STOP: `verdict: error`, `failure_reason: "missing prior_findings"`.
+3. `change_set` empty → `verdict: clean`, `findings: []`, no `prior_findings_disposition`.
+4. Read all change-set files fully before judging. Partial → STOP: `verdict: error`, `failure_reason: "incomplete change set read"`.
 
 Procedure:
-Before analysis: (1) map affected code paths — which modules, functions, data flows does the change set touch; (2) identify scope: new code, modified logic, API surface, security-sensitive areas; (3) set review frame for tier (adversarial for smoke/single-adversary, systematic for substantive).
-1. `tier=smoke`: review for surface-level findings — style, naming, obvious bugs, missing error handling on observable failures, lint-grade defects. Bound depth to fast pass. Skip design and architecture critique. Adversarial framing: assume ≥1 bug exists; find it, don't rubber-stamp. If `focus` includes `security`: also frame as pentester looking for exploitable paths, not colleague doing courtesy review.
-2. `tier=substantive`: review for design, correctness, security, concurrency, architectural risk, test adequacy, public API surface. Read every affected file, not just diff hunks.
-3. `tier=single-adversary`: adversarial single-pass review. No prior_findings. Frame as attacker looking for exploitable paths, logic errors, and correctness failures. Bound depth to a focused pass — narrower than substantive, deeper than smoke. If `model` provided, use it; else use tier default.
-4. Substantive pass MUST re-examine each `prior_findings` entry. Decide: agree (carry forward, severity may change), or contradict (mark false-positive or out-of-scope). Contradictions go in output for caller to preserve.
-5. Apply focus areas if provided: examine first and most thoroughly. Still surface every `critical` and `high` finding outside focus. `medium`/`low` outside focus may be deprioritized.
+1. `tier=smoke`: surface-level — style, naming, obvious bugs, missing error handling, lint-grade defects. Fast pass. Skip design/architecture. Adversarial: assume ≥1 mistake; find it, don't approve. If `focus` includes `security`: also frame as pentester.
+2. `tier=substantive`: design, correctness, security, concurrency, architectural risk, test adequacy, public API surface. Read every file touched, not just diff hunks.
+3. `tier=single-adversary`: adversarial single-pass. No prior_findings. Frame as attacker: exploitable paths, logic errors, correctness failures. Narrower than substantive, deeper than smoke. Use `model` if provided; else tier default.
+4. Substantive MUST re-examine each `prior_findings` entry: agree (carry forward, severity may change) or contradict (false-positive/out-of-scope). Contradictions go in output for caller.
+5. `focus` provided: examine first and most thoroughly. Still surface every `critical`/`high` outside focus. `medium`/`low` outside focus may be deprioritized.
 6. Read `context_pointer` if provided, for local conventions only. Does NOT replace judgment.
 
-Severity vocabulary (use ONLY these):
+One skill per invocation. Each pass is separate dispatch. Smoke always before substantive. Two-pass policy regardless of change-set size — no size threshold permits single-pass. Single-Adversary Mode explicitly exempt: intentionally one pass.
+
+Empty change set: skip all passes; return empty-result aggregate.
+
+Severity vocabulary (ONLY these):
 `critical`: must fix before advancing — data loss, security hole, broken build, broken contract.
-`high`: should fix unless caller defers — significant correctness risk, missing error handling on observable failure, regression risk.
+`high`: should fix unless caller defers — significant correctness risk, missing error handling, regression risk.
 `medium`: improvement worth making, not blocking.
 `low`: stylistic preference, naming polish, comment wording.
 `info`: informational only — no action required.
 
-Hallucination Filter:
-Before including any finding in output, verify all four checks pass:
-1. File existence: cited file path appears in provided diff or file list.
-2. Line range: cited line number is within changed hunk or within 10 lines of one.
-3. Code-quote accuracy: code quoted verbatim must appear in diff (exact string match).
-4. Direction consistency: claims about "added" or "removed" must match diff direction (+/- hunks).
-Findings that fail any check MUST be omitted. Don't downgrade — omit entirely.
+SARIF mapping: critical/high → error, medium → warning, low/info → note.
+
+Hallucination Filter (verify all four before including any finding):
+1. File existence: cited file path appears in diff or file list.
+2. Line range: cited line is within changed hunk or within 10 lines of one.
+3. Code-quote accuracy: verbatim code must appear in diff (exact string match).
+4. Direction consistency: "added"/"removed" must match diff direction (+/- hunks).
+Findings failing any check MUST be omitted. Don't downgrade — omit entirely.
 
 Output (JSON-shaped, returned as final response):
 ```json
@@ -76,15 +69,16 @@ Output (JSON-shaped, returned as final response):
 
 Aggregated Result (calling agent assembles after all passes):
 `passes`: per-pass reports in dispatch order.
-`sign_off_pass_index`: index of most recent successful standard pass; `null` when empty change set or only failed passes exist.
-`severity_aggregate`: `{critical, high, medium, low, info}` counts from sign-off pass only. All buckets zero when `sign_off_pass_index` is `null` or result is `clean`.
+`sign_off_pass_index`: index of most recent successful standard pass; `null` when empty change set or only failed passes.
+`severity_aggregate`: finding counts by severity in sign-off pass only (zero per bucket when null or clean).
 `verdict`: `clean`, `findings`, or `error`.
-`preserved_contradictions`: smoke findings contradicted by the sign-off pass. Each entry: `{smoke_finding: <finding>, contradiction: {verdict: "false_positive"|"out_of_scope", commentary: "<string>"}}`.
+`preserved_contradictions`: smoke findings contradicted by sign-off pass, each paired with contradicting commentary.
 
 Rules:
 Read-only. Don't edit, stage, commit, push, or run scripts that mutate state.
 Don't fix findings. Report only.
-Use ONLY severity vocabulary above (no invention).
+Use ONLY severity vocabulary above. Don't invent severities.
+Smoke MUST NOT receive `prior_findings`; if it arrives anyway, ignore and proceed.
 Single pass per dispatch. Don't chain or self-iterate.
-Don't consult agent memory, working-tree, or history beyond `change_set`/`context_pointer`.
+Don't consult agent memory, working-tree state, or repo history beyond `change_set`/`context_pointer`.
 Form own judgment on prior findings; ignore caller disputes.

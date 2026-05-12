@@ -1,11 +1,11 @@
-Inputs:
+Dispatch skill. Zero context. Create or update two index artifacts at every dir in a skill tree: `skill.index` (raw index) and `skill.index.md` (metadata overlay). Integrity stamp (`skill.index.sha256`) written by auditor after PASS — not by you. Read all inputs, execute procedure exactly, return change manifest.
 
+Inputs:
 `root` (required): absolute path to invocation root dir. Traversal begins here; first `skill.index` written here.
 `--dot-allow` (optional): comma-separated bare dot-folder names (e.g. `.hidden,.meta`) to allow traversal into. No globbing, paths, or regexes. Default: empty — all dot-prefixed dirs skipped.
 `--rebuild` (optional flag): regenerate all nodes regardless of stamp state. Default: incremental — skip nodes whose computed hash matches stored stamp.
 
 Artifact Pair:
-
 Every indexed dir receives exactly two files. No other filenames permitted.
 
 | File | Description |
@@ -18,108 +18,90 @@ Don't write `skill.index.sha256`. Stamp written by auditor after PASS verdict. A
 Raw Index Format (`skill.index`):
 
 Each entry: exactly one line:
-
 ```txt
 key: keyword, keyword, keyword
 ```
-
-Rules:
 
 Single space after colon. Keywords separated by `, ` (comma + space).
 Entry key: child's dir name (or `.` for self entry, or multi-segment path for curator-added shortcuts).
 Append `/` to entry key when child dir contains own `skill.index` (sub-node marker).
 Self entry: if current dir is combo node (skill manifest present AND ≥1 indexable child), emit `.` entry as first line. Don't emit self entry at pure leaf dir (manifest present, zero indexable children).
-Sort: entries by key, byte-lexicographic of full UTF-8 key string. Self entry (`.`) always first before sorted block. Multi-segment shortcut keys sort in same space as single-segment keys; `/` (0x2F) compared by byte value. When one key is proper prefix of another, shorter key sorts first.
-Keywords: natural-language trigger phrases and synonyms. Mustn't duplicate entry key verbatim. Synonyms, phrasings, related concepts accepted.
+Sort: entries by key, byte-lexicographic of full UTF-8 key string. Self entry (`.`) always first before sorted block. Multi-segment shortcut keys sort in same space as single-segment keys; `/` (0x2F) compared by byte value. Proper prefix of another key sorts first.
+Keywords: natural-language trigger phrases and synonyms. MUST NOT duplicate entry key verbatim. Synonyms, phrasings, related concepts accepted.
 No blank lines, header, or footer.
 
 Metadata Overlay Format (`skill.index.md`):
-
 H1: dir's identifying title.
 Optional preamble: ≤2 sentences between H1 and first section heading. Must help locate skill; mustn't describe index mechanics or artifact internals.
 One `## name` section per entry key, same order as raw index. Self entry's section uses dir's own name, not `.`.
 Each section body: single paragraph. One sentence preferred.
-Mustn't describe trailing slashes, dot entries, navigation mechanics, shortcut entries, or any index artifact structure.
+MUST NOT describe trailing slashes, dot entries, navigation mechanics, shortcut entries, or any index artifact structure.
 
 Build Logic:
 
 Incremental Mode (default):
-
 For each node:
-1. Compute mechanical portion: self entry (if combo node — manifest present AND ≥1 indexable child) + direct-child entries.
-2. Merge with preserved shortcut entries from existing `skill.index` (see Shortcut Entries below).
+1. Compute mechanical portion: self entry (if combo — manifest present AND ≥1 indexable child) + direct-child entries.
+2. Merge with preserved shortcut entries from existing `skill.index` (see Shortcut Entries).
 3. Sort combined list per sort rule.
 4. Serialize as one line per entry.
 5. Compute SHA-256 of serialized content.
-6. Compare against SHA-256 of currently stored `skill.index` bytes. Never consult `skill.index.sha256` for change detection — it's auditor's sign-off artifact, not builder freshness marker.
+6. Compare against SHA-256 of currently stored `skill.index` bytes. NEVER consult `skill.index.sha256` for change detection — it's auditor's sign-off artifact, not builder freshness marker.
 7. Hashes match: no writes. Record as unchanged.
 8. Hashes differ (or no stored `skill.index`): generate overlay in memory → write in strict order: `skill.index` first, then `skill.index.md`. Don't terminate normally between two writes.
 
 Full-Rebuild Mode (`--rebuild`):
-
 Regenerates all nodes regardless of stored raw index content. Same write order as incremental.
 
 Write Order (strict):
-
 1. `skill.index`
 2. `skill.index.md`
-
 No early termination between two writes for single node.
 
 Traversal Rules:
-
 Walk downward from invocation root.
 Skip dot-prefixed dirs by default. Only traverse dot-folders in `--dot-allow`.
 Don't follow symlinks.
 Dir has indexable children: write artifacts, descend.
 Dir has no indexable children and no skill manifest: write empty `skill.index` (zero bytes) and overlay with only H1, no sections.
-Dir has no indexable children but has skill manifest (pure leaf): don't write `skill.index`. Parent's index already references leaf as plain entry; leaf's own manifest describes it.
+Dir has no indexable children but has skill manifest (pure leaf): don't write `skill.index`. Parent's index already references leaf as plain entry.
 
 Combo Nodes:
-
 Combo node: dir with own skill manifest AND ≥1 manifest-bearing child.
 Emits `.` self entry in own `skill.index`.
 Emits sub-node-marked entry (key ending in `/`) in parent's `skill.index`.
 Manifest-bearing subdirs traversed normally.
 
 Curator-Added Shortcut Entries:
-
 Shortcut entries: multi-segment keys (e.g. `tools/compression/`). Curator-added, never mechanically generated.
-
-Existing `skill.index` at node contains shortcut entries:
-Preserve verbatim: same key, keyword list, character sequence.
-Merge with freshly generated mechanical portion.
-Sort combined list per sort rule. Self entry (if any) remains first.
-Preserved shortcut target doesn't exist on filesystem: record as `broken-shortcut` in change manifest; emit entry unchanged. Don't repair or remove — curator decision.
-Don't evaluate shortcut structural legality (subtree containment or acyclicity) — auditor's responsibility.
-Curator keyword lists in preserved shortcuts are authoritative even if non-conforming to `key: keyword, keyword, keyword` format; treat as opaque text.
+When existing `skill.index` at node contains shortcut entries:
+  Preserve verbatim: same key, keyword list, character sequence.
+  Merge with freshly generated mechanical portion.
+  Sort combined list per sort rule. Self entry (if any) remains first.
+  Preserved shortcut target doesn't exist: record as `broken-shortcut` in change manifest; emit entry unchanged. Don't repair or remove — curator decision.
+  Don't evaluate shortcut structural legality (subtree containment or acyclicity) — auditor's responsibility.
+  Curator keyword lists in preserved shortcuts are authoritative even if non-conforming; treat as opaque text.
 
 Error Handling:
-
 Unreadable dir: skip, record as skipped in change manifest, continue with siblings.
 Partial-write protection: don't terminate normally between two writes of single node.
 Change manifest not producible: emit non-zero exit signal; don't silently succeed.
 
 Fail-Fast Rules:
-
 `root` missing or unreadable: stop immediately, return non-zero exit signal.
 Never write `skill.index` with `.md` extension.
 Never embed navigation or mechanical explanation in overlay sections.
 Never emit overlay before raw index.
 
 Change Manifest:
-
-Builder output: change manifest. Return as structured text, one entry per node.
-
+Return as structured text, one entry per node.
 Fields per node:
-`path`: dir path
-`status`: `created` | `updated` | `unchanged` | `drifted` | `skipped`
-`notes`: free text for broken-shortcut, orphan, phantom findings
-
+  `path`: dir path
+  `status`: `created` | `updated` | `unchanged` | `drifted` | `skipped`
+  `notes`: free text for broken-shortcut, orphan, phantom findings
 Include `ok` summary line at end if run completed without non-zero exit.
 
 Report Format:
-
 ```txt
 ## Skill Index Build Report
 
@@ -140,7 +122,6 @@ Broken shortcuts: N  Orphans: N
 ```
 
 Don'ts:
-
 Don't author skill content.
 Don't validate or audit skills.
 Don't decide which dot-folders to traverse — supplied via `--dot-allow`.

@@ -1,0 +1,60 @@
+GH CLI PR Create (Bash)
+
+Prereq: `gh auth status 2>&1`
+
+Check for existing PR — before creating, confirm no open PR exists for current branch:
+```bash
+gh pr list --repo "$OWNER/$REPO" --head "$(git branch --show-current)" --json number,url
+```
+If open PR returned, report to caller and stop — don't create duplicate.
+
+Create:
+Write BODY to temp file — inline substitution corrupts bodies with backticks, `$VAR` refs, double quotes, code fences.
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+```
+Invoke local create tool:
+```bash
+create_args=(
+  --owner "$OWNER"
+  --repo  "$REPO"
+  --base  "$BASE"
+  --title "$TITLE"
+  --body-file "$BODY_FILE"
+)
+[[ -n "${LABEL:-}" ]] && create_args+=(--label "$LABEL")
+[[ -n "${DRAFT:-}"  ]] && create_args+=(--draft)
+
+PR_URL=$(bash create.sh "${create_args[@]}")
+CREATE_EXIT=$?
+rm -f "$BODY_FILE"
+```
+Exit codes from `create.sh`: 0 → created (PR_URL holds URL); 2 → usage error; 4 → gh error (stderr forwarded).
+
+List PRs:
+```bash
+gh pr list --repo "$OWNER/$REPO" --state open
+gh pr list --repo "$OWNER/$REPO" --head "$(git branch --show-current)"
+```
+
+Promote draft:
+```bash
+gh pr ready "$PR_NUMBER" --repo "$OWNER/$REPO"
+```
+
+Edit metadata:
+```bash
+gh pr edit "$PR_NUMBER" --repo "$OWNER/$REPO" \
+  --add-reviewer user3 --add-label bug --remove-label wip
+```
+
+Safety:
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh pr create | Destructive | Operator approval required |
+| gh pr ready | Destructive | Operator approval required |
+| gh pr edit | Destructive | Operator approval required |
+| gh pr list (GET) | Safe | Read-only |
+
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

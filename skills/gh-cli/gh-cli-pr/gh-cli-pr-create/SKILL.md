@@ -1,70 +1,37 @@
 ---
 name: gh-cli-pr-create
-description: Open pull request via GitHub CLI. Triggers - create pull request, open PR, submit PR, new pull request, open a pull request.
+description: Open a pull request via GitHub CLI. Triggers - create pr, open pull request, submit pr, create draft pr.
 ---
 
-Before Creating:
-Check for existing open PR on current branch:
+GH CLI PR Create
 
-```bash
-gh pr list --head $(git branch --show-current)
-```
+Inputs:
 
-If PR exists, edit or view — don't create duplicate.
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| OWNER | yes | GitHub org or user name |
+| REPO | yes | Repository name |
+| BASE | yes | Base branch name (e.g., `main`) |
+| TITLE | yes | PR title |
+| BODY | yes | PR body markdown; written to temp file before use |
+| LABEL | no | Comma-separated label names |
+| DRAFT | no | Any non-empty value enables `--draft` |
 
-Creating:
-PR with title, body, base branch:
+Route by shell — read and follow:
+- bash 4+ → `instructions.bash.txt` in this folder
+- pwsh 7+ → `instructions.pwsh.txt` in this folder
 
-```bash
-gh pr create --title "title" --body "body" --base main
-```
+Host executes directly. No sub-agent dispatch.
 
-PR with full metadata — reviewers, assignee, labels, draft:
+Return: create → PR URL; list → table or JSON; promote/edit → exit 0.
 
-```bash
-gh pr create --title "title" --body-file .github/PULL_REQUEST_TEMPLATE.md \
-  --reviewer user1,user2 --assignee @me --label enhancement --draft
-```
+Safety:
 
-Closing Issue:
-Include closing keyword in PR body to auto-close linked issue on merge:
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh pr create | Destructive | Operator approval required |
+| gh pr ready | Destructive | Operator approval required |
+| gh pr edit | Destructive | Operator approval required |
+| gh pr list (GET) | Safe | Read-only |
 
-```bash
-# In the --body value or --body-file content:
-Closes #123
-```
-
-Promote Draft:
-PR ready for review — promote:
-
-```bash
-gh pr ready 123
-```
-
-Edit Metadata:
-Add/remove reviewers, labels after PR is open:
-
-```bash
-gh pr edit 123 --add-reviewer user3 --add-label bug --remove-label wip
-```
-
-## Inputs
-
-- `base_branch` — target branch for the PR (default: repo default branch).
-- `head_branch` — source branch.
-- `title` — PR title.
-- `body` — optional PR description.
-
-## Dependencies
-
-- `gh-cli-setup/SKILL.md` — required pre-check: auth + CLI installed
-
-## Error Handling
-
-- Auth failure: re-run `gh-cli-setup`.
-- Branch not found: verify branch names.
-- Duplicate PR: a PR from this branch already exists.
-
-## Scope
-
-Covers `gh pr create`, `gh pr ready`, `gh pr edit`. Doesn't cover branch creation or `git push` — branch must exist on remote first. Reviewing and merging → respective sub-skills.
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

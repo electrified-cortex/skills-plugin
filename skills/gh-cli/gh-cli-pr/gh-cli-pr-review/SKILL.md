@@ -1,84 +1,47 @@
 ---
 name: gh-cli-pr-review
-description: Approve, request changes on, dismiss pull request review via GitHub CLI. Triggers - approve PR, request changes, dismiss review, pr approval, review pull request.
+description: Approve, request changes on, dismiss pull request review via GitHub CLI.
 ---
 
-## Inputs
+GH CLI PR Review
 
-- `pr_number` — PR to review.
-- `event` — review action: `APPROVE`, `REQUEST_CHANGES`, or `COMMENT`.
-- `body` — optional review body text.
+Inputs:
 
-## Dependencies
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| OWNER | yes | GitHub org or user name |
+| REPO | yes | Repository name |
+| PR_NUMBER | yes | Integer PR number |
+| DECISION | yes | One of: `approve`, `request-changes`, `comment`, `dismiss` |
+| BODY_FILE | cond | Required for `request-changes` and `comment`; optional for `approve` and `dismiss` |
+| REVIEW_ID | cond | Required for `dismiss` |
 
-- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed
+Route by shell — read and follow:
+- bash 4+ → `instructions.bash.txt` in this folder
+- pwsh 7+ → `instructions.pwsh.txt` in this folder
 
-PR review + dismiss via `gh pr review`.
+Host executes directly. No sub-agent dispatch.
 
-Approve:
-Optional body:
+Decision Mapping:
 
-```bash
-gh pr review 123 --approve --body "LGTM"
+| DECISION value | gh flag passed |
+| --- | --- |
+| `approve` | `--approve` |
+| `request-changes` | `--request-changes` (requires BODY_FILE) |
+| `comment` | `--comment` (requires BODY_FILE) |
+| `dismiss` | `--dismiss` (requires REVIEW_ID) |
 
-```
+Return: `gh pr review` emits no URL. Local tool retrieves it via `gh pr view --json url --jq .url` and writes to stdout. Success → exactly one stdout line: PR URL.
 
-Request Changes:
-Body required:
+Safety:
 
-```bash
-gh pr review 123 --request-changes --body "Please address X before merging"
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh pr review --approve | Destructive | Operator approval required |
+| gh pr review --request-changes | Destructive | Operator approval required |
+| gh pr review --comment | Destructive | Operator approval required |
+| gh pr review --dismiss | Destructive | Operator approval required |
+| gh pr view (GET) | Safe | Read-only |
+| gh api --paginate (GET) | Safe | Read-only |
 
-```
-
-Comment-Only (No Verdict):
-
-```bash
-gh pr review 123 --comment --body "Thoughts inline"
-
-```
-
-Dismiss:
-`--review-id` required; `gh` CLI won't accept `--dismiss` without it:
-
-```bash
-gh pr review 123 --dismiss --review-id <review-id> --body "reason"
-
-```
-
-Get review ID:
-
-```bash
-gh pr view 123 --json reviews --jq '.reviews[].id'
-
-```
-
-Add Reviewers:
-Creation-time: `gh pr create --reviewer`. After creation:
-
-```bash
-gh pr edit 123 --add-reviewer user
-
-```
-
-Covered by `gh-cli-pr-create`, not this skill.
-
-Resolve Threads:
-No `gh pr` command. Use `resolveReviewThread` GraphQL via `gh-cli-api`:
-
-```bash
-gh api graphql -f query='
-  mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
-
-```
-
-Scope:
-Covers `gh pr review` only. Excludes: inline comments, requesting reviewers (`gh-cli-prs-create`), resolving threads (`gh-cli-api`).
-
-Error Paths:
-`--request-changes` without `--body` → prompt caller for change rationale before running.
-`--dismiss` with non-existent review ID → surface `gh` error; run `gh pr view --json reviews` to list valid IDs, ask caller to reconfirm.
-
-Related:
-`gh-cli-prs-create` — adding reviewers, creating PRs
-`gh-cli-api` — resolving review threads via GraphQL
+ALL destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

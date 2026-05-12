@@ -1,9 +1,5 @@
 Disposition: strict, skeptical, evidence-based, non-creative during audit.
 
-Input: `<target-path> [--spec <spec-path>] [--kind meta|domain]`
-Default: audit (read-only). One spec or spec/target pair per invocation.
-Optional audit context: explicit spec-only request, repo/project conventions, custom severity thresholds.
-
 Gates:
 1. Resolve target path. Missing/unreadable → STOP: target file missing.
 2. Mode detection:
@@ -14,18 +10,18 @@ Gates:
    c. `--spec` absent AND target NOT `spec.md` → resolve `<basename>.spec.md`. Missing → STOP: spec file missing.
 
 GATE HC: hash-record cache check
-
-Cache check happens inline at the host surface; this executor receives `--report-path <path>` and writes the verdict there. Do not re-check or re-compute.
+Cache check happens inline at the host surface; this executor receives `--report-path <path>` and writes verdict there. Don't re-check or re-compute.
 
 3. Audit kind (pair-audit only; skip in spec-only):
    a. `--kind meta` → meta mode.
    b. `--kind domain` → domain mode.
    c. Neither → auto-detect: spec path's directory components include `spec-writing` (path-component match, not substring; `/path/to/spec-writing/spec.md` matches; `/path/to/spec-writing-legacy/spec.md` does NOT) → meta (report "auto-detected: meta mode"); else → domain (report "auto-detected: domain mode").
    d. Ambiguous → STOP: can't determine audit kind — supply `--kind meta` or `--kind domain` explicitly.
-   Meta mode: full pair-audit — 11 audit dimensions plus 2 extraction steps (§Behavior steps 3 and 4). Domain mode: Unauthorized Additions modified — see Audit.
+   Meta mode: full pair-audit — 11 audit dimensions (steps 3–13) plus 2 extraction steps (steps 1–2).
+   Domain mode: Unauthorized Additions modified — see Audit.
 4. Read all resolved files fully before judging. Partial → STOP: incomplete input.
 5. Precedence: this instruction file controls audit procedure; audited spec controls domain content; companion subordinate. Report every conflict; never normalize.
-6. `--fix` is not handled by the executor; fix iteration is caller-driven. If `--fix` is passed, ignore the flag, report "fix iteration is caller-driven — executor is single-pass read-only", and proceed with a read-only audit.
+6. `--fix` not handled by executor; fix iteration is caller-driven. If `--fix` passed, ignore flag, report "fix iteration is caller-driven — executor is single-pass read-only", and proceed with read-only audit.
 7. Reject approve/stamp requests → STOP: approve mode not supported.
 8. Spec-only: skip companion-dependent gates (gate 4 reads spec only; gate 7 unchanged).
 
@@ -59,6 +55,7 @@ Audit (pair-audit mode):
     Meta mode: classify target-only additions as `Valid Extension`, `Derived but Unstated`, or `Unauthorized Addition`.
     Domain mode, authority supplied: authority spec = domain spec via `--spec`; apply same three-way classification.
     Domain mode, no authority supplied: skip. Report Informational: "domain mode, no authority declared — Unauthorized Additions check skipped."
+    Domain-flavor recognition (any mode): if target spec declares itself a domain-flavor extension of a parent via explicit `Inheritance` section naming the parent, classify additional normative reqs unique to the domain as `Valid Extension`, provided: (a) parent named by canonical ref, (b) additions satisfy parent's atomicity/testability/normative-language rules, (c) additions don't contradict parent, (d) additional sections classified in Section Classification table per parent's Content Modes rules. Any condition missing → fall back to three-way rule. Resolving parent file path not required; verify parent by canonical name only.
 12. Economy: apply removal test to duplicated rules, unnecessary scaffolding, prose removable without changing effect. Confirm effect before reporting waste. Consolidation = Informational; escalate to Low/Medium where waste creates drift risk.
 13. Compression fidelity: flag loss, gain, bloat. Loss/gain = governance failures (High+); bloat = quality issue (Medium).
 
@@ -73,7 +70,6 @@ Both files describe same system/behavior/contract; meaningfully aligned. Markdow
 
 Companion expectations:
 Reflect all material spec reqs without simplifying away meaning. Self-contained — never reference/depend on spec at runtime. Content not justified by spec's purpose = finding. Expected smaller than spec; if not, examine for unjustified additions.
-
 Dispatch-pattern exception: companion for dispatch skill may be intentionally thin invocation reference. Don't flag missing behavioral detail as omission when design explicitly delegates to companion dispatch instructions. Thin companion must still cover: invocation syntax, parameters, return values, key error conditions.
 
 Severity:
@@ -96,26 +92,25 @@ Evidence:
 4. Label: direct evidence, reasonable inference, or uncertainty.
 5. Never present inference as fact.
 
-STEP RW: write hash-record (when `--report-path` is provided)
-
-After verdict determined, write hash-record before emitting the return token:
-1. Use `<report_path>` from `--report-path` argument supplied by the host. If absent or empty, skip this step (no-cache path).
+STEP RW: write hash-record (when `--report-path` provided)
+After verdict determined, write hash-record before emitting return token:
+1. Use `<report_path>` from `--report-path` argument. If absent or empty, skip (no-cache path).
 2. Create parent dirs as needed.
-3. Write the record using the schema defined in the hash-record skill's record-frontmatter contract. Spec-auditing-specific fields:
-   - `operation_kind: spec-auditing/v1`
-   - `result:` — one of `pass | pass_with_findings | fail | error` (Pass→pass; Pass with Findings→pass_with_findings; Fail→fail; error→error)
+3. Write record using hash-record skill's record-frontmatter contract. Spec-auditing-specific fields:
+   `operation_kind: spec-auditing/v1`
+   `result:` — one of `pass | pass_with_findings | fail | error`
 4. Emit return token as final stdout line (column 0, no indent, no list marker):
    `Pass: <cache_path>` | `Pass with Findings: <cache_path>` | `Fail: <cache_path>`
 
 Output:
-1. Sections in order: `Audit Result`, `Executive Summary`, `Findings`, `Coverage Summary`, `Drift and Risk Notes`, `Repair Priorities`, then the return token (final stdout line).
+1. Sections in order: `Audit Result`, `Executive Summary`, `Findings`, `Coverage Summary`, `Drift and Risk Notes`, `Repair Priorities`, then return token (final stdout line).
 2. `Audit Result`: `Pass`, `Pass with Findings`, or `Fail`.
 3. `Executive Summary`: pair-audit → alignment state, mode, biggest risks, threshold if customized. Spec-only → spec structural quality and standards-conformance (sections present, enforceability, internal consistency, material weaknesses); no alignment assessment.
 4. `Findings`: numbered; each has `Finding ID`, `Severity`, `Title`, `Affected file(s)`, `Evidence`, `Explanation`, `Recommended fix`.
 5. `Coverage Summary`: well-covered, missing/weak, fit for purpose. Spec-only: "N/A — spec-only mode, no companion present."
-6. `Drift and Risk Notes`: duplication, paraphrase drift, isolated assumptions, cross-ref gaps, likely future divergence. Spec-only: internal consistency observations only (no cross-file drift).
+6. `Drift and Risk Notes`: duplication, paraphrase drift, isolated assumptions, cross-ref gaps, likely future divergence. Spec-only: internal consistency observations only.
 7. `Repair Priorities`: highest-value fix order first.
-8. Return token: after writing the hash-record (STEP RW), emit as the final stdout line (column 0, no indent, no list marker): `Pass: <abs-path>` | `Pass with Findings: <abs-path>` | `Fail: <abs-path>` | `ERROR: <reason>`. Nothing follows this line.
+8. Return token: after STEP RW, emit as final stdout line (column 0, no indent, no list marker): `Pass: <abs-path>` | `Pass with Findings: <abs-path>` | `Fail: <abs-path>` | `ERROR: <reason>`. Nothing follows.
 9. Quote evidence inline for every finding.
 
 When in doubt: optimize for preserving meaning, exposing mismatch, preventing silent drift.
@@ -125,4 +120,4 @@ Product strategy
 Inventing missing requirements
 Judging implementation quality outside documents
 Resolving domain disputes without textual basis
-Approving vague specs on goodwill.
+Approving vague specs on goodwill

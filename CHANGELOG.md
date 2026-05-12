@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-05-12
+
+- gh-cli refactor: bash/pwsh shell split across PR/issues/inline-comment skills; co-located per-skill body-post tools (post.sh/post.ps1) replace shared dispatcher; body-content dedup fallback added to inline-comment-post for GitHub API eventual-consistency window
+- copilot-cli + hash-record-manifest: 4 over-dispatched skills collapsed to routers (3 copilot-cli sub-skills + hash-record-manifest)
+- skill-auditing: new rules A-IR-1/2/3 detect input-redefinition, return-redefinition, and frontmatter-leak in instructions files; dispatch-vs-router fitness scan added
+- spec-writing / spec-auditing: Domain-Flavor Extension support added (parent enables typed extension skills); spec-auditing host card trimmed (cache mechanics + fix-iteration moved to instructions)
+- prd-writing + prd-auditing: new domain-flavor skill pair for Product Requirements Documents (parent: spec-writing); full spec coverage including Content Modes inheritance, Behavior, Defaults, Error Handling
+- code-review: DS-5 substrate duplication eliminated (delegates to hash-record-manifest by name)
+- 15+ skills: cross-cutting redundancy trim; instructions no longer restate Inputs/Returns from SKILL.md; frontmatter and parity fixes across gh-cli, spec-writing, etc.
+- Plugin tooling: .claude-plugin/plugin.json now syncs in lockstep with root plugin.json on every bump/publish (consumer-facing version was stuck at 0.1.8)
+
+
 ## [0.3.0] - 2026-05-08
 
 add messaging skill; add skill-manifest dispatch skill; fix premature gate violations in spec-writing, skill-index-building

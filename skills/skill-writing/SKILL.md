@@ -20,7 +20,7 @@ New skill — follow order. Never skip steps.
 3. Markdown hygiene — run `markdown-hygiene` on every uncompressed source file (`uncompressed.md`, and `instructions.uncompressed.md` if present). Zero errors required before proceeding.
 4. Intermediate audit — `skill-auditing --uncompressed` on the skill. FAIL → fix source → re-audit. Repeat until PASS.
 5. Compress via `compression` skill (`--source uncompressed.md --target SKILL.md`; same for instructions if dispatch). SKILL.md = compressed runtime.
-6. Pre-submit dispatch gate — dispatch `skill-auditing` on the completed skill folder following the dispatch pattern in `skill-auditing/SKILL.md`. Do not declare done without a returned PASS. FAIL → fix source → recompress → re-dispatch until PASS.
+6. Pre-submit dispatch gate — load `skill-auditing/SKILL.md` and follow the dispatch pattern it describes on the completed skill folder. Do not declare done without a returned PASS. FAIL → fix source → recompress → re-dispatch until PASS.
 
 Dispatch skills: companion instruction source file written in step 2; both compressed in step 5.
 

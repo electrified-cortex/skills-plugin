@@ -1,0 +1,54 @@
+GH CLI PR Comments (pwsh 7+; PS5.1 NOT supported)
+
+Prereq: `gh auth status 2>&1`
+
+Add comment:
+Write BODY to temp file — inline interpolation corrupts backticks, `$VAR` refs, double quotes, code fences. `WriteAllText` = UTF-8 no-BOM, no shell expansion.
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+```
+`post.ps1` uses kebab-case flags parsed manually — pass as double-dash flags, not pwsh-style params.
+```powershell
+$COMMENT_URL = pwsh post.ps1 `
+  --owner $OWNER --repo $REPO --pr $PR_NUMBER --body-file $bodyFile
+$POST_EXIT = $LASTEXITCODE
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+Exit codes: 0 = posted ($COMMENT_URL holds URL); 2 = usage error; 4 = gh error (stderr forwarded).
+
+Edit comment:
+`gh pr comment` has no `--edit` flag — use REST API. Get COMMENT_ID via paginated list if unknown:
+```powershell
+gh api --paginate "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments" `
+  --jq '.[] | {id, body: .body[:80], author: .user.login}'
+```
+Write BODY to temp file, then PATCH:
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+gh api --method PATCH "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID" `
+  --field "body=@$bodyFile"
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+
+Delete comment:
+```powershell
+gh api --method DELETE "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID"
+```
+
+List comments:
+`gh pr view --comments` truncates + misses later pages. Use paginated API for exhaustive results:
+```powershell
+gh api --paginate "repos/$OWNER/$REPO/issues/$PR_NUMBER/comments"   # PR comments
+gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments"    # inline/review
+gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews"     # review submissions
+```
+`gh pr view --comments` = quick human-readable glance only.
+
+Resolve review threads:
+No `gh pr` command. Use `resolveReviewThread` GraphQL via `gh-cli-api`:
+```powershell
+gh api graphql -f query='
+  mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+```

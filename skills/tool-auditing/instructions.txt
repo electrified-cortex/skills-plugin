@@ -1,121 +1,114 @@
-# Tool Auditing
-
-## Inputs
-
+Inputs:
 `tool_path` (positional, required) — absolute path to ANY member of the tool trio: `<stem>.sh`, `<stem>.ps1`, or `<stem>.spec.md`.
-`--report-path <abs-path>` (required) — absolute path where report MUST be written. Missing -> `ERROR: --report-path required`, stop. Existing file at `<report_path>` is overwritten.
-
-## Procedure
+`--report-path <abs-path>` (required) — absolute path where report MUST be written. Missing → `ERROR: --report-path required`, stop. Existing file at `<report_path>` is overwritten.
 
 Hard prohibition: do NOT author scripts (`.ps1`, `.sh`, `.py`, etc.), helper files, or any file other than `<report_path>`. Trio members are read-only. Use Read/Bash/Grep only for inspection.
 
 1. Resolve trio from `tool_path`:
-   - Derive `<stem>`:
-     - ends with `.spec.md` -> stem = filename minus `.spec.md`
-     - ends with `.sh` -> stem = filename minus `.sh`
-     - ends with `.ps1` -> stem = filename minus `.ps1`
-     - other -> `ERROR: unsupported tool extension`, stop.
-   - `<dir>` = `dirname(tool_path)`.
-   - `sh_path` = `<dir>/<stem>.sh` (may not exist)
-   - `ps1_path` = `<dir>/<stem>.ps1` (may not exist)
-   - `spec_path` = `<dir>/<stem>.spec.md` (may not exist)
+   Derive `<stem>`:
+     ends with `.spec.md` → stem = filename minus `.spec.md`
+     ends with `.sh` → stem = filename minus `.sh`
+     ends with `.ps1` → stem = filename minus `.ps1`
+     other → `ERROR: unsupported tool extension`, stop.
+   `<dir>` = `dirname(tool_path)`.
+   `sh_path` = `<dir>/<stem>.sh` (may not exist)
+   `ps1_path` = `<dir>/<stem>.ps1` (may not exist)
+   `spec_path` = `<dir>/<stem>.spec.md` (may not exist)
 
 2. Trio-first short-circuit: evaluate Check 1 immediately. If Check 1 FAILs, skip Checks 2-8. Write report with `result: fail`, body containing only Check 1 row + Findings block enumerating each missing member with its Fix. Return `done`.
 
 3. Run Checks 2-8 against resolved trio (all three members guaranteed present). Levels: FAIL (blocking) or WARN (non-blocking). Check 2 is trio-level (one row). Checks 3-8 are per-variant — one row per shell variant; since Check 1 passed, both `.sh` and `.ps1` exist, so Checks 3-8 always produce exactly two rows each.
 
    Check 1 — Complete trio exists (FAIL, evaluated in step 2):
-   - PASS if all three of `<stem>.sh`, `<stem>.ps1`, and `<stem>.spec.md` exist in `<dir>`.
-   - FAIL otherwise. Fix: list each missing member. For missing shell variant: "create `<stem>.<ext>` with parity to `<existing>.<other-ext>` per spec." For missing spec: "create `<stem>.spec.md` with Purpose / Parameters / Output Contract / Constraints sections."
+   PASS if all three of `<stem>.sh`, `<stem>.ps1`, and `<stem>.spec.md` exist in `<dir>`.
+   FAIL otherwise. Fix: list each missing member. For missing shell variant: "create `<stem>.<ext>` with parity to `<existing>.<other-ext>` per spec." For missing spec: "create `<stem>.spec.md` with Purpose / Parameters / Output Contract / Constraints sections."
 
    Check 2 — Spec describes THIS tool and intent aligns with implementation (FAIL, trio-level):
-   - Read spec and EACH existing shell variant.
-   - PASS if ALL hold:
-     - Spec references tool by `<stem>`, full filename, or unambiguous title (e.g. spec for stem `result` mentions `result` in title or first paragraph).
-     - Spec has `## Purpose` (or equivalent intent-statement) section describing what tool does.
-     - Spec's described purpose is coherent with what each existing shell variant actually implements — inputs, outputs, side effects, and core behavior match. Minor wording divergence is OK; semantic divergence is not (e.g. spec says "read-only" but a shell writes; spec says "takes one arg" but a shell takes two; spec describes a different tool entirely; spec describes only the `.sh` and the `.ps1` does something different).
-   - FAIL if any condition fails. Fix: name specific divergence — `spec describes <X> but <variant> does <Y>`, or `spec missing Purpose section`, or `spec appears to describe a different tool (mentions <other-name>)`, or `spec covers only .sh; .ps1 implements different behavior`. Imperative: align spec to scripts (or fix scripts to match spec, whichever is correct).
+   Read spec and EACH existing shell variant.
+   PASS if ALL hold:
+     Spec references tool by `<stem>`, full filename, or unambiguous title.
+     Spec has `## Purpose` (or equivalent) section describing what tool does.
+     Spec's described purpose is coherent with what each existing shell variant implements — inputs, outputs, side effects, core behavior match. Minor wording divergence OK; semantic divergence not (e.g. spec says "read-only" but shell writes; spec says "takes one arg" but shell takes two; spec describes different tool; spec describes only `.sh` and `.ps1` does something different).
+   FAIL if any condition fails. Fix: name specific divergence — `spec describes <X> but <variant> does <Y>`, or `spec missing Purpose section`, or `spec appears to describe different tool`, or `spec covers only .sh; .ps1 implements different behavior`. Align spec to scripts (or fix scripts to match spec, whichever is correct).
 
-   Checks 3-8 — per shell variant (run separately for each of `sh_path`, `ps1_path`; both present when Check 1 passes):
+   Checks 3-8 — per shell variant (run separately for `sh_path`, `ps1_path`; both present when Check 1 passes):
 
    Check 3 — Parameter / usage block at top (WARN):
-   - PASS if script has `# Usage:` line within first 20 lines.
-   - WARN otherwise. Fix: add `# Usage: <script-name> <args>` comment block at top.
+   PASS if script has `# Usage:` line within first 20 lines.
+   WARN otherwise. Fix: add `# Usage: <script-name> <args>` comment block at top.
 
    Check 4 — No hardcoded absolute paths (FAIL):
-   - PASS if script has no Windows drive-letter paths (`<letter>:[/\\]`) or POSIX root paths (`/Users/`, `/home/`, `/d/`, `/c/`, `/mnt/`).
-   - FAIL otherwise. Fix: replace each absolute path with a parameter, env var, or repo-relative computation. List each offending line.
+   PASS if script has no Windows drive-letter paths (`<letter>:[/\\]`) or POSIX root paths (`/Users/`, `/home/`, `/d/`, `/c/`, `/mnt/`).
+   FAIL otherwise. Fix: replace each absolute path with a parameter, env var, or repo-relative computation. List each offending line.
 
    Check 5 — Error handling (WARN):
-   - Bash: PASS if `set -e` (or `set -o errexit`) appears in first 30 lines.
-   - PowerShell: PASS if `$ErrorActionPreference` is set in first 30 lines.
-   - WARN otherwise. Fix: add appropriate error-handling preamble.
+   Bash: PASS if `set -e` (or `set -o errexit`) appears in first 30 lines.
+   PowerShell: PASS if `$ErrorActionPreference` set in first 30 lines.
+   WARN otherwise. Fix: add appropriate error-handling preamble.
 
    Check 6 — Self-documenting (WARN):
-   - PASS if comment-line ratio is at least 1 comment per 10 lines OR `# Usage:` block has parameter descriptions.
-   - WARN otherwise. Fix: add comments explaining major logical blocks.
+   PASS if comment-line ratio ≥1 comment per 10 lines OR `# Usage:` block has parameter descriptions.
+   WARN otherwise. Fix: add comments explaining major logical blocks.
 
    Check 7 — No interactive input (FAIL):
-   - PASS if no `Read-Host`, `read -p`, `read -r` (without `<<<` or pipe), or `Get-Credential` patterns appear.
-   - FAIL otherwise. Fix: replace interactive input with arguments or env vars.
+   PASS if no `Read-Host`, `read -p`, `read -r` (without `<<<` or pipe), or `Get-Credential` patterns appear.
+   FAIL otherwise. Fix: replace interactive input with arguments or env vars.
 
    Check 8 — Consistent output format (WARN):
-   - Inspect stdout-producing patterns (`echo`, `printf`, `Write-Output`, `[Console]::Out.Write`, `Write-Host`).
-   - PASS if single output mode used (markdown, JSON, plain text, key-value).
-   - WARN if mixed (e.g. `Write-Host` + `Write-Output`, or JSON + plain text). Fix: name chosen mode and convert all stdout to it.
+   Inspect stdout-producing patterns (`echo`, `printf`, `Write-Output`, `[Console]::Out.Write`, `Write-Host`).
+   PASS if single output mode (markdown, JSON, plain text, key-value).
+   WARN if mixed (e.g. `Write-Host` + `Write-Output`, or JSON + plain text). Fix: name chosen mode and convert all stdout to it.
 
-4. Determine verdict (after trio short-circuit OR after Checks 2-8 across all variants):
-   - All checks PASS across trio -> `pass`
-   - Any FAIL anywhere (Check 1, Check 2, or any per-variant FAIL-level check) -> `fail`
-   - Only WARNs (no FAIL) -> `pass-with-findings`
+4. Determine verdict:
+   All checks PASS across trio → `pass`
+   Any FAIL (Check 1, 2, or per-variant FAIL-level) → `fail`
+   Only WARNs (no FAIL) → `pass-with-findings`
 
 5. Write report at `<report_path>` (overwrite if present):
-   - `mkdir -p $(dirname <report_path>)`
-   - Frontmatter (open `---`, close `---`):
-     - `file_paths:` — YAML list, repo-relative paths to ALL existing trio members (sh / ps1 / spec). Repo-relative = relative to git repo owning the cache record. Resolve: `git -C <dir> rev-parse --show-toplevel`, strip that prefix. Same root governs `.hash-record/` layout.
-     - `operation_kind: tool-auditing`
-     - `model:` MUST be `haiku-class`, `sonnet-class`, or `opus-class`. NEVER a literal model id (e.g. `claude-sonnet-4-6`) — ids drift; class labels are stable cache keys.
-     - `result: pass | pass-with-findings | fail`
-   - Body opens with `# Result` H1, then verdict word, then single checks table covering trio-level and per-variant checks (`Variant` column distinguishes shell-specific rows; `-` for trio-level):
+   `mkdir -p $(dirname <report_path>)`
+   Frontmatter (open `---`, close `---`):
+     `file_paths:` — YAML list, repo-relative paths to ALL existing trio members (sh / ps1 / spec). Repo-relative = relative to git repo owning the cache record. Resolve: `git -C <dir> rev-parse --show-toplevel`, strip that prefix. Same root governs `.hash-record/` layout.
+     `operation_kind: tool-auditing`
+     `model:` MUST be `haiku-class`, `sonnet-class`, or `opus-class`. NEVER a literal model id (e.g. `claude-sonnet-4-6`) — ids drift; class labels are stable cache keys.
+     `result: pass | pass-with-findings | fail`
+   Body: `# Result` H1, then verdict word, then single checks table covering trio-level and per-variant checks (`Variant` column distinguishes shell-specific rows; `-` for trio-level):
 
-     ```text
-     # Result
+   ```text
+   # Result
 
-     <PASS | PASS_WITH_FINDINGS | FAIL>
+   <PASS | PASS_WITH_FINDINGS | FAIL>
 
-     | # | Check | Variant | Status | Notes |
-     | --- | --- | --- | --- | --- |
-     | 1 | Complete trio exists | - | PASS / FAIL | <notes> |
-     | 2 | Spec describes this tool, intent aligns | - | PASS / FAIL | <notes> |
-     | 3 | Parameter/usage block | sh | PASS / WARN | <notes> |
-     | 3 | Parameter/usage block | ps1 | PASS / WARN | <notes> |
-     | 4 | No absolute paths | sh | PASS / FAIL | <notes> |
-     | 4 | No absolute paths | ps1 | PASS / FAIL | <notes> |
-     | 5 | Error handling | sh | PASS / WARN | <notes> |
-     | 5 | Error handling | ps1 | PASS / WARN | <notes> |
-     | 6 | Self-documenting | sh | PASS / WARN | <notes> |
-     | 6 | Self-documenting | ps1 | PASS / WARN | <notes> |
-     | 7 | No interactive input | sh | PASS / FAIL | <notes> |
-     | 7 | No interactive input | ps1 | PASS / FAIL | <notes> |
-     | 8 | Consistent output format | sh | PASS / WARN | <notes> |
-     | 8 | Consistent output format | ps1 | PASS / WARN | <notes> |
+   | # | Check | Variant | Status | Notes |
+   | --- | --- | --- | --- | --- |
+   | 1 | Complete trio exists | - | PASS / FAIL | <notes> |
+   | 2 | Spec describes this tool, intent aligns | - | PASS / FAIL | <notes> |
+   | 3 | Parameter/usage block | sh | PASS / WARN | <notes> |
+   | 3 | Parameter/usage block | ps1 | PASS / WARN | <notes> |
+   | 4 | No absolute paths | sh | PASS / FAIL | <notes> |
+   | 4 | No absolute paths | ps1 | PASS / FAIL | <notes> |
+   | 5 | Error handling | sh | PASS / WARN | <notes> |
+   | 5 | Error handling | ps1 | PASS / WARN | <notes> |
+   | 6 | Self-documenting | sh | PASS / WARN | <notes> |
+   | 6 | Self-documenting | ps1 | PASS / WARN | <notes> |
+   | 7 | No interactive input | sh | PASS / FAIL | <notes> |
+   | 7 | No interactive input | ps1 | PASS / FAIL | <notes> |
+   | 8 | Consistent output format | sh | PASS / WARN | <notes> |
+   | 8 | Consistent output format | ps1 | PASS / WARN | <notes> |
 
-     ## Findings
+   ## Findings
 
-     - Check 2 FAIL: spec Purpose says "read-only verification" but `result.sh` writes report at `<report_path>`
-       Fix: update spec Purpose to describe write behavior, or remove the write.
-     - Check 4 FAIL `result.ps1` line 42: hardcoded absolute path (drive-letter prefix)
-       Fix: replace with `$BASE_DIR` from caller environment.
-     - Check 5 WARN `verify.ps1`: `$ErrorActionPreference` not set
-       Fix: add `$ErrorActionPreference = 'Stop'` near the top.
-     ```
+   - Check 2 FAIL: spec Purpose says "read-only verification" but `result.sh` writes report at `<report_path>`
+     Fix: update spec Purpose to describe write behavior, or remove the write.
+   - Check 4 FAIL `result.ps1` line 42: hardcoded absolute path (drive-letter prefix)
+     Fix: replace with `$BASE_DIR` from caller environment.
+   - Check 5 WARN `verify.ps1`: `$ErrorActionPreference` not set
+     Fix: add `$ErrorActionPreference = 'Stop'` near the top.
+   ```
 
-     When Check 1 passes, both shell variant rows are always present (sh + ps1 guaranteed).
+   When Check 1 passes, both shell variant rows are always present (sh + ps1 guaranteed).
 
-6. Scrub absolute paths from entire report — frontmatter `file_paths`, Notes columns, Findings, ALL prose. Includes paths quoted as evidence from audited source even when citing line numbers. Forbidden tokens: Windows drive-letter paths (`<letter>:[/\\]`), POSIX root-anchored paths (`/Users/`, `/home/`, `/d/`, `/c/`, `/mnt/`, `/tmp/`, `/var/`). When citing evidence containing such a path, describe abstractly ("hardcoded drive-letter path on line N", "POSIX root path under `/Users/`") — never quote literal. Report body MUST be safe to share publicly. Use repo-relative paths (git root from step 5) in Findings.
+6. Scrub absolute paths from entire report — frontmatter `file_paths`, Notes columns, Findings, ALL prose. Includes paths quoted as evidence even when citing line numbers. Forbidden tokens: Windows drive-letter paths (`<letter>:[/\\]`), POSIX root-anchored paths (`/Users/`, `/home/`, `/d/`, `/c/`, `/mnt/`, `/tmp/`, `/var/`). When citing evidence containing such a path, describe abstractly ("hardcoded drive-letter path on line N", "POSIX root path under `/Users/`") — never quote literal. Report body MUST be safe to share publicly. Use repo-relative paths (git root from step 5) in Findings.
 
 7. Return literal string `done` on success. On any failure, return `ERROR: <reason>`.
 
-## Return
-
-`done` (report written at `<report_path>`) | `ERROR: <reason>`.
+Return: `done` (report written at `<report_path>`) | `ERROR: <reason>`.

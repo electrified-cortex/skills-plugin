@@ -1,0 +1,110 @@
+GH CLI Issues (Bash)
+
+Prereq: `gh auth status 2>&1`
+
+Body temp-file pattern (inline substitution corrupts backticks, `$VAR` refs, double quotes, code fences):
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+```
+Always `rm -f "$BODY_FILE"` after use.
+
+Create issue:
+```bash
+ISSUE_URL=$(bash create.sh \
+  --owner "$OWNER" --repo "$REPO" --title "$TITLE" \
+  --body-file "$BODY_FILE" --label "$LABELS")
+CREATE_EXIT=$?
+rm -f "$BODY_FILE"
+```
+Omit `--label` when LABELS is empty.
+Exit codes from `create.sh`: 0 = created (ISSUE_URL holds URL); 2 = usage error; 4 = gh error (stderr forwarded).
+
+Comment on issue:
+```bash
+COMMENT_URL=$(bash comment.sh \
+  --owner "$OWNER" --repo "$REPO" \
+  --issue "$ISSUE_NUMBER" --body-file "$BODY_FILE")
+COMMENT_EXIT=$?
+rm -f "$BODY_FILE"
+```
+Exit codes from `comment.sh`: 0 = posted (COMMENT_URL holds URL); 2 = usage error; 4 = gh error (stderr forwarded).
+
+Edit metadata (title, labels, assignees, milestone — no body):
+```bash
+gh issue edit "$ISSUE_NUMBER" --repo "$OWNER/$REPO" \
+  --title "new title" \
+  --add-label triage --remove-label stale \
+  --add-assignee user1 --remove-assignee user2 \
+  --milestone "v2.0"
+```
+
+Edit issue body (`--body-file` for replacement):
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+gh issue edit "$ISSUE_NUMBER" --repo "$OWNER/$REPO" --body-file "$BODY_FILE"
+rm -f "$BODY_FILE"
+```
+
+Edit comment (`gh issue comment` has no `--edit` flag — use REST API):
+Get COMMENT_ID via paginated list if unknown:
+```bash
+gh api --paginate "repos/$OWNER/$REPO/issues/$ISSUE_NUMBER/comments" \
+  --jq '.[] | {id, body: .body[:80], author: .user.login}'
+```
+PATCH with body file:
+```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
+gh api --method PATCH "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID" \
+  --field "body=@$BODY_FILE"
+rm -f "$BODY_FILE"
+```
+
+Delete comment:
+```bash
+gh api --method DELETE "repos/$OWNER/$REPO/issues/comments/$COMMENT_ID"
+```
+
+View: `gh issue view "$ISSUE_NUMBER" --repo "$OWNER/$REPO" --comments`
+
+List (default state = open):
+```bash
+gh issue list --repo "$OWNER/$REPO" \
+  --state all --assignee @me --label bug --milestone "v1.0" --limit 50
+gh issue list --repo "$OWNER/$REPO" \
+  --search "is:open label:stale" --json number,title --jq '.[].number'
+```
+
+Close / reopen:
+```bash
+gh issue close "$ISSUE_NUMBER" --repo "$OWNER/$REPO" --comment "Fixed in #456"
+gh issue reopen "$ISSUE_NUMBER" --repo "$OWNER/$REPO"
+```
+
+Transfer: `gh issue transfer "$ISSUE_NUMBER" --repo "$OWNER/$REPO" owner/other-repo`
+
+Bulk:
+```bash
+gh issue list --repo "$OWNER/$REPO" \
+  --search "label:stale" --json number --jq '.[].number' \
+  | xargs -I {} gh issue close {} --repo "$OWNER/$REPO" --comment "Closing stale"
+```
+
+Safety:
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh issue list | Safe | Read-only |
+| gh issue view | Safe | Read-only |
+| gh api --paginate (GET) | Safe | Read-only |
+| bash create.sh | Destructive | Operator approval required |
+| bash comment.sh | Destructive | Operator approval required |
+| gh issue edit | Destructive | Operator approval required |
+| gh issue close | Destructive | Operator approval required |
+| gh issue reopen | Destructive | Operator approval required |
+| gh issue transfer | Destructive | Operator approval required |
+| gh api PATCH (edit comment) | Destructive | Operator approval required |
+| gh api DELETE (delete comment) | Destructive | Operator approval required |
+
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

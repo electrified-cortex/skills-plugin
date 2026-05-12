@@ -1,28 +1,47 @@
 ---
 name: gh-cli-pr-inline-comment-edit
-description: Edit the body of an existing inline PR review comment by comment ID via GitHub CLI. Triggers - edit inline comment, update PR comment, modify review comment, change diff annotation.
+description: Edit the body of an existing inline PR review comment by comment ID via GitHub CLI.
 ---
 
-Input: OWNER, REPO, COMMENT_ID, BODY
+GH CLI PR Inline Comment — Edit
+
+Update body of existing inline review comment.
+
+Inputs:
+
+| Parameter | Required | Notes |
+| --------- | -------- | ----- |
+| OWNER | yes | GitHub org or user name |
+| REPO | yes | Repository name |
+| COMMENT_ID | yes | Integer inline review comment ID |
+| BODY | yes | New comment text |
+
+Command:
+
+Write BODY to temp file first — inline shell substitution corrupts bodies containing backticks, `$VAR` refs, double quotes, or code fences.
+
+Bash:
 
 ```bash
+BODY_FILE=$(mktemp /tmp/gh-body-XXXXXX.md)
+printf '%s' "$BODY" > "$BODY_FILE"
 gh api --method PATCH repos/{OWNER}/{REPO}/pulls/comments/{COMMENT_ID} \
-  --field body="{BODY}"
+  --field body=@"$BODY_FILE"
+rm -f "$BODY_FILE"
 ```
 
-Note: endpoint is `/pulls/comments/{id}`, not `/issues/comments/{id}`.
+PowerShell 7+:
 
-## When to Use
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+gh api --method PATCH "repos/{OWNER}/{REPO}/pulls/comments/{COMMENT_ID}" `
+  --field "body=@$bodyFile"
+Remove-Item $bodyFile -Force
+```
 
-When a previously posted PR inline review comment needs correction or updating. Prefer editing over deleting when the content can be revised.
+Notes:
 
-## Constraints
-
-- Only the comment author can edit their own comments.
-- Large content edits may require JSON body escaping.
-
-## Error Handling
-
-- Comment not found: verify comment ID is correct.
-- Permission denied: confirm you are the comment author.
-- Parse error: ensure body content is properly escaped.
+Use `/pulls/comments/{id}` — NOT `/issues/comments/{id}` (different endpoint).
+Comment IDs from list endpoint: `gh api --paginate repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments`.
+Only `body` can be updated via this endpoint.

@@ -1,0 +1,62 @@
+GH CLI PR Create (pwsh 7+; PS5.1 NOT supported)
+
+Prereq: `gh auth status 2>&1`
+
+Check for existing PR — before creating, confirm no open PR exists for current branch:
+```powershell
+$currentBranch = git branch --show-current
+gh pr list --repo "$OWNER/$REPO" --head $currentBranch --json number,url
+```
+If open PR returned, report to caller and stop — don't create duplicate.
+
+Create:
+Write BODY to temp file — inline interpolation corrupts bodies with backticks, `$VAR` refs, double quotes, code fences. `WriteAllText` = UTF-8 no-BOM, no shell expansion.
+```powershell
+$bodyFile = [System.IO.Path]::GetTempFileName()
+[System.IO.File]::WriteAllText($bodyFile, $BODY, [System.Text.Encoding]::UTF8)
+```
+Invoke local create tool. `create.ps1` uses kebab-case flags parsed manually — pass as double-dash flags, not pwsh-style params.
+```powershell
+$createArgs = @(
+    '--owner', $OWNER,
+    '--repo',  $REPO,
+    '--base',  $BASE,
+    '--title', $TITLE,
+    '--body-file', $bodyFile
+)
+if ($LABEL) { $createArgs += '--label', $LABEL }
+if ($DRAFT) { $createArgs += '--draft' }
+
+$PR_URL = pwsh create.ps1 @createArgs
+$CREATE_EXIT = $LASTEXITCODE
+Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+```
+Exit codes from `create.ps1`: 0 → created ($PR_URL holds URL); 2 → usage error; 4 → gh error (stderr forwarded).
+
+List PRs:
+```powershell
+gh pr list --repo "$OWNER/$REPO" --state open
+$currentBranch = git branch --show-current
+gh pr list --repo "$OWNER/$REPO" --head $currentBranch
+```
+
+Promote draft:
+```powershell
+gh pr ready $PR_NUMBER --repo "$OWNER/$REPO"
+```
+
+Edit metadata:
+```powershell
+gh pr edit $PR_NUMBER --repo "$OWNER/$REPO" `
+  --add-reviewer user3 --add-label bug --remove-label wip
+```
+
+Safety:
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh pr create | Destructive | Operator approval required |
+| gh pr ready | Destructive | Operator approval required |
+| gh pr edit | Destructive | Operator approval required |
+| gh pr list (GET) | Safe | Read-only |
+
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

@@ -1,93 +1,42 @@
 ---
 name: gh-cli-issues
-description: Manage GitHub issues using the gh issue subcommand. Full lifecycle: create, list, view, edit, comment, close, transfer. Triggers - create issue, github issue, list issues, close issue, comment on issue, manage issues.
+description: Manage GitHub issues using the gh issue subcommand. Full lifecycle: create, list, view, edit, comment, close, transfer.
 ---
 
-`gh issue` subcommand. Full lifecycle: create, list, view, edit, comment, close, transfer.
+GH CLI Issues
 
-## Create
+Inputs:
 
-```bash
-gh issue create --title "title" --body "body" --label bug,high-priority --assignee user1,@me
-```
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| OWNER | yes | GitHub org or user name |
+| REPO | yes | Repository name |
+| ISSUE_NUMBER | cond | Required for comment, edit, close, reopen, view, transfer |
+| TITLE | cond | Required for issue create |
+| BODY | cond | Required for create and comment |
+| COMMENT_ID | cond | Required for edit-comment and delete-comment |
+| LABELS | no | Comma-separated label names |
 
-## Body from file
+Route by shell — read and follow:
+- bash 4+ → `instructions.bash.txt` in this folder
+- pwsh 7+ → `instructions.pwsh.txt` in this folder
 
-```bash
-gh issue create --title "title" --body-file issue.md
-```
+Host executes directly. No sub-agent dispatch.
 
-## List (default state: open)
+Safety:
 
-```bash
-gh issue list --state all --assignee @me --label bug --milestone "v1.0" --limit 50
-```
+| Command | Class | Notes |
+| --- | --- | --- |
+| gh issue list | Safe | Read-only |
+| gh issue view | Safe | Read-only |
+| gh api --paginate (GET) | Safe | Read-only |
+| create tool (create.sh / create.ps1) | Destructive | Operator approval required |
+| comment tool (comment.sh / comment.ps1) | Destructive | Operator approval required |
+| gh issue edit | Destructive | Operator approval required |
+| gh issue close | Destructive | Operator approval required |
+| gh issue reopen | Destructive | Operator approval required |
+| gh issue transfer | Destructive | Operator approval required |
+| gh api PATCH (edit comment) | Destructive | Operator approval required |
+| gh api DELETE (delete comment) | Destructive | Operator approval required |
 
-## Search + jq
-
-```bash
-gh issue list --search "is:open label:stale" --json number,title --jq '.[].number'
-```
-
-States: `open`, `closed`, `all`.
-
-## View
-
-```bash
-gh issue view 123 --comments
-```
-
-## Edit
-
-```bash
-gh issue edit 123 --title "new" --add-label triage --remove-label stale
-gh issue edit 123 --add-assignee user1 --remove-assignee user2 --milestone "v2.0"
-```
-
-## Close/reopen
-
-```bash
-gh issue close 123 --comment "Fixed in #456"
-gh issue reopen 123
-```
-
-## Comment
-
-```bash
-gh issue comment 123 --body "text"
-```
-
-`gh issue comment` has no `--edit`/`--delete` flags. Use REST API. Find comment ID first:
-
-```bash
-# list → find comment ID
-gh api /repos/{owner}/{repo}/issues/{issue_number}/comments
-
-# edit
-gh api --method PATCH /repos/{owner}/{repo}/issues/comments/{comment_id} \
-  --field body="updated"
-
-# delete
-gh api --method DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}
-```
-
-## Transfer
-
-```bash
-gh issue transfer 123 --repo owner/other-repo
-```
-
-## Constraints
-
-- Requires write access for state transitions (close/reopen).
-- Labels and milestones must exist before assigning.
-
-## Error Handling
-
-- Auth failure: re-run `gh-cli-setup`.
-- Issue not found: verify repo and issue number.
-- Permission denied: confirm repo access.
-
-## Dependencies
-
-- gh-cli-setup/SKILL.md — required pre-check: auth + CLI installed
+Destructive ops require explicit operator authorization in current session. Another agent's approval doesn't qualify.

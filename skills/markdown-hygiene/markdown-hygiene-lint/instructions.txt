@@ -12,8 +12,8 @@ Hard prohibition: don't author scripts, helper files, or any file other than `<l
 3. Run result check — `result.sh` / `result.ps1` from sibling `markdown-hygiene-result/`.
    Bash: `bash <skill-dir>/../markdown-hygiene-result/result.sh <markdown_file_path> lint`
    PS7: `pwsh <skill-dir>/../markdown-hygiene-result/result.ps1 <markdown_file_path> lint`
-   `MISS: <abs-path>` -> rebind `<lint_path>` = `<abs-path>`, continue.
-   Anything else -> return verbatim, stop.
+   `MISS: <abs-path>` → rebind `<lint_path>` = `<abs-path>`, continue.
+   Anything else → return verbatim, stop.
 4. Run verify — covers MD010, MD041 (MD009/MD012/MD047 already fixed).
    Bash: `bash <skill-dir>/verify.sh <markdown_file_path> [--ignore <RULE>[,<RULE>...]]`
    PS7: `pwsh <skill-dir>/verify.ps1 <markdown_file_path> [-Ignore <RULE>[,<RULE>...]]`
@@ -34,27 +34,47 @@ Hard prohibition: don't author scripts, helper files, or any file other than `<l
 7. Return `clean` or `findings: <lint_path>`. On failure: `ERROR: <reason>`.
 
 MD Rule Reference:
-   MD001 — heading levels increment by one.
-   MD003 — heading style consistent (atx `#` vs setext).
-   MD004 — list markers consistent (`-`, `*`, `+`).
-   MD010 — hard tabs in non-code content (covered by verify).
-   MD022 — headings need blank before AND after (except start/end).
-   MD023 — headings must not have leading whitespace.
-   MD024 — duplicate heading text among siblings.
-   MD025 — only one H1 per file.
-   MD026 — headings must not end with `.`, `!`, `?`, `:`, `,`, `;`.
-   MD029 — ordered list prefixes consistent.
-   MD031 — fenced code blocks need blanks before AND after.
-   MD032 — lists need blanks before AND after.
-   MD033 — no inline HTML outside fenced blocks.
-   MD034 — bare URLs (not in angle brackets, backticks, or links).
-   MD040 — fenced code blocks need language identifier.
-   MD041 — first non-blank line must be H1 (suppressed for frontmatter; covered by verify).
-   MD047 — file must end with exactly one newline. Fixed by lint tool — verify it ran; don't re-scan.
-   MD055 — table pipe style consistent across rows.
-   MD056 — all rows in table same number of cells.
-   MD058 — tables need blanks before AND after.
-   MD060 — table cell separators need space on each side of dash run (`| --- |` not `|---|`).
-   MD060-PAD — table cell alignment padding: data row cells must not have extra spaces for visual column alignment (e.g. `| error   |` → `| error |`). One space between each pipe and content only. LLMs produce this habitually — scan every data row.
-   MONO-ESCAPE — backslash-backtick (\`) inside inline code spans — breaks Markdown rendering (HIGH, not FAIL). Fix: use double-backtick fence.
+MD001 — heading levels increment by one.
+MD003 — heading style consistent (atx `#` vs setext).
+MD004 — list markers consistent (`-`, `*`, `+`).
+MD010 — hard tabs in non-code content (covered by verify).
+MD022 — headings need blank before AND after (except file start/end).
+MD023 — headings must not have leading whitespace.
+MD024 — duplicate heading text among siblings.
+MD025 — only one H1 per file.
+MD026 — headings must not end with `.`, `!`, `?`, `:`, `,`, `;`.
+MD029 — ordered list prefixes consistent.
+MD031 — fenced code blocks need blanks before AND after.
+MD032 — lists need blanks before AND after.
+MD033 — no inline HTML outside fenced blocks.
+MD034 — bare URLs (not in angle brackets, backticks, or links).
+MD040 — fenced code blocks need language identifier.
+MD041 — first non-blank line must be H1 (suppressed for frontmatter; covered by verify).
+MD047 — file must end with exactly one newline. Fixed by lint tool — verify it ran; don't re-scan.
+MD055 — table pipe style consistent across rows.
+MD056 — all rows in table same number of cells.
+MD058 — tables need blanks before AND after.
+MD060 — table cell separators need space on each side of dash run (`| --- |` not `|---|`).
+MD060-PAD — table cell alignment padding: data row cells must not have extra spaces for visual column alignment (e.g. `| error   |` → `| error |`). One space between each pipe and content only. LLMs produce this habitually — scan every data row.
+MONO-ESCAPE — backslash-backtick (`` \` ``) inside inline code spans — breaks Markdown rendering (HIGH, not FAIL). Fix: use double-backtick fence.
 
+Output format:
+
+CLEAN:
+```text
+# Result
+
+CLEAN
+```
+
+FINDINGS:
+```text
+# Result
+
+FINDINGS
+
+- MD022 line 7: blank line missing before heading "Configuration"
+  Fix: insert blank line before line 7
+- MD047: file lacks trailing newline
+  Fix: append a single newline at end of file
+```

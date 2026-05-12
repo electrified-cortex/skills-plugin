@@ -218,6 +218,24 @@ NOT violations:
 
 Any other cross-file pointer with no canonical name → HIGH.
 
+(A-IR-1) Input redefinition in instructions:
+Scan all instructions files in `skill_dir`: `instructions.txt`, `instructions.uncompressed.md`, and shell-split variants (`instructions.<shell>.txt`, `instructions.<shell>.uncompressed.md`).
+For each: check whether it contains a heading introducing an inputs block — `## Inputs`, `# Inputs`, or an equivalent parameter table (block of lines with param names + type annotations or dashes under an inputs/parameters heading). If found, verify `SKILL.md` or `uncompressed.md` already declares those same params. If already declared → flag HIGH.
+Applies equally to router skills (whose `SKILL.md` says "read and follow `instructions.<ext>`"): instructions file is a continuation of the `SKILL.md` context; restating inputs is decorative bloat.
+Finding text: `A-IR-1: instructions file '<filename>' restates input parameters already declared in SKILL.md. Remove the Inputs section from the instructions file.`
+
+(A-IR-2) Return contract redefinition in instructions:
+Scan all instructions files: `instructions.txt`, `instructions.uncompressed.md`, and shell-split variants.
+For each: check for return/output section — headings `## Return`, `# Return`, `## Returns`, `# Returns`, `## Output`, or `# Output`. If found, compare against return declaration in `SKILL.md` or `uncompressed.md`. Verbatim or near-verbatim match → flag HIGH. Material extensions adding genuinely new error cases or output modes not in `SKILL.md` are permitted — don't flag those.
+Finding text: `A-IR-2: instructions file '<filename>' restates the return contract already declared in SKILL.md. Remove the redundant Return/Output section from the instructions file.`
+
+(A-IR-3) Frontmatter leak in instructions:
+Scan all instructions files: `instructions.txt`, `instructions.uncompressed.md`, and shell-split variants.
+For each: check whether the first non-empty line is `---` (YAML frontmatter opening delimiter). If yes → flag HIGH.
+Frontmatter belongs only in `SKILL.md`, `uncompressed.md`, agent files, and tool-spec files. Instructions files are runtime executor content — frontmatter in them is never consumed.
+Finding text: `A-IR-3: instructions file '<filename>' has YAML frontmatter (--- at line 1). Remove the frontmatter block; it belongs in SKILL.md or uncompressed.md only.`
+If skill has no instructions files → A-IR-3 is N/A.
+
 (A-FM-10) Launch-script form on dispatch skills:
 N/A for inline skills. N/A if `uncompressed.md` is absent (SKILL.md-only is valid).
 If `uncompressed.md` is present for a dispatch skill, verify it contains ONLY:
@@ -240,7 +258,7 @@ Any of following → HIGH:
 
 Content must go in `instructions.uncompressed.md` (executor procedure) or `spec.md` (rationale/behavior).
 
-Dispatch Skill Checks (DS-1..DS-6):
+Dispatch Skill Checks (DS-1..DS-8):
 N/A for inline skills. Run against `uncompressed.md` (host-facing card).
 
 (DS-1) Return shape declared:
@@ -285,6 +303,11 @@ For skills shipping a co-located tool trio (`<stem>.sh` + `<stem>.ps1` + `<stem>
 - Missing tool — every tool referenced by `SKILL.md` or `spec.md` MUST exist in `skill_dir` as a complete trio. Referenced tool absent or incomplete trio → FAIL.
 - Tool-spec alignment — IF a referenced tool has `*.spec.md`, its declared behavior (Purpose, Output, return contract) MUST be consistent with how `SKILL.md` / `spec.md` describes the tool's role. Contradiction (main spec says "moves A to B"; tool spec says "deletes") → FAIL.
 Auditor reads tool-spec text for this check; tool files remain excluded from manifest hash per Step 1.
+
+(DS-8) Canonical trigger phrase:
+N/A for inline skills. N/A for sub-skill files (applies only to the top-level `SKILL.md`).
+For dispatch skills (frontmatter `type: dispatch`): `description` MUST include the canonical phrase = folder name with hyphens replaced by spaces (e.g., `spec-auditing` → "spec audit", `tool-auditing` → "tool audit", `markdown-hygiene` → "markdown hygiene"). Check case-insensitively. A trigger of the form `<verb> <root>` or `<root>` alone MUST appear verbatim in the description triggers list.
+Missing phrase → HIGH (DS-8). Finding text: `Canonical trigger phrase '<phrase>' missing from description triggers.`
 
 These checks extend Step 3. Violations recorded in Step 3 findings table under "Dispatch Skill Checks" group. HIGH violations → NEEDS_REVISION or FAIL depending on count; LOW → NEEDS_REVISION.
 
@@ -374,6 +397,9 @@ CLEAN | PASS | NEEDS_REVISION | FAIL
 | Iteration-safety pointer form (A-FM-9a) | PASS/FAIL/N/A | |
 | No verbatim Rule A/B (A-FM-9b) | PASS/FAIL/N/A | |
 | Cross-reference anti-pattern (A-XR-1) | PASS/FAIL | |
+| Input redefinition in instructions (A-IR-1) | PASS/FAIL | |
+| Return contract redefinition in instructions (A-IR-2) | PASS/FAIL | |
+| Frontmatter leak in instructions (A-IR-3) | PASS/FAIL/N/A | |
 | Launch-script form (A-FM-10) | PASS/FAIL/N/A | |
 | Return shape declared (DS-1) | PASS/FAIL/N/A | |
 | Host card minimalism (DS-2) | PASS/FAIL/N/A | |
@@ -381,6 +407,8 @@ CLEAN | PASS | NEEDS_REVISION | FAIL
 | Inline dispatch guard (DS-4) | PASS/FAIL/N/A | |
 | No substrate duplication (DS-5) | PASS/FAIL/N/A | |
 | No overbuilt sub-skill dispatch (DS-6) | PASS/FAIL/N/A | |
+| Tool integration alignment (DS-7) | PASS/FAIL/N/A | |
+| Canonical trigger phrase (DS-8) | PASS/FAIL/N/A | |
 
 ### Per-file Basic Checks
 

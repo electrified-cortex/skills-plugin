@@ -1,5 +1,3 @@
-Input: `<path>` | `<glob>` | `--tree <root>` [`--force`]
-
 Modes:
 
 File/glob: one or more explicit paths or a glob pattern. Stamp each resolved file.

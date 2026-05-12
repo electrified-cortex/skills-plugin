@@ -45,7 +45,7 @@ Defaults and Assumptions: explicit defaults only
 Error Handling: defined failure behavior
 Precedence Rules: conflict resolution
 Don'ts: explicit exclusions
-After section list, include a Section Classification table: columns = Section, Type (normative/informative/structural), Required (yes/no).
+After section list, include a Section Classification table: columns = Section, Mode. Mode values: Normative, Descriptive, Informational.
 
 Each requirement must be atomic (one testable condition only), testable (verifiable from doc text alone), and unambiguous.
 Use subject-verb-object form. Name actor, artifact acted upon, and trigger condition. Two clear sentences preferred over one dense nested clause.
@@ -68,6 +68,19 @@ introduced in exploratory sections
 
 For derived targets: no new normative requirements, no term redefinition, no scope expansion, no changed constraints/defaults, no new concepts.
 If extension is allowed, spec must define where extension is permitted and what constraints apply. Otherwise extension is prohibited.
+
+Domain-Flavor Extension:
+Spec permits domain-flavor extension. Derived spec may declare itself domain flavor (e.g., `prd-writing`) and add normative sections specific to its domain, subject to all of:
+derived spec includes Inheritance section naming this spec as parent + domain-flavor declaration
+derived spec inherits, without contradiction, this spec's Content Modes, normative-language rules, atomicity requirements, and audit gate
+additional normative requirements are atomic, testable, use normative language defined here
+every additional section classified in Section Classification table using this spec's Content Modes
+derived spec mustn't redefine any term defined here, expand scope contrary to this spec, change default or constraint declared here, or override any rule here
+derived spec references corresponding audit skill running `spec-auditing` first, then domain-specific checks
+
+Additional requirements in conforming derived spec are VALID EXTENSIONS, not Unauthorized Additions. Traceability applies to requirements restating or specializing parent rule; requirements unique to domain need not trace to parent rule.
+
+Without explicit Inheritance declaration and conformance above, derived-target rules apply unchanged: no new normative requirements permitted.
 
 Behavior:
 Statement affects behavior → move to Normative section (see Content Modes). Define behavior including edge cases. State defaults explicitly. Define failure behavior explicitly. Define conflict resolution explicitly. State explicit exclusions.
@@ -107,7 +120,6 @@ Skipping spec-auditor pass before writing derived artifact is prohibited.
 Don't use descriptive, exploratory, or informational content as substitute for normative requirements. Don't use this skill to justify silent scope expansion. Don't embed normative requirements in examples, descriptive text, or exploratory sections.
 
 Footgun Convention:
-Spec-writing failure modes belong in derived specs (skills, agents, tools) that implement or extend this spec, not in this meta-spec itself; authors should document failure modes specific to their domain using the convention below.
 Specs may include optional `Footguns` section. Format:
 **F#: {title}** — failure mode description.
 Why: why it's a footgun.

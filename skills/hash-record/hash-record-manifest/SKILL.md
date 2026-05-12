@@ -1,24 +1,32 @@
 ---
 name: hash-record-manifest
-description: Compute a manifest hash for a set of files. Triggers — compute manifest hash, multi-file cache key, hash-record manifest, manifest hash, bundle file hashes, cache key for directory.
+description: Probe the hash-record cache for a set of files via a combined manifest hash. Triggers - compute manifest hash, multi-file cache key, hash-record manifest, manifest hash, bundle file hashes, cache key for directory.
 ---
 
-Compute deterministic manifest hash for set of files. Manifest hash = multi-file cache key for hash-record consumers (skill audits, dir code reviews, anything bundling multiple sources into single result).
+Probe hash-record cache for set of files via combined manifest hash. Returns cache path as `HIT` (exists) or `MISS` (absent); caller reads or writes at that path.
 
-Input:
-`repo_root` (required): abs path to repo root. Computes repo-relative paths for manifest text.
-`files` (required): paths to include. Abs or repo-relative; skill normalizes all to repo-relative against `repo_root`.
+Inputs:
 
-Dispatch:
-Variables:
-`<instructions>` = `instructions.txt` (this folder; NEVER READ THIS FILE)
-`<instructions-abspath>` = abs path to `<instructions>`
-`<input-args>` = `repo_root=<abs-path> files=<comma-or-newline-separated-list>`
-`<tier>` = `fast-cheap`
-`<description>` = `Computing manifest hash: <repo_root>`
-`<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
+| Parameter         | Required | Description                                                                 |
+| ----------------- | -------- | --------------------------------------------------------------------------- |
+| `op_kind`         | yes      | Operation kind, e.g. `skill-auditing/v2`. May contain `/`; no `..`, `\`, `*`. |
+| `record_filename` | yes      | Leaf filename, e.g. `report.md`. No path separators or `..`.               |
+| `files`           | yes      | One or more file paths (absolute or relative). At least one required.      |
 
-Follow `dispatch` skill. See `../../dispatch/SKILL.md`.
-Returns: `manifest: <40-char-hash>` | `ERROR: <reason>`
+Procedure: Call local tool directly — no sub-agent dispatch.
+
+bash: `bash manifest.sh <op_kind> <record_filename> <file1> [<file2> ...]`
+
+pwsh: `pwsh manifest.ps1 <op_kind> <record_filename> <file1> [<file2> ...]`
+
+Tool resolves repo root from first file, computes git blob hash per file, sorts pairs lexically, builds manifest text, hashes via `git hash-object --stdin`, tests resulting cache path.
+
+Return:
+
+| Output            | Exit | Meaning                                      |
+| ----------------- | ---- | -------------------------------------------- |
+| `HIT: <abs-path>` | 0    | Cache file exists; caller reads its contents |
+| `MISS: <abs-path>`| 0    | No cache entry; caller writes to this path   |
+| `ERROR: <reason>` | 1    | Argument or runtime error                    |
 
 Related: `hash-record`, `hash-record-index`, `hash-record-prune`

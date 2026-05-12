@@ -8,35 +8,26 @@ Inputs:
 `depth_limit` (optional): max recursion depth. Default: 4. Max: 8.
 
 Step 1 — Ref walk:
-Init:
-`file_set`: set of repo-relative paths (deduplicated), empty.
-`broken_refs`: list of unresolved refs, empty.
-`queue`: list of `(file_path, depth)`. Start: `(skill_dir/SKILL.md, 0)`.
-`visited`: set of absolute paths, empty.
+Init: `file_set` (deduplicated repo-relative paths, empty), `broken_refs` (empty), `queue` = `[(skill_dir/SKILL.md, 0)]`, `visited` (absolute paths, empty).
 
 1a — Seed: Add all paths from `files` to `file_set` as repo-relative paths.
 
-1b — Walk queue:
-While queue not empty:
+1b — Walk queue. While not empty:
 1. Pop `(file_path, depth)`.
-2. If `file_path` in `visited`: skip.
-3. Add `file_path` to `visited`.
+2. `file_path` in `visited` → skip.
+3. Add to `visited`.
 4. Read file content.
-5. Extract all refs:
-   - Backtick paths: `` `some/path.md` ``
-   - Markdown links: `[label](some/path.md)`
-   - Ignore URLs (http/https), anchors (#), refs starting with `*/`.
+5. Extract refs: backtick paths `` `some/path.md` ``, markdown links `[label](some/path.md)`. Ignore URLs (http/https), anchors (#), refs starting with `*/`.
 6. For each raw ref:
    a. Resolve relative to dir of `file_path`.
-   b. If resolved path doesn't exist: add raw ref to `broken_refs`. Continue.
-   c. If resolved path outside `repo_root`: skip silently.
-   d. Add resolved path to `file_set` as repo-relative path.
-   e. If resolved path is `.md` AND `depth < depth_limit`: enqueue `(resolved_path, depth + 1)`.
+   b. Doesn't exist → add to `broken_refs`. Continue.
+   c. Outside `repo_root` → skip silently.
+   d. Add to `file_set` as repo-relative path.
+   e. Is `.md` AND `depth < depth_limit` → enqueue `(resolved_path, depth + 1)`.
 
 1c — Deduplicate: Sort `file_set` lexicographically. Remove duplicates.
 
 Step 2 — Store result:
-Assemble result JSON:
 ```json
 {
   "skill": "<skill_dir folder name>",
@@ -47,10 +38,9 @@ Assemble result JSON:
   "depth_limit": <depth_limit>
 }
 ```
-Write to `hash-record(manifest_hash, "skill-manifest")`. On write failure: log warning, don't stop — still return result.
+Write to `hash-record(manifest_hash, "skill-manifest")`. Write failure: log warning, don't stop — still return result.
 
-Step 3 — Output:
-Print JSON to `stdout`. Nothing else.
+Step 3 — Output: Print JSON to `stdout`. Nothing else.
 
 Rules:
 Never copy files. Return list only.
@@ -59,5 +49,5 @@ Never include dot-files.
 Never fail hard on broken refs — report and continue.
 Never include files outside `repo_root`.
 Never cache error or partial result (Step 2 runs only on full success).
-Never recurse into subdirectories of `skill_dir` during Step 4a enumeration.
-Note: Cached results may have stale `files`/`broken_refs` if transitive deps outside `skill_dir` changed since last scan. Cache key covers `skill_dir` direct files only — external dep changes not detected.
+Never recurse into subdirectories of `skill_dir` during Step 1a enumeration.
+Cached results may have stale `files`/`broken_refs` if transitive deps outside `skill_dir` changed since last scan. Cache key covers `skill_dir` direct files only — external dep changes not detected.
