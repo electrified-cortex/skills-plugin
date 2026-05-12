@@ -142,6 +142,12 @@ DON'T post to own inbox.
 DON'T halt on single failing msg — log and continue.
 DON'T assume inbox is private.
 
+Tools (co-located):
+`init.sh` / `init.ps1` — register inbox
+`post.sh` / `post.ps1` — post message
+`drain.sh` / `drain.ps1` — drain inbox
+`status.sh` / `status.ps1` — count pending messages
+
 Related:
 `markdown-hygiene` — sealing step; run on uncompressed sources after audit PASS
 `skill-auditing` — audits this skill

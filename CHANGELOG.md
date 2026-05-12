@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-05-12
+
+- README rewrite: skills/README.md is now lean (foundational journey of 5 entries; stale 13-skill table and 12-section per-skill journey removed).
+- skills-plugin/README.md structure block corrected — references `.claude-plugin/plugin.json` (the consumer manifest); removed stale root `plugin.json` reference.
+- Plugin manifest collapse: root `plugin.json` deleted; `.claude-plugin/plugin.json` is now the sole version of record. `bump.ps1`/`publish.ps1` updated accordingly.
+- Session-noise cleanup: removed `gh-cli/redundancy-audit.md`, `prd-auditing/research.md`, `skill-auditing/result/audit-report.md` (~664 lines of session work-notes that leaked into 0.4.0 dist).
+- markdownlint configuration added to skills source to ignore directories that should not be linted.
+- Cross-cutting markdown hygiene normalizations: table-pipe alignment and code-fence language tags across spec/doc files.
+- gh-cli-pr-inline-comment-post dedup fallback was already in 0.4.0; no change here.
+
+
 ## [0.4.0] - 2026-05-12
 
 - gh-cli refactor: bash/pwsh shell split across PR/issues/inline-comment skills; co-located per-skill body-post tools (post.sh/post.ps1) replace shared dispatcher; body-content dedup fallback added to inline-comment-post for GitHub API eventual-consistency window

@@ -21,4 +21,6 @@ Variables:
 
 Follow `dispatch` skill. See `../../dispatch/SKILL.md`.
 
+Tools (co-located, invoked by sub-agent): `lint.sh` / `lint.ps1` · `verify.sh` / `verify.ps1`
+
 Should return: `clean` | `findings: <lint_path>` | `ERROR: <reason>`

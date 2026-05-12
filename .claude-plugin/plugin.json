@@ -1,6 +1,6 @@
 {
   "name": "electrified-cortex-skills",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Curated skill library by Electrified Cortex — compression, spec writing, skill writing, code review, and more.",
   "author": {
     "name": "electricessence",
@@ -15,5 +15,6 @@
     "spec-writing",
     "skill-writing",
     "electrified-cortex"
-  ]
+  ],
+  "built": "2026-05-12"
 }
