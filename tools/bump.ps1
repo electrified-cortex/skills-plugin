@@ -1,5 +1,9 @@
 #Requires -Version 7
-# bump.ps1 — Bump the plugin.json version and optionally create an annotated git tag.
+# bump.ps1 — Bump the plugin version and optionally create an annotated git tag.
+#
+# Canonical version source: .claude-plugin/plugin.json (the manifest Claude Code
+# reads when the plugin is installed). There is no second manifest; this is the
+# only version of record.
 #
 # Usage:
 #   bump.ps1 [patch|minor|major] [--tag] [--dry-run]
@@ -22,9 +26,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$pluginRoot       = Split-Path -Parent $PSScriptRoot
-$pluginJson       = Join-Path $pluginRoot 'plugin.json'
-$claudePluginJson = Join-Path $pluginRoot '.claude-plugin\plugin.json'
+$pluginRoot = Split-Path -Parent $PSScriptRoot
+$pluginJson = Join-Path $pluginRoot '.claude-plugin\plugin.json'
 
 if (-not (Test-Path $pluginJson)) {
     Write-Error "plugin.json not found: $pluginJson"
@@ -61,19 +64,10 @@ if ($DryRun) {
 
 # ── Write plugin.json ─────────────────────────────────────────────────────────
 $json.version = $newVersion
-$json.built   = (Get-Date -Format 'yyyy-MM-dd')
+$json | Add-Member -NotePropertyName built -NotePropertyValue (Get-Date -Format 'yyyy-MM-dd') -Force
 $jsonOut = $json | ConvertTo-Json -Depth 10
 [System.IO.File]::WriteAllText($pluginJson, $jsonOut + "`n")
 Write-Host "Wrote $pluginJson"
-
-# .claude-plugin/plugin.json is the consumer-facing manifest Claude Code reads
-# when the plugin is installed. Move in lockstep with root plugin.json.
-if (Test-Path $claudePluginJson) {
-    $cpJson = Get-Content $claudePluginJson -Raw | ConvertFrom-Json
-    $cpJson.version = $newVersion
-    [System.IO.File]::WriteAllText($claudePluginJson, ($cpJson | ConvertTo-Json -Depth 10) + "`n")
-    Write-Host "Synced .claude-plugin/plugin.json -> $newVersion"
-}
 
 # ── Tag ───────────────────────────────────────────────────────────────────────
 if ($Tag) {

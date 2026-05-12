@@ -26,13 +26,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$pluginRoot       = Split-Path -Parent $PSScriptRoot
-$pluginJson       = Join-Path $pluginRoot 'plugin.json'
-$claudePluginJson = Join-Path $pluginRoot '.claude-plugin\plugin.json'
-$changelog        = Join-Path $pluginRoot 'CHANGELOG.md'
-$distRoot         = Join-Path $pluginRoot 'skills'
-$manifestDir      = Join-Path $pluginRoot '.hash-record\publish'
-$manifestFile     = Join-Path $manifestDir 'last-manifest.txt'
+$pluginRoot   = Split-Path -Parent $PSScriptRoot
+# Canonical version source: .claude-plugin/plugin.json — the manifest Claude
+# Code reads when the plugin is installed. There is no second manifest.
+$pluginJson   = Join-Path $pluginRoot '.claude-plugin\plugin.json'
+$changelog    = Join-Path $pluginRoot 'CHANGELOG.md'
+$distRoot     = Join-Path $pluginRoot 'skills'
+$manifestDir  = Join-Path $pluginRoot '.hash-record\publish'
+$manifestFile = Join-Path $manifestDir 'last-manifest.txt'
 
 # ── Source root ───────────────────────────────────────────────────────────────
 if (-not $Source) { $Source = Join-Path $pluginRoot '..\skills' }
@@ -74,7 +75,7 @@ Write-Host "`n=== PRE-FLIGHT ==="
 Push-Location $pluginRoot
 $dirty = & git status --porcelain 2>$null |
     Where-Object { $_ -notmatch '^\?\?' } |                              # skip untracked
-    Where-Object { $_ -notmatch '^\s*\S+\s+(skills/|plugin\.json|CHANGELOG\.md)' }
+    Where-Object { $_ -notmatch '^\s*\S+\s+(skills/|\.claude-plugin/|CHANGELOG\.md)' }
 Pop-Location
 if ($dirty) {
     Write-Error "Dirty working tree (unmanaged changes):`n$($dirty -join "`n")`nCommit or stash before publishing."
@@ -223,21 +224,11 @@ if ($violations) {
 
 Write-Host "Dist: $($skillFolders.Count) skills | $totalCopied copied | $totalDenied denied"
 
-# ── Update plugin.json + .claude-plugin/plugin.json (lockstep) ────────────────
+# ── Update plugin.json ────────────────────────────────────────────────────────
 $json.version = $newVer
-$json.built   = $today
+$json | Add-Member -NotePropertyName built -NotePropertyValue $today -Force
 [System.IO.File]::WriteAllText($pluginJson, ($json | ConvertTo-Json -Depth 10) + "`n")
-
-# .claude-plugin/plugin.json is the consumer-facing manifest Claude Code reads
-# when the plugin is installed. Must move in lockstep with root plugin.json.
-if (Test-Path $claudePluginJson) {
-    $cpJson = Get-Content $claudePluginJson -Raw | ConvertFrom-Json
-    $cpJson.version = $newVer
-    [System.IO.File]::WriteAllText($claudePluginJson, ($cpJson | ConvertTo-Json -Depth 10) + "`n")
-    Write-Host "Synced .claude-plugin/plugin.json -> $newVer"
-} else {
-    Write-Warning ".claude-plugin/plugin.json not found at $claudePluginJson — skipping consumer-manifest bump."
-}
+Write-Host "Wrote $pluginJson -> $newVer"
 
 # ── Update CHANGELOG.md ───────────────────────────────────────────────────────
 $entry   = "## [$newVer] - $today`n`n$Notes`n"
@@ -249,7 +240,7 @@ $body    = ($existing -split "`n" | Select-Object -Skip 3) -join "`n"
 # ── Stage + commit ────────────────────────────────────────────────────────────
 Write-Host "`n=== COMMIT ==="
 Push-Location $pluginRoot
-& git add plugin.json .claude-plugin/plugin.json CHANGELOG.md skills/
+& git add .claude-plugin/plugin.json CHANGELOG.md skills/
 & git commit -m "release: v$newVer"
 Write-Host "Committed: release v$newVer"
 
