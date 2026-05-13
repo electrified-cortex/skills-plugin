@@ -61,12 +61,13 @@ GitHub's PR comments index is eventually consistent. When a previous call posts 
 
 Only run when 4a is empty. Match on body content (post-trim) scoped to same path + side.
 
+> **Important**: apply the same `gsub` trim to both sides so internal whitespace is never collapsed. Do **not** pre-process BODY through `awk '{$1=$1};1'` — that idiom collapses all consecutive internal whitespace per line, producing a different string than jq's leading/trailing-only trim, causing false negatives on code-block or indented-list bodies.
+
 ```bash
 if [ -z "$EXISTING" ]; then
-  BODY_TRIMMED=$(printf '%s' "$BODY" | awk '{$1=$1};1')
   EXISTING=$(gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" \
-    --jq --arg body "$BODY_TRIMMED" --arg path "$FILE_PATH" --arg side "$SIDE" \
-    '.[] | select(.path == $path and .side == $side and ((.body // "") | gsub("^\\s+|\\s+$"; "")) == $body) | {id, body, author: .user.login}')
+    --jq --arg body "$BODY" --arg path "$FILE_PATH" --arg side "$SIDE" \
+    '.[] | select(.path == $path and .side == $side and ((.body // "") | gsub("^\\s+|\\s+$"; "")) == ($body | gsub("^\\s+|\\s+$"; ""))) | {id, body, author: .user.login}')
 fi
 ```
 

@@ -36,13 +36,12 @@ EXISTING=$(gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" \
   )) | {id, body, author: .user.login}")
 ```
 
-4b — Body-content fallback (eventual-consistency guard). GitHub's PR comments index is eventually consistent; after a timed-out post + retry the just-posted comment may not yet be returned by the positional query (2–5s window). Only run when 4a is empty. Scope to same path + side.
+4b — Body-content fallback (eventual-consistency guard). GitHub's PR comments index is eventually consistent; after a timed-out post + retry the just-posted comment may not yet be returned by the positional query (2–5s window). Only run when 4a is empty. Scope to same path + side. Apply the same jq gsub trim to both sides so internal whitespace is never collapsed (awk '{$1=$1};1' collapses internal spaces — don't use it here).
 ```bash
 if [ -z "$EXISTING" ]; then
-  BODY_TRIMMED=$(printf '%s' "$BODY" | awk '{$1=$1};1')
   EXISTING=$(gh api --paginate "repos/$OWNER/$REPO/pulls/$PR_NUMBER/comments" \
-    --jq --arg body "$BODY_TRIMMED" --arg path "$FILE_PATH" --arg side "$SIDE" \
-    '.[] | select(.path == $path and .side == $side and ((.body // "") | gsub("^\\s+|\\s+$"; "")) == $body) | {id, body, author: .user.login}')
+    --jq --arg body "$BODY" --arg path "$FILE_PATH" --arg side "$SIDE" \
+    '.[] | select(.path == $path and .side == $side and ((.body // "") | gsub("^\\s+|\\s+$"; "")) == ($body | gsub("^\\s+|\\s+$"; ""))) | {id, body, author: .user.login}')
 fi
 ```
 

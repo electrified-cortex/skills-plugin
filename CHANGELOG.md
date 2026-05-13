@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 2026-05-13
+
+- **fix(gh-cli-pr-inline-comment-post):** bash Step 4b body-trim mismatch causing dedup false negatives. `awk '{$1=$1};1'` collapsed internal whitespace per line while jq's `gsub("^\\s+|\\s+$"; "")` only trims outer whitespace; mismatch caused dedup to miss on every retry within the eventual-consistency window, producing N copies of the same comment. Fix passes BODY directly to jq and applies the same gsub trim on both sides. pwsh path was already correct (uses `.Trim()`). Upstream PR: electrified-cortex/skills#27.
+
 ## [0.4.1] - 2026-05-12
 
 - README rewrite: skills/README.md is now lean (foundational journey of 5 entries; stale 13-skill table and 12-section per-skill journey removed).
