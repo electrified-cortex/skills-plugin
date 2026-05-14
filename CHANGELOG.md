@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.3] - 2026-05-13
+
+- **fix(gh-cli pwsh BOM):** PowerShell instructions wrote temp body files with `[System.Text.Encoding]::UTF8`, which emits a 3-byte UTF-8 BOM (0xEF 0xBB 0xBF) at file start. `gh api --field body=@file` preserves the BOM and GitHub stores it as U+FEFF at the head of comment/issue/PR bodies. Swapped to `[System.Text.UTF8Encoding]::new($false)` across 17 occurrences in 10 pwsh instruction files. Comments saying "UTF-8 no-BOM" are now factually correct. Bash path (`printf '%s' > file`) already produces no BOM — no bash changes (parity: bash_ok). Byte-level verified against electrified-cortex/skills#29 (squash-merged to master via #30).
+
 ## [0.4.2] - 2026-05-13
 
 - **fix(gh-cli-pr-inline-comment-post):** bash Step 4b body-trim mismatch causing dedup false negatives. `awk '{$1=$1};1'` collapsed internal whitespace per line while jq's `gsub("^\\s+|\\s+$"; "")` only trims outer whitespace; mismatch caused dedup to miss on every retry within the eventual-consistency window, producing N copies of the same comment. Fix passes BODY directly to jq and applies the same gsub trim on both sides. pwsh path was already correct (uses `.Trim()`). Upstream PR: electrified-cortex/skills#27.
