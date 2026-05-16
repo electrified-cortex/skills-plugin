@@ -1,4 +1,4 @@
 ﻿.: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execu, copilot cli, copilot cli skill, copilot cli workflow
-copilot-cli-ask: General query or advice operation via the standalone Copilot CLI binary. Returns Copilot's plain text answer, copilot cli ask, copilot cli ask skill, copilot cli ask workflow
-copilot-cli-explain: Explain operation via the standalone Copilot CLI binary. Returns an explanatory markdown description of a code, copilot cli explain, copilot cli explain skill, copilot cli explain workflow
-copilot-cli-review: Code review operation via the standalone Copilot CLI binary. Runs adversarial review of a change set and retur, copilot cli review, copilot cli review skill, copilot cli review workflow
+ask: General query or advice operation via the standalone Copilot CLI binary. Returns Copilot's plain text answer, copilot cli ask, copilot cli ask skill, copilot cli ask workflow
+explain: Explain operation via the standalone Copilot CLI binary. Returns an explanatory markdown description of a code, copilot cli explain, copilot cli explain skill, copilot cli explain workflow
+review: Code review operation via the standalone Copilot CLI binary. Runs adversarial review of a change set and retur, copilot cli review, copilot cli review skill, copilot cli review workflow

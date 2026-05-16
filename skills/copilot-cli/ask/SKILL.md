@@ -1,5 +1,5 @@
 ---
-name: copilot-cli-ask
+name: ask
 description: General query or advice operation via the standalone Copilot CLI binary. Returns Copilot's plain text answer. Triggers - ask copilot, copilot question, get advice from copilot, query copilot, copilot answer.
 ---
 
@@ -31,4 +31,4 @@ Answer: <Copilot's plain text response verbatim>
 `OK` = exit zero. `ERROR` = non-zero (Answer = stderr). `UNAVAILABLE` = version check failed.
 Do not interpret, filter, or rewrite the answer. One question per invocation.
 
-Related: `copilot-cli` (router), `copilot-cli-review`, `copilot-cli-explain`
+Related: `copilot-cli` (router), `review`, `explain`

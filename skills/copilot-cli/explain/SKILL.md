@@ -1,5 +1,5 @@
 ---
-name: copilot-cli-explain
+name: explain
 description: Explain operation via the standalone Copilot CLI binary. Returns an explanatory markdown description of a code region or file. Triggers - explain this code, copilot explain, what does this do, explain this file, describe this function.
 ---
 
@@ -38,4 +38,4 @@ Explanation: <Copilot's markdown explanation verbatim>
 `OK` = exit zero. `ERROR` = non-zero (Explanation = stderr). `UNAVAILABLE` = version check failed.
 Do not summarize or reinterpret. One code region per invocation.
 
-Related: `copilot-cli` (router), `copilot-cli-review`, `copilot-cli-ask`
+Related: `copilot-cli` (router), `review`, `ask`

@@ -9,9 +9,9 @@ Execution, flag assembly, prompt framing, and output parsing live inside the dis
 
 | Operation | Sub-skill | Use for |
 | --- | --- | --- |
-| review | copilot-cli-review/ | Code review of a change set; structured findings + raw markdown |
-| ask | copilot-cli-ask/ | General query or advice; plain text answer |
-| explain | copilot-cli-explain/ | Explain a code region or file; explanatory markdown |
+| review | review/ | Code review of a change set; structured findings + raw markdown |
+| ask | ask/ | General query or advice; plain text answer |
+| explain | explain/ | Explain a code region or file; explanatory markdown |
 
 ## How to Route
 
@@ -47,4 +47,4 @@ Before dispatching any sub-skill, check the capability cache (see `capability-ca
 - Do NOT attempt installation or auth recovery if `copilot` is unavailable — surface the sub-skill's error and stop.
 - Sub-skill missing → report that and stop; do not improvise.
 
-Related: `copilot-cli-review`, `copilot-cli-ask`, `copilot-cli-explain`, `capability-cache`
+Related: `review`, `ask`, `explain`, `capability-cache`

@@ -1,5 +1,5 @@
 ---
-name: copilot-cli-review
+name: review
 description: Code review operation via the standalone Copilot CLI binary. Runs adversarial review of a change set and returns structured findings. Triggers - copilot review, review these changes, adversarial review, copilot code review, review this diff.
 ---
 
@@ -53,4 +53,4 @@ Raw: <Copilot's full response>
 
 One repo per invocation. Do not advise on severity thresholds — that is the caller's policy.
 
-Related: `copilot-cli` (router), `copilot-cli-ask`, `copilot-cli-explain`
+Related: `copilot-cli` (router), `ask`, `explain`

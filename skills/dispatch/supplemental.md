@@ -133,7 +133,7 @@ The calling agent **must** load the `copilot-cli` skill and route through it. Di
 # Via copilot-cli skill routing (correct path):
 # 1. Load copilot-cli skill.
 # 2. Identify operation: "ask" (general query).
-# 3. Sub-skill copilot-cli-ask assembles flags and invokes:
+# 3. Sub-skill ask assembles flags and invokes:
 gh copilot ask "What does the authenticate() function in src/auth.ts do? Explain only — do not modify files."
 ```
 
