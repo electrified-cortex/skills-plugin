@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.2] - 2026-05-17
+
+- **fix(compression):** Restore missing tier subdirs (`lite/`, `full/`, `ultra/`) with `rules.txt` files — instructions.txt still references `<tier>/rules.txt` so they were required; prior 0.5.1 fix incorrectly claimed they were removed inline
+
 ## [0.5.1] - 2026-05-17
 
 - **fix(BOM):** Strip UTF-8 BOM (0xEF 0xBB 0xBF) from markdown-hygiene, swarm, and tool-auditing SKILL.md — YAML parser was failing to load these skills
