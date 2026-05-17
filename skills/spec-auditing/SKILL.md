@@ -12,7 +12,7 @@ Inputs:
 
 ## Inline hash check
 
-Uses `hash-record-manifest` cache substrate; host resolves HIT/MISS/ERROR before dispatch.
+Uses `hash-record/manifest` cache substrate; host resolves HIT/MISS/ERROR before dispatch.
 
 ## Dispatch
 

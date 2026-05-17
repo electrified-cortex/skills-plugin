@@ -1,0 +1,18 @@
+.: GitHub umbrella router — directs to child skills for actions, api, issues, pr, projects, release, repo, setup, github, github skill, github CLI
+actions: Trigger, monitor, manage GitHub Actions workflows, runs, secrets, variables via CLI, github actions, actions skill, github actions workflow
+api: Make authenticated REST and GraphQL calls to the GitHub API via the CLI. Use when no dedicated gh subcommand covers the operation, github api, api skill, github REST API
+issues: Manage GitHub issues using the gh issue subcommand. Full lifecycle: create, list, view, edit, comment, close, github issues, issues skill, github issue workflow
+pr/: Pull request router — routes to sub-skills for create, review, comments, inline-comment, merge, file-viewed, github pr, pr skill, pull request skill
+pr/comments: Add, edit, delete general pull request comments via GitHub CLI, github pr comments, pr comments skill, pr comments workflow
+pr/create: Open pull request via GitHub CLI, github pr create, pr create skill, create pull request
+pr/file-viewed: Mark or unmark one, multiple, or all files in a pull request as viewed via GitHub CLI, github pr file viewed, pr mark file viewed, file-viewed skill
+pr/inline-comment/: Inline comment router — routes post, edit, delete operations on PR diff line comments, github pr inline comment, inline comment skill, inline diff comment
+pr/inline-comment/delete: Delete an existing inline PR review comment by comment ID via GitHub CLI, github pr inline comment delete, delete inline comment skill
+pr/inline-comment/edit: Edit the body of an existing inline PR review comment by comment ID via GitHub CLI, github pr inline comment edit, edit inline comment skill
+pr/inline-comment/post: Post a single or multi-line inline review comment on a PR diff line via GitHub CLI. Handles SHA lookup, diff verification, deduplication, and POST, github pr inline comment post, post inline comment skill
+pr/merge: Merge, update, revert, close pull request via GitHub CLI, github pr merge, pr merge skill, merge pull request
+pr/review: Approve, request changes on, dismiss pull request review via GitHub CLI, github pr review, pr review skill, pr review workflow
+projects: Create, manage GitHub Projects v2 boards, items, fields via CLI, github projects, projects skill, github projects v2
+release: Manage GitHub releases via gh release. Full lifecycle: create, publish, upload assets, edit, delete, github release, release skill, github release workflow
+repo: Create, clone, fork, sync, edit, delete GitHub repositories via CLI, github repo, repo skill, github repository management
+setup: Install, authenticate, and configure the GitHub CLI. Prerequisite for all other github skills, github setup, setup skill, gh auth login

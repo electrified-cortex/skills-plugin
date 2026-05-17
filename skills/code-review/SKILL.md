@@ -6,8 +6,8 @@ description: Tiered code review on a change set. Read-only. Never modifies code.
 Cache Probe:
 SKILL.md owns probe + write; dispatched agents don't cache.
 Before dispatching any pass:
-1. Invoke `hash-record-manifest` with: `op_kind` = `code-review/vN` (append `/<model>` if `model` input set); `record_filename` = `report.md`; `files` = all `change_set` files + `context_pointer` file (if set) + temp file containing `tier`, `focus` (if set), `prior_findings` hash (if substantive + set).
-2. `hash-record-manifest` emits `HIT: <abs-path>` or `MISS: <abs-path>`.
+1. Invoke `hash-record/manifest` with: `op_kind` = `code-review/vN` (append `/<model>` if `model` input set); `record_filename` = `report.md`; `files` = all `change_set` files + `context_pointer` file (if set) + temp file containing `tier`, `focus` (if set), `prior_findings` hash (if substantive + set).
+2. `hash-record/manifest` emits `HIT: <abs-path>` or `MISS: <abs-path>`.
 3. HIT → read + return cached report; skip dispatch.
 4. MISS → proceed to dispatch. After receiving result, write to returned `<abs-path>`.
 

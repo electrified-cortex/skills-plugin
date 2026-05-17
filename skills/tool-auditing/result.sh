@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # result.sh — tool-auditing result tool
-# Wraps hash-record-manifest and translates HIT into the cached audit verdict.
+# Wraps hash-record/manifest and translates HIT into the cached audit verdict.
 # Resolves the tool trio (<stem>.sh, <stem>.ps1, <stem>.spec.md) from tool_path.
 # Usage: result <tool_path>
 # Outputs one of:
@@ -15,7 +15,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
   cat <<'USAGE'
 Usage: result <tool_path>
 
-Wraps hash-record-manifest for tool-auditing and translates a HIT into
+Wraps hash-record/manifest for tool-auditing and translates a HIT into
 the cached audit verdict. Resolves the tool trio from any input member.
 
 Arguments:
@@ -83,16 +83,16 @@ FILES=()
 
 # Locate sibling manifest tool
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-MANIFEST_SH="${SCRIPT_DIR}/../hash-record/hash-record-manifest/manifest.sh"
+MANIFEST_SH="${SCRIPT_DIR}/../hash-record/manifest/manifest.sh"
 
 if [ ! -f "$MANIFEST_SH" ]; then
-  echo "ERROR: cannot locate hash-record-manifest at: $MANIFEST_SH"
+  echo "ERROR: cannot locate hash-record/manifest at: $MANIFEST_SH"
   exit 1
 fi
 
 # Invoke manifest (op_kind v2 — trio scope)
 MANIFEST_OUT=$(bash "$MANIFEST_SH" "tool-auditing/v2" "report.md" "${FILES[@]}" 2>/dev/null) || {
-  echo "ERROR: hash-record-manifest failed for: $TOOL_PATH"
+  echo "ERROR: hash-record/manifest failed for: $TOOL_PATH"
   exit 1
 }
 
@@ -133,7 +133,7 @@ case "$MANIFEST_OUT" in
     esac
     ;;
   *)
-    echo "ERROR: unrecognized hash-record-manifest output: $MANIFEST_OUT"
+    echo "ERROR: unrecognized hash-record/manifest output: $MANIFEST_OUT"
     exit 1
     ;;
 esac

@@ -1,0 +1,7 @@
+.: Pull request router — routes to sub-skills for create, review, comments, inline-comment, merge, file-viewed. Read-only inspection inline., github pr, pr skill, pull request skill
+comments: Add, edit, delete general pull request comments via GitHub CLI, github pr comments, pr comments skill, pr comments workflow
+create: Open pull request via GitHub CLI, github pr create, pr create skill, create pull request
+file-viewed: Mark or unmark one, multiple, or all files in a pull request as viewed via GitHub CLI, github pr file viewed, pr mark file viewed, file-viewed skill
+inline-comment/: Post, edit, or delete inline code review comments on PR diff lines. Routes to sub-skills by operation, github pr inline comment, pr inline comment skill, inline diff comment
+merge: Merge, update, revert, close pull request via GitHub CLI, github pr merge, pr merge skill, merge pull request
+review: Approve, request changes on, dismiss pull request review via GitHub CLI, github pr review, pr review skill, pr review workflow

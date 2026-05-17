@@ -16,9 +16,9 @@ Supports Router — accepts any GitHub Copilot CLI task and dispatches to the co
 
 Supports Decision tree for whether, how, and at what model tier to dispatch sub-agents.
 
-## gh-cli
+## github
 
-Supports GitHub CLI operations — routes to domain-specific sub-skills via dispatch.
+Supports GitHub umbrella router — directs to child skills for actions, api, issues, pr, projects, release, repo, setup.
 
 ## hash-record
 

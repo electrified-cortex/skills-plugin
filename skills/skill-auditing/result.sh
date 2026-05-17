@@ -14,7 +14,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
   cat <<'USAGE'
 Usage: result.sh <skill_dir>
 
-Wraps hash-record-manifest for skill-auditing and translates a HIT into
+Wraps hash-record/manifest for skill-auditing and translates a HIT into
 the cached audit verdict by reading the report's frontmatter.
 
 Arguments:
@@ -79,10 +79,10 @@ OP_KIND="skill-auditing/v2"
 
 # Locate sibling manifest tool
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-MANIFEST_SH="${SCRIPT_DIR}/../hash-record/hash-record-manifest/manifest.sh"
+MANIFEST_SH="${SCRIPT_DIR}/../hash-record/manifest/manifest.sh"
 
 if [ ! -f "$MANIFEST_SH" ]; then
-  echo "ERROR: cannot locate hash-record-manifest at: $MANIFEST_SH"
+  echo "ERROR: cannot locate hash-record/manifest at: $MANIFEST_SH"
   exit 1
 fi
 
@@ -135,7 +135,7 @@ case "$MANIFEST_OUT" in
     esac
     ;;
   *)
-    echo "ERROR: unrecognized hash-record-manifest output: $MANIFEST_OUT"
+    echo "ERROR: unrecognized hash-record/manifest output: $MANIFEST_OUT"
     exit 1
     ;;
 esac

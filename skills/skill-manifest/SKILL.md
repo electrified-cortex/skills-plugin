@@ -15,7 +15,7 @@ Host steps (before dispatch):
 1. Resolve `repo_root` (from input or `git rev-parse --show-toplevel`).
 2. Verify `skill_dir` exists, contains `SKILL.md`. Fail → return `ERROR: <reason>`.
 3. Enumerate files in `skill_dir` (non-recursive, no dot-files).
-4. Dispatch `hash-record-manifest` with file list + `repo_root`. Receive `manifest_hash`.
+4. Dispatch `hash-record/manifest` with file list + `repo_root`. Receive `manifest_hash`.
 5. Probe `hash-record(manifest_hash, "skill-manifest")`.
    - Hit: return stored result with `"cached": true`. Done — no subagent needed.
      Cache key covers `skill_dir` direct files only. Stale `files` or `broken_refs` possible if transitive deps outside `skill_dir` changed since last scan. Callers force fresh scan by touching any `skill_dir` file.

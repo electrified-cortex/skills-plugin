@@ -2,7 +2,8 @@ code-review/: Tiered code review on a change set. Read-only — never modifies c
 compression: Compress .md and text files via subagent dispatch. Triggers — compress this file, reduce tokens, shrink instru, compression skill, compression workflow
 copilot-cli/: Router — accepts any GitHub Copilot CLI task and dispatches to the correct operation sub-skill. Does not execu, copilot cli, copilot cli skill, copilot cli workflow
 dispatch/: Decision tree for whether, how, and at what model tier to dispatch sub-agents, dispatch skill, dispatch workflow
-gh-cli/: GitHub CLI operations — routes to domain-specific sub-skills via dispatch, gh cli, gh cli skill, gh cli workflow
+file-watching: Watch a single file for modification and emit one event line per change. Optimized native (FileSystemWatcher on Windows). Triggers — watch a file, monitor file changes, file mtime kick, react on file write, file watching, file watching skill, file watching workflow
+github/: GitHub umbrella router — directs to child skills for actions, api, issues, pr, projects, release, repo, setup, github, github skill, github CLI
 hash-record/: Content-hash-keyed durable record store. Probe / Read / Write / Invalidate API. Replaces .audit-reports/ and, hash record, hash record skill, hash record workflow
 hash-stamping/: SHA-256 integrity stamp suite. Verify stamp drift or write/update stamps. Triggers — verify stamp, check integ, hash stamping, hash stamping skill, hash stamping workflow
 iteration-safety: Rules for iterating audit, compression, hygiene, or review passes. Reference this skill from callers; do not e, iteration safety, iteration safety skill, iteration safety workflow

@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # result.ps1 — skill-auditing result tool
-# Wraps hash-record-manifest and translates HIT into the cached audit verdict.
+# Wraps hash-record/manifest and translates HIT into the cached audit verdict.
 # Usage: result <skill_dir>
 # Outputs one of:
 #   CLEAN: <abs-path>           (HIT, result: clean)        (exit 0)
@@ -23,7 +23,7 @@ if ($help -or $h) {
     [Console]::Out.Write(@"
 Usage: result <skill_dir>
 
-Wraps hash-record-manifest for skill-auditing and translates a HIT into
+Wraps hash-record/manifest for skill-auditing and translates a HIT into
 the cached audit verdict by reading the report's frontmatter.
 
 Arguments:
@@ -85,10 +85,10 @@ $op_kind = 'skill-auditing/v2'
 
 # Locate sibling manifest tool
 $script_dir = Split-Path -Parent $PSCommandPath
-$manifest_ps1 = Join-Path $script_dir '../hash-record/hash-record-manifest/manifest.ps1'
+$manifest_ps1 = Join-Path $script_dir '../hash-record/manifest/manifest.ps1'
 
 if (-not (Test-Path -LiteralPath $manifest_ps1)) {
-    [Console]::Out.Write("ERROR: cannot locate hash-record-manifest at: $manifest_ps1`n")
+    [Console]::Out.Write("ERROR: cannot locate hash-record/manifest at: $manifest_ps1`n")
     exit 1
 }
 
@@ -98,12 +98,12 @@ try {
     $manifest_out = & pwsh -NoProfile -File $manifest_ps1 @manifest_args
     $manifest_out = $manifest_out -join "`n" -replace "`r", '' -split "`n" | Where-Object { $_ -ne '' } | Select-Object -Last 1
 } catch {
-    [Console]::Out.Write("ERROR: hash-record-manifest failed for: $skill_dir_full`n")
+    [Console]::Out.Write("ERROR: hash-record/manifest failed for: $skill_dir_full`n")
     exit 1
 }
 
 if (-not $manifest_out) {
-    [Console]::Out.Write("ERROR: hash-record-manifest returned no output for: $skill_dir_full`n")
+    [Console]::Out.Write("ERROR: hash-record/manifest returned no output for: $skill_dir_full`n")
     exit 1
 }
 
@@ -156,5 +156,5 @@ if ($manifest_out -like 'HIT: *') {
     }
 }
 
-[Console]::Out.Write("ERROR: unrecognized hash-record-manifest output: $manifest_out`n")
+[Console]::Out.Write("ERROR: unrecognized hash-record/manifest output: $manifest_out`n")
 exit 1

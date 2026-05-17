@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-05-17
+
+V1: add file-watching, skill-eval, sub-session-dispatch; rename gh-cli to github; all 27 skills clean and trigger-phrase verified
+
 ## [0.4.3] - 2026-05-13
 
 - **fix(gh-cli pwsh BOM):** PowerShell instructions wrote temp body files with `[System.Text.Encoding]::UTF8`, which emits a 3-byte UTF-8 BOM (0xEF 0xBB 0xBF) at file start. `gh api --field body=@file` preserves the BOM and GitHub stores it as U+FEFF at the head of comment/issue/PR bodies. Swapped to `[System.Text.UTF8Encoding]::new($false)` across 17 occurrences in 10 pwsh instruction files. Comments saying "UTF-8 no-BOM" are now factually correct. Bash path (`printf '%s' > file`) already produces no BOM — no bash changes (parity: bash_ok). Byte-level verified against electrified-cortex/skills#29 (squash-merged to master via #30).

@@ -71,7 +71,7 @@ Compressed `instructions.txt`: only instructions — no title headers, no descri
 ### Naming
 
 Dir name = kebab-case, equal to `name` frontmatter. Mismatch → skill unreachable.
-Nested sub-skills must use fully-qualified names including parent prefix. Example: under `electrified-cortex/skill-index/`, children are `skill-index-auditing/`, `skill-index-building/` — not bare `auditing/`, `building/`. Ref: `electrified-cortex/gh-cli/` (`gh-cli-actions`, `gh-cli-api`). Bare unqualified names don't resolve.
+Nested sub-skills under a pure router use bare names matching the folder (e.g. `github/actions/`, `github/api/`). Fully-qualified prefix naming (e.g. `skill-index-auditing/`) is required only when sub-skills may be discovered independently at depth-1. Router-only intermediates (e.g. `skill-index/`) still qualify children with the parent prefix.
 Never use "SKILL" in any filename except `SKILL.md`.
 
 ### Content

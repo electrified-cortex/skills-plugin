@@ -10,39 +10,39 @@ Input:
 
 ## Cached Result Check
 
-Run inline `markdown-hygiene-result` for `report`. See `markdown-hygiene-result/SKILL.md`.
+Run inline `result` for `report`. See `result/SKILL.md`.
 
 - `MISS: <abs-path>` — bind `<report_path>`. Continue.
 - Otherwise: stop, return result to caller.
 
 ## Analysis
 
-Follow `markdown-hygiene-analysis/SKILL.md` with `<markdown_file_path>`.
+Follow `analysis/SKILL.md` with `<markdown_file_path>`.
 
 - `ERROR: <reason>` — stop, surface reason.
 - Otherwise: bind `<analysis_result>`.
 
 ## Lint
 
-Run inline result check for `lint`. See `markdown-hygiene-result/SKILL.md`.
+Run inline result check for `lint`. See `result/SKILL.md`.
 
 - `MISS: <abs-path>` — bind `<lint_path>`. Continue to Dispatch.
 - Otherwise: stop, return result to caller.
 
-Follow `markdown-hygiene-lint/SKILL.md` with `<markdown_file_path> [--ignore <RULE>[,<RULE>...]]`.
+Follow `lint/SKILL.md` with `<markdown_file_path> [--ignore <RULE>[,<RULE>...]]`.
 
 - `ERROR: <reason>` — stop, surface reason.
 - `clean` — bind `<lint_result>` as `clean`. Continue.
-- `findings: <path>` — dispatch a standard tier sub-agent to fix reported issues, then re-follow `markdown-hygiene-lint/SKILL.md`. After 3 revision rounds: stop, bind `<lint_result>` as the final findings. On success: bind `<lint_result>`.
+- `findings: <path>` — dispatch a standard tier sub-agent to fix reported issues, then re-follow `lint/SKILL.md`. After 3 revision rounds: stop, bind `<lint_result>` as the final findings. On success: bind `<lint_result>`.
 
 ## Rekey Analysis
 
-Read `hash-record/hash-record-rekey/SKILL.md`.
+Read `hash-record/rekey/SKILL.md`.
 
 ```bash
-bash hash-record/hash-record-rekey/rekey.sh <markdown_file_path> markdown-hygiene analysis.md <hash_A>
+bash hash-record/rekey/rekey.sh <markdown_file_path> markdown-hygiene analysis.md <hash_A>
 # Windows:
-pwsh hash-record/hash-record-rekey/rekey.ps1 <markdown_file_path> markdown-hygiene analysis.md <hash_A>
+pwsh hash-record/rekey/rekey.ps1 <markdown_file_path> markdown-hygiene analysis.md <hash_A>
 ```
 
 - `REKEYED:` or `CURRENT:` — ok.

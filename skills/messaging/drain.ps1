@@ -51,7 +51,7 @@ if (-not (Test-Path $archiveDir)) {
 }
 
 # Helper: archive a claimed file, collect JSON content, handle errors
-function Drain-ClaimedFile {
+function Move-ClaimedFile {
     param([string]$ClaimedPath, [string]$OrigName, [bool]$OutputContent, [System.Collections.Generic.List[string]]$Messages)
     $archiveDest = Join-Path $archiveDir $OrigName
     $content = $null
@@ -83,7 +83,7 @@ foreach ($file in $msgFiles) {
     } catch {
         continue
     }
-    Drain-ClaimedFile -ClaimedPath $claimedPath -OrigName $file.Name -OutputContent $true -Messages $messages
+    Move-ClaimedFile -ClaimedPath $claimedPath -OrigName $file.Name -OutputContent $true -Messages $messages
 }
 
 # Pass 2: leftover *.json.claimed from a prior crashed run — archive without re-outputting
@@ -92,7 +92,7 @@ $claimedFiles = Get-ChildItem -Path $inboxDir -Filter '*.json.claimed' -File |
 
 foreach ($file in $claimedFiles) {
     $origName = $file.Name -replace '\.claimed$', ''
-    Drain-ClaimedFile -ClaimedPath $file.FullName -OrigName $origName -OutputContent $false -Messages $messages
+    Move-ClaimedFile -ClaimedPath $file.FullName -OrigName $origName -OutputContent $false -Messages $messages
 }
 
 # Output JSON array

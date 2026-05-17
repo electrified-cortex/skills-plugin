@@ -1,0 +1,4 @@
+.: Inline comment router — routes post, edit, delete operations on PR diff line comments, github pr inline comment, inline comment skill, inline diff comment
+delete: Delete an existing inline PR review comment by comment ID via GitHub CLI, github pr inline comment delete, delete inline comment skill
+edit: Edit the body of an existing inline PR review comment by comment ID via GitHub CLI, github pr inline comment edit, edit inline comment skill
+post: Post a single or multi-line inline review comment on a PR diff line via GitHub CLI. Handles SHA lookup, diff verification, deduplication, and POST, github pr inline comment post, post inline comment skill
