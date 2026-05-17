@@ -3,6 +3,9 @@ name: prd-writing
 description: Write a Product Requirements Document as a product-layer flavor of a spec. Triggers — write a PRD, draft product requirements, author a PRD, new product requirements document, create PRD.
 ---
 
+## Inheritance
+Parent skill: spec-writing
+
 PRD Writing
 
 PRD = spec at product layer. Read `spec-writing` first — it owns base workflow, content modes, quality discipline. This skill records deltas: additional sections, rules, anti-patterns distinguishing PRD from generic spec.

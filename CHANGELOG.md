@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2026-05-17
+
+- **fix(BOM):** Strip UTF-8 BOM (0xEF 0xBB 0xBF) from markdown-hygiene, swarm, and tool-auditing SKILL.md — YAML parser was failing to load these skills
+- **fix(compression):** Remove dead `<tier>/rules.txt` subdirectory references from instructions.txt; tier rules now applied inline
+- **fix(skill-optimize):** Remove dead `topics/` directory references from SKILL.md; topic list and priority order now resolved from the inline slug list in the same file
+- **fix(code-review):** Procedure was already correctly extracted to instructions.txt — confirmed clean, no change needed
+- **fix(prd-writing):** Add missing `## Inheritance` section naming `spec-writing` as parent skill
+- **fix(swarm):** Create `reviewers/` directory with 10 persona files (devils-advocate, accessibility-officer, architect, designer, engineer, linguist, penny-pincher, privacy-advocate, security-auditor, copilot-reviewer)
+- **fix(swarm):** Create `specs/arbitrator.md` — authoritative format spec for arbitrator output (verdict structure, section definitions, constraints)
+
 ## [0.5.0] - 2026-05-17
 
 V1: add file-watching, skill-eval, sub-session-dispatch; rename gh-cli to github; all 27 skills clean and trigger-phrase verified

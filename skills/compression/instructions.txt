@@ -20,7 +20,7 @@ Steps:
    - Clean (`  ` or `M `) → in-place. Untracked (`??`) or dirty → fallback: target = `<file>.compressed`.
    - `REJECTED` only on conflict/deleted states.
 3. Resolve tier: `--tier` or ultra.
-4. Load tier rules: `<tier>/rules.txt` (in this directory). Apply.
+4. Apply tier rules for the selected tier inline (ultra: maximum reduction; full: balanced; lite: light trim).
 5. Verify (file mode only, not blurb): compare compressed result against original. Every fact, rule, constraint must survive.
    - Recoverable (single dropped item or collapsed qualifier) → fix in-place, report fix + suggest prevention.
    - Not recoverable (multi-element loss, structural damage, meaning reversal) → restore original, `REJECTED: content lost — <details>`.

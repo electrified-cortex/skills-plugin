@@ -23,7 +23,7 @@ Read all from `<skill-path>` in order; don't analyze yet.
 
 None found → `ERROR: no skill source files found at <skill-path>`.
 
-Allowed write targets (inside the **target skill's** directory): `<skill-path>/.optimization/.log.md` (5a), `<skill-path>/.optimization/<slug>.md` (5b). Read scope: `<skill-path>` and `<skill-optimize-root>/topics/` only.
+Allowed write targets (inside the **target skill's** directory): `<skill-path>/.optimization/.log.md` (5a), `<skill-path>/.optimization/<slug>.md` (5b). Read scope: `<skill-path>` only.
 
 Step 2 — Check Optimize Log:
 
@@ -55,11 +55,11 @@ If `<topic>` provided AND log exists AND `<topic>` row status is `clean`, `acted
 
 Step 3 — Assessor Pass:
 
-Pick best next topic. Skip if `<topic>` provided — verify `topics/<topic>.md` exists; missing → `ERROR: topic file not found at topics/<topic>.md`. Go to Step 4.
+Pick best next topic. Skip if `<topic>` provided — verify slug is in the topic list at the bottom of this file; unknown slug → `ERROR: topic slug not recognized`. Go to Step 4.
 
 3a — Candidate Selection (Host, mechanical):
 
-1. Read `topics/_index.md` — fixed priority-ordered list
+1. Use the topic slugs list at the bottom of this file as the fixed priority-ordered list
 2. Remove any topic already in the optimize-log (any status, including `qualified`)
 3. Take top 3 remaining in order
 
@@ -88,11 +88,11 @@ Tie-breaking: 1. `yes` > `maybe` 2. Structural > stylistic 3. Shorter spec
 
 Emit: `Assessor selected: <TOPIC-SLUG> — <one-line reason>`. `assess-only` → stop.
 
-Fallback (no dispatch): Skip 3b. Read `topics/_index.md` for priority order. Assess top 3 candidates inline. Log as `qualified`. Proceed to 3c.
+Fallback (no dispatch): Skip 3b. Use the topic slugs list at the bottom of this file for priority order. Assess top 3 candidates inline. Log as `qualified`. Proceed to 3c.
 
 Step 4 — Topic Analysis (Dispatched):
 
-Dispatch Sonnet-class sub-agent. Pass: source files (Step 1), `topics/<slug>.spec.md`, `topics/<slug>.md` (if exists).
+Dispatch Sonnet-class sub-agent. Pass: source files (Step 1) and topic slug.
 
 ```md
 You are a skill optimizer running a focused topic analysis.
