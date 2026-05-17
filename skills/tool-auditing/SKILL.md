@@ -1,4 +1,4 @@
-﻿---
+---
 name: tool-auditing
 description: Audit a tool script for companion spec, conventions, and error handling. Triggers — audit tool, check tool script, review tool conventions, tool compliance, tool script audit, tool auditing.
 ---
