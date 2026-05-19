@@ -11,7 +11,6 @@ $script:DenyFiles = [System.Collections.Generic.HashSet[string]]([System.StringC
 @(
     'spec.md'
     'uncompressed.md'
-    '*.uncompressed.md'
     'instructions.uncompressed.md'
     'instructions.uncompressed.md.compressed'
     'eval.md'
@@ -20,7 +19,8 @@ $script:DenyFiles = [System.Collections.Generic.HashSet[string]]([System.StringC
 ) | ForEach-Object { [void]$script:DenyFiles.Add($_) }
 
 # Wildcard patterns (evaluated per file via -like)
-$script:DenyPatterns = @('*.spec.md', '*.sha256')
+# NOTE: wildcards MUST be here — adding them to DenyFiles (a HashSet) only matches the literal string.
+$script:DenyPatterns = @('*.spec.md', '*.sha256', '*.uncompressed.md')
 
 function Test-Denied {
     param([System.IO.FileInfo]$File)

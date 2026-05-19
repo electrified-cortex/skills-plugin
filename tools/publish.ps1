@@ -68,6 +68,76 @@ function Get-BlobHash([string]$path) {
     } finally { Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue }
 }
 
+# ── Reference-chain inclusion ─────────────────────────────────────────────────
+# Patterns that indicate a file reference inside a source file:
+#   1. Backtick-quoted:  `filename.ext`  (markdown inline code)
+#   2. Bare in shell command:  bash foo.sh / pwsh foo.ps1 / source foo.sh
+# Patterns are matched relative to the directory of the file being scanned.
+# Cross-folder refs (path separators) are resolved from the scanning dir.
+# Refs escaping sourceRoot, hitting deny-list, or under dot-ancestors are dropped.
+
+$script:_RefPatterns = @(
+    # backtick-quoted: `path/to/file.ext` or `file.ext`
+    [regex]'`([^`\r\n]+\.[a-zA-Z0-9]{1,8})`'
+    # bare shell command token: bash/pwsh/sh/source/. followed by a word.ext token
+    [regex]'(?:^|[\s;|])(?:bash|pwsh|sh|source|\.)\s+([\w./\\-]+\.[a-zA-Z0-9]{1,8})'
+)
+
+function Get-RefsFromContent([string]$content, [string]$srcDir) {
+    $refs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($pat in $script:_RefPatterns) {
+        [regex]::Matches($content, $pat) | ForEach-Object {
+            $raw = $_.Groups[1].Value.Trim()
+            if (-not $raw) { return }
+            # Skip glob wildcards, absolute Windows paths, and template/shell token chars
+            # Do NOT filter ".." — path traversal is bounded post-resolution by sourceRoot check
+            if ($raw -match '^\*|^[A-Za-z]:\\|[<>\$\[\]]') { return }
+            $resolved = [System.IO.Path]::GetFullPath((Join-Path $srcDir $raw))
+            [void]$refs.Add($resolved)
+        }
+    }
+    return $refs
+}
+
+# Build-InclusionSet: walk the reference chain from SKILL.md in $skillSrcDir.
+# Returns a HashSet[string] of absolute source paths that belong in the dist.
+function Build-InclusionSet([string]$skillSrcDir) {
+    $included = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $queue    = [System.Collections.Generic.Queue[string]]::new()
+    $scanned  = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    $skillMd = Join-Path $skillSrcDir 'SKILL.md'
+    if (-not (Test-Path $skillMd -PathType Leaf)) { return $included }
+
+    [void]$included.Add($skillMd)
+    $queue.Enqueue($skillMd)
+
+    while ($queue.Count -gt 0) {
+        $current = $queue.Dequeue()
+        if (-not $scanned.Add($current)) { continue }   # already scanned
+
+        $ext = [System.IO.Path]::GetExtension($current).ToLowerInvariant()
+        # Only .md and .txt files embed references; binary/script files are leaf nodes
+        if ($ext -notin @('.md', '.txt')) { continue }
+
+        $content = Get-Content $current -Raw -ErrorAction SilentlyContinue
+        if (-not $content) { continue }
+
+        $srcDir = Split-Path $current -Parent
+        $refs   = Get-RefsFromContent $content $srcDir
+
+        foreach ($resolved in $refs) {
+            if (-not (Test-Path $resolved -PathType Leaf)) { continue }
+            $fi = Get-Item $resolved
+            if (-not $resolved.StartsWith($sourceRoot, [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+            if (Test-DotAncestor $resolved $sourceRoot) { continue }
+            if (Test-Denied $fi -or (Test-DotFile $fi)) { continue }
+            if ($included.Add($resolved)) { $queue.Enqueue($resolved) }
+        }
+    }
+    return $included
+}
+
 # ── Preflight ─────────────────────────────────────────────────────────────────
 Write-Host "`n=== PRE-FLIGHT ==="
 
@@ -113,12 +183,11 @@ $skillFolders = Get-ChildItem -Path $sourceRoot -Recurse -Filter 'SKILL.md' |
 
 $newMap = [System.Collections.Generic.SortedDictionary[string,string]]::new([System.StringComparer]::Ordinal)
 foreach ($dir in $skillFolders) {
-    $relDir = $dir.FullName.Substring($sourceRoot.Length).TrimStart('\/')
-    Get-ChildItem -Path $dir.FullName -File | ForEach-Object {
-        if (-not (Test-Denied $_) -and -not (Test-DotFile $_)) {
-            $h = Get-BlobHash $_.FullName
-            if ($h) { $newMap["skills/$($relDir.Replace('\','/'))" + "/$($_.Name)"] = $h }
-        }
+    $inclusion = Build-InclusionSet $dir.FullName
+    foreach ($srcFile in $inclusion) {
+        $relFile = $srcFile.Substring($sourceRoot.Length).TrimStart('\/')
+        $h = Get-BlobHash $srcFile
+        if ($h) { $newMap["skills/$($relFile.Replace('\','/'))" ] = $h }
     }
 }
 foreach ($idxName in @('skill.index', 'skill.index.md')) {
@@ -174,40 +243,26 @@ if ($DryRun) {
 Write-Host "`n=== BUILD DIST ==="
 Get-ChildItem -Path $distRoot | Remove-Item -Recurse -Force
 
-$totalCopied = 0; $totalDenied = 0
-
-function Resolve-Refs([string]$mdDest, [string]$srcDir, [int]$depth) {
-    if ($depth -ge 4) { return }
-    $content = Get-Content $mdDest -Raw -ErrorAction SilentlyContinue
-    if (-not $content) { return }
-    [regex]::Matches($content, '`([^`]+\.[a-zA-Z0-9]{2,6})`') | ForEach-Object {
-        $ref = $_.Groups[1].Value.Trim()
-        if ($ref.StartsWith('*/') -or $ref.StartsWith('../') -or $ref -match '^[A-Za-z]:\\') { return }
-        $resolved = [System.IO.Path]::GetFullPath((Join-Path $srcDir $ref))
-        if (-not (Test-Path $resolved -PathType Leaf)) { return }
-        $fi = Get-Item $resolved
-        if ($resolved.StartsWith($srcDir, [System.StringComparison]::OrdinalIgnoreCase)) { return }
-        if (Test-DotAncestor $resolved $sourceRoot -or (Test-Denied $fi)) { return }
-        $relFromRoot = $resolved.Substring($sourceRoot.Length).TrimStart('\/')
-        $dest        = Join-Path $distRoot $relFromRoot
-        if (-not (Test-Path $dest)) {
-            New-Item -ItemType Directory -Path (Split-Path $dest -Parent) -Force | Out-Null
-            Copy-Item $fi.FullName $dest -Force
-            if ($fi.Extension -eq '.md') { Resolve-Refs $dest (Split-Path $resolved -Parent) ($depth + 1) }
-        }
-    }
-}
+$totalCopied = 0; $totalDenied = 0; $totalExcluded = 0
 
 foreach ($dir in $skillFolders) {
-    $relDir = $dir.FullName.Substring($sourceRoot.Length).TrimStart('\/')
-    $dest   = Join-Path $distRoot $relDir
-    New-Item -ItemType Directory -Path $dest -Force | Out-Null
-    Get-ChildItem -Path $dir.FullName -File | ForEach-Object {
-        if (Test-Denied $_ -or (Test-DotFile $_)) { $totalDenied++ }
-        else { Copy-Item $_.FullName (Join-Path $dest $_.Name) -Force; $totalCopied++ }
+    $inclusion = Build-InclusionSet $dir.FullName
+
+    # Copy only files in the inclusion set; count others as excluded or denied
+    Get-ChildItem -Path $dir.FullName -Recurse -File | ForEach-Object {
+        $srcFile = $_.FullName
+        if (Test-Denied $_ -or (Test-DotFile $_)) {
+            $totalDenied++
+        } elseif ($inclusion.Contains($srcFile)) {
+            $relFile = $srcFile.Substring($sourceRoot.Length).TrimStart('\/')
+            $dest    = Join-Path $distRoot $relFile
+            New-Item -ItemType Directory -Path (Split-Path $dest -Parent) -Force | Out-Null
+            Copy-Item $srcFile $dest -Force
+            $totalCopied++
+        } else {
+            $totalExcluded++
+        }
     }
-    $destMd = Join-Path $dest 'SKILL.md'
-    if (Test-Path $destMd) { Resolve-Refs $destMd $dir.FullName 0 }
 }
 
 foreach ($idxName in @('skill.index', 'skill.index.md')) {
@@ -222,7 +277,7 @@ if ($violations) {
     exit 1
 }
 
-Write-Host "Dist: $($skillFolders.Count) skills | $totalCopied copied | $totalDenied denied"
+Write-Host "Dist: $($skillFolders.Count) skills | $totalCopied copied | $totalExcluded excluded | $totalDenied denied"
 
 # ── Update plugin.json ────────────────────────────────────────────────────────
 $json.version = $newVer
@@ -262,4 +317,4 @@ Push-Location $pluginRoot
 Pop-Location
 
 Write-Host "`n=== DONE ==="
-Write-Host "Released v$newVer | $($skillFolders.Count) skills | $totalCopied files"
+Write-Host "Released v$newVer | $($skillFolders.Count) skills | $totalCopied included | $totalExcluded excluded"
