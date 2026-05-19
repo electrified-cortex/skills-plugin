@@ -67,16 +67,18 @@ Example: `.claude-plugins/ec-skills/skills/compression/SKILL.md`
 
 ```text
 skills-plugin/
-  publish/        # meta-skill: version-bump, changelog, tag, push
-  build/          # build tooling (Stage 1 crawler)
-  skills/         # distributed output tree (build output — never edit by hand)
-  plugin.json     # version: mono SemVer
+  .claude-plugin/
+    plugin.json    # plugin manifest: name, version, description (the manifest Claude Code reads)
+  build/           # build tooling (deny-list, blob-hash)
+  tools/           # publish toolchain (bump, plan, publish)
+  skills/          # distributed output tree (build output — never edit by hand)
   CHANGELOG.md
   README.md
-  spec.md         # full contract: inputs, outputs, invariants
+  spec.md          # full contract: inputs, outputs, invariants
 ```
 
 ## Versioning
 
-`plugin.json` carries a single `version` field — the plugin is the unit of release.
-Pin by git tag (`v<version>`) or submodule commit. No per-skill versioning.
+`.claude-plugin/plugin.json` carries a single `version` field — the plugin is
+the unit of release. Pin by git tag (`v<version>`) or submodule commit. No
+per-skill versioning.
