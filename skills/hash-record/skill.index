@@ -1,0 +1,6 @@
+.: cache result, look up cached record, hash-record store, content hash cache, audit result cache
+check: check hash-record, skip if cached, cache-first lookup
+index: index hash records, refresh hash-record index, build manifest yaml
+manifest: multi-file cache key, compute manifest hash, cache key for directory
+prune: prune hash records, clean up hash-record, remove orphaned records
+rekey: rekey hash-record, update hash record after lint, move stale hash record

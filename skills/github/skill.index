@@ -1,0 +1,9 @@
+.: github CLI, gh command, github operations, github actions, github PRs, github repos
+actions: run workflow, trigger GitHub Actions, check workflow status, manage workflows
+api: call GitHub API, github REST API, graphql query github, gh api call, raw github API
+issues: manage github issues, create issue, list issues, edit issue, close issue, comment on issue
+pr/: manage pull request, PR status, view PR, list PRs, pull request operations
+projects: github projects board, manage project items, project v2, github project board
+release: create release, publish release, upload release asset, manage releases
+repo: create repo, clone repository, fork repo, manage repositories
+setup: install gh CLI, authenticate github CLI, gh auth login, setup github CLI, configure gh

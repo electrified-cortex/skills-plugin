@@ -1,0 +1,7 @@
+.: manage pull request, PR status, view PR, list PRs, check PR, pull request operations
+comments: add pr comment, edit pr comment, delete pr comment, list pr comments, resolve review thread
+create: create pr, open pull request, submit pr, create draft pr
+file-viewed: mark file as viewed, PR file viewed, unmark file, mark all files reviewed
+inline-comment/: inline comment, PR diff comment, comment on code line, annotate diff, inline review comment
+merge: merge PR, merge pull request, close PR, squash merge, rebase merge
+review: approve PR, request changes on PR, dismiss review, PR review approval

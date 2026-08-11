@@ -1,0 +1,28 @@
+capability-cache: check capability cache, cache model availability, probe copilot models, capability cache hit, capability cache miss
+code-review/: tiered code review, security review, correctness review, code quality, change review, architectural risk
+compression: compress this file, reduce tokens, shrink instructions, caveman compress, ultra compress, full compress, lite compress
+copilot-cli/: use copilot CLI, copilot command, run copilot, ask copilot, explain with copilot, copilot review
+dispatch/: run in background, spawn subagent, background task, isolated agent execution, dispatch subagent, background agent
+file-watching: watch a file, monitor file changes, file mtime change, react on file write
+github/: github CLI, gh command, github operations, github actions, github PRs, github repos
+hash-record/: cache result, look up cached record, hash-record store, content hash cache, audit result cache
+iteration-safety: iteration rules, re-audit rules, when to re-run a pass, prevent redundant re-runs, pass iteration safety
+markdown-hygiene/: lint markdown, fix markdown, MD violations, markdownlint pass, hygiene check
+messaging: post message, read inbox, drain inbox, inter-agent communication, monitor incoming messages
+model-detect: what model are you, model identity, detect model, identify model, model version
+opus5-handoff: offload to Opus 5, hand this to Opus 5, dispatch to Opus 5, spawn an Opus 5 background agent, write an Opus 5 prompt, background agent for a multi-file feature or review or research sweep
+pareto-rank: pareto front, rank by multiple dimensions, non-dominated sort, multi-criteria order
+plan-audit-implement-verify: PAIV, plan a change, audit my plan, implement this plan, verify this change, no cowboy, before I delete
+prd-auditing: audit this PRD, review the PRD, check PRD quality, validate product requirements document, PRD audit
+prd-writing: write a PRD, draft product requirements, author a PRD, new product requirements document, create PRD
+skill-auditing: audit this skill, check skill quality, review skill compliance, validate skill structure, skill audit
+skill-critique: critique this skill, skill quality, is this skill good, refine this skill, quality critique, skill critic
+skill-index/: discover skills, find available skill, skill discovery, read skill index, build skill index, find skill, skill lookup
+skill-manifest: skill file list, skill manifest, what files does this skill need, skill dependency scan
+skill-optimize: optimize skill, skill review, architectural review, skill improvement, find skill issues, analyze skill structure
+skill-writing: write a skill, author SKILL.md, create new skill, draft skill file, implement skill spec
+spec-auditing: spec validation, requirements coverage, contradiction detection, specification quality, validate spec, spec audit
+spec-writing: write a spec, create specification, draft spec document, new spec file, spec document
+swarm: swarm review, multi-reviewer, parallel personalities, run all reviewers, arbitrate findings
+tool-auditing: audit tool, check tool script, review tool conventions, tool compliance, tool script audit
+tool-writing: write a tool, create tool script, new bash script, build a tool, write shell script, tool spec

@@ -1,0 +1,4 @@
+.: inline comment, PR diff comment, comment on code line, annotate diff, inline review comment
+delete: delete inline comment, remove PR comment, delete review comment, delete diff annotation
+edit: edit inline comment, update PR comment body, edit review comment body
+post: post inline comment, pr review comment, inline diff comment, pr inline annotation

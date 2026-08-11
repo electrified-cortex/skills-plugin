@@ -1,0 +1,6 @@
+.: discover skills, find available skill, skill discovery, read skill index, build skill index, find skill, skill lookup
+auditing: validate skill index, audit skill index, skill index health, verify cascade, auditing
+building: build skill index, create skill index, update skill index, rebuild index, building
+crawling: search skill index, find skill in index, locate skill by need, crawl index, crawling
+finding: find skill, locate skill, where is skill, get skill path, cached lookup, finding
+integration: integrate skill index, set up skill discovery, wire skill index, add index to agent, integration

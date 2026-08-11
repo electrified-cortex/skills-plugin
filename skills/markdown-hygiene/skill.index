@@ -1,0 +1,4 @@
+.: lint markdown, fix markdown, MD violations, markdownlint pass, hygiene check
+analysis: semantic advisory, style advisories, markdown analysis, style rule scan, advisory analysis
+lint: markdown lint, MD violations, markdownlint scan, lint markdown file, fix markdown rules
+result: check hygiene cache, hygiene result cache, get cached report, markdown hygiene hit or miss

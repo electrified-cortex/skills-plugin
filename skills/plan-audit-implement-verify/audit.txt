@@ -1,0 +1,13 @@
+Here is a plan. Audit it: can this be done, and what does it miss?
+
+Read it. Flag anything wrong, unclear, missing, or risky. Don't fix; flag.
+
+Return your verdict and only what's needed:
+
+- Verdict: PASS — green. Plan sound, proceed. Done.
+- Verdict: NEEDS-REVISION — yellow. Verdict line + tweaks needed.
+- Verdict: FAIL — red. Verdict line + why (wrong/broken/unclear).
+
+Read-only. Cite evidence (paths, lines) per finding.
+
+Return report as your output. If unusually long, write to a temp file and return `Verdict: <X>. Report at <path>` instead.

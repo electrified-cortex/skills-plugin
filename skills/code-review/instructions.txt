@@ -1,0 +1,85 @@
+Code Review Pass. Produce structured findings report. Never edit, commit, push, or stage.
+
+Tier vocabulary:
+fast-cheap — cost-optimized model (e.g. Haiku-class). Use for `smoke`, `single-adversary`.
+standard — capable model (e.g. Sonnet-class). Use for `substantive`.
+Tier substitution prohibited.
+
+Pre-dispatch:
+1. If `context_pointer` not supplied, check repo root in order: `CLAUDE.md`, `README.md`, `.cursorrules`, `copilot-instructions.md`. Use first found as `context_pointer`. If none, omit.
+2. Blast-radius gate (git-range input only): if `change_set` is git ref/range (contains `..`, `...`, or matches `HEAD~N`), run `git diff --name-only <change_set>` to enumerate affected files. Restrict review context to those files. Skip if inline diff or explicit file list.
+
+Gates:
+1. Resolve `change_set`. Path missing, ref unreachable, PR not found → STOP: `verdict: error`, `failure_reason`.
+2. `tier=substantive` + `prior_findings` absent → STOP: `verdict: error`, `failure_reason: "missing prior_findings"`.
+3. `change_set` empty (no files, no diff, no refs resolving to changes) → `verdict: clean`, `findings: []`, no `prior_findings_disposition`.
+4. Read all change-set files fully before judging. Partial read → STOP: `verdict: error`, `failure_reason: "incomplete change set read"`.
+
+Procedure:
+1. `tier=smoke`: surface-level — style, naming, obvious bugs, missing error handling on observable failures, lint-grade defects. Fast pass. Skip design/architecture critique. Adversarial: assume author made ≥1 mistake; find it, don't approve. If `focus` includes `security`: also frame as pentester looking for exploitable paths, not courtesy reviewer.
+2. `tier=substantive`: design, correctness, security, concurrency, architectural risk, test adequacy, public API surface. Read every file touched by change set, not just diff hunks.
+3. `tier=single-adversary`: adversarial single-pass review. No prior_findings. Frame as attacker: exploitable paths, logic errors, correctness failures. Focused pass — narrower than substantive, deeper than smoke. Use `model` if provided; else tier default.
+4. Substantive MUST re-examine each `prior_findings` entry: agree (carry forward, severity may change) or contradict (mark false-positive/out-of-scope). Contradictions go in output so caller can preserve them.
+5. `focus` provided: examine first, most thoroughly. Still surface every `critical`/`high` finding outside focus. `medium`/`low` outside focus may be deprioritized.
+6. Read `context_pointer` if provided, for local conventions only. Does NOT replace judgment.
+
+One skill per invocation. Each pass separate dispatch. Smoke always before substantive. Two-pass policy applies regardless of change-set size — no size threshold permits single-pass review. Single-Adversary Mode explicitly exempt: intentionally one pass.
+
+Empty change set: skip all passes; return empty-result aggregate.
+
+Severity vocabulary (ONLY these):
+`critical`: must fix before advancing — data loss, security hole, broken build, broken contract.
+`high`: should fix unless caller defers — significant correctness risk, missing error handling on observable failure, regression risk.
+`medium`: improvement worth making, not blocking.
+`low`: stylistic preference, naming polish, comment wording.
+`info`: informational only — no action required.
+
+SARIF mapping: critical/high → error, medium → warning, low/info → note.
+
+Calibration: grade findings proportional to signal strength. Speculative/uncertain issues → `medium` or lower; reserve `critical`/`high` for findings with fully established evidence path.
+
+`critical`/`high` findings must state in description: Source (where problem enters), Sink (where it causes harm/manifests), Missing guard (what defense is absent). Missing any of the three → downgrade finding to `medium` before returning results.
+
+Hallucination Filter (verify all four before including any finding):
+1. File existence: cited file path appears in diff or file list.
+2. Line range: cited line within changed hunk or within 10 lines of one.
+3. Code-quote accuracy: verbatim code must appear in diff (exact string match).
+4. Direction consistency: claims about "added"/"removed" must match diff direction (+/- hunks).
+Findings failing any check MUST be omitted. Don't downgrade — omit entirely.
+
+Output (JSON-shaped, returned as final response):
+```json
+{
+  "tier": "smoke" | "substantive" | "single-adversary",
+  "pass_index": <integer assigned by caller; echo if provided, else 0>,
+  "verdict": "clean" | "findings" | "error",
+  "findings": [
+    {
+      "severity": "critical" | "high" | "medium" | "low" | "info",
+      "location": "<file:line-range>" or "general",
+      "snippet": "<verbatim code excerpt from diff -- exact match; omit if location is \"general\">",
+      "description": "<what the issue is>",
+      "recommended_action": "<what should be done>"
+    }
+  ],
+  "failure_reason": "<string>"      // present only when verdict = "error"
+}
+```
+
+Aggregated Result (calling agent assembles after all passes):
+`passes`: per-pass reports in dispatch order.
+`sign_off_pass_index`: index of most recent successful standard pass; `null` when empty change set or only failed passes exist.
+`severity_aggregate`: finding counts by severity in sign-off pass only (zero per bucket when null or clean).
+`verdict`: `clean`, `findings`, or `error`.
+`preserved_contradictions`: smoke findings sign-off contradicted, each paired with contradicting commentary.
+
+Rules:
+Read-only. Don't edit, stage, commit, push, or run scripts that mutate state.
+Don't fix findings, even one-line fixes. Report only.
+Use ONLY severity vocabulary above. Don't invent severities.
+Smoke MUST NOT receive `prior_findings`; if it arrives anyway, ignore and proceed.
+Single pass per dispatch. Don't chain or self-iterate.
+Don't consult agent memories, working-tree state, or repo history beyond `change_set`/`context_pointer`.
+Caller disputes about prior findings not passed to you. Form own judgment.
+
+Related: `dispatch` (`../dispatch/SKILL.md`), `swarm` (`../swarm/SKILL.md`)

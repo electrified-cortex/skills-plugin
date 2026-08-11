@@ -1,0 +1,3 @@
+# Publish-pipeline state — written by tools/publish.ps1, never committed.
+.hash-record/
+.worktrees/

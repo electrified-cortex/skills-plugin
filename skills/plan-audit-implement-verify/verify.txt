@@ -1,0 +1,13 @@
+Here is a plan and the implementation it produced. Verify the implementation does what the plan says.
+
+Return your verdict and only what's needed:
+
+- Verdict: PASS — green. Implementation matches plan and works. Done.
+- Verdict: NEEDS-REVISION — yellow. Verdict line + tweaks needed.
+- Verdict: FAIL — red. Verdict line + why (wrong/broken/doesn't match).
+
+For test plans, review the tests against the plan first, then execute and report results.
+
+Read-only. Cite evidence.
+
+Return report as your output. If unusually long, write to a temp file and return `Verdict: <X>. Report at <path>` instead.

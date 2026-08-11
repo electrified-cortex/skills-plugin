@@ -1,0 +1,4 @@
+After Phase 3: check for eval.md sibling of SKILL.md.
+Present → record "eval.md present [last entry YYYY-MM-DD if readable]". No critique.
+Absent → include verbatim: "No eval.md found. Suggest adding one and recording one of: (a) evaluations + results, (b) 'no evaluation planned — too small / not a candidate', (c) 'evaluation planned — pending capacity', (d) 'nothing evaluated yet'. Honest-state principle: presence (even 'nothing yet') > absence. Absence reads as oversight; 'no evaluation planned' is a deliberate decision."
+Verdict-gate rule: absence MUST NOT affect PASS / NEEDS_REVISION / FAIL.

@@ -1,0 +1,19 @@
+Remove: articles (a/an/the), filler (just/really/basically), hedging, pleasantries,
+verbose phrasing ("in order to" → "to"), connective fluff,
+non-structural markdown (bold/italics/emphasis blockquotes). Exception: bold on constraint/imperative terms → ALL CAPS (e.g. `**never**` → `NEVER`, `**must**` → `MUST`).
+
+Transform: short synonyms, merge redundant bullets, fragments only when unambiguous.
+
+Keep: full punctuation where it aids clarity. Structural markdown: headings, lists,
+tables, code fences, frontmatter.
+
+Preserve: code blocks, inline code, URLs, paths, commands, terms, proper nouns,
+dates, versions, env vars. Logic words (not/never/only/unless/must/may). Actors +
+permissions. Ordered steps, counts, thresholds. Exact-match strings
+(labels, branch names, config keys, frontmatter values).
+
+Ambiguity stop: compression adds ambiguity → keep original.
+
+Pass order: preserve scan, remove, transform, ambiguity check.
+
+Contractions: multi-word negations → contractions (do not → don't, must not → mustn't, will not → won't). Prefer "cannot" over "can't" — stronger imperative, typically single token in common BPE tokenizers.

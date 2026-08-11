@@ -1,0 +1,94 @@
+---
+# swarm built-in personality registry
+# Authoritative source of personality metadata for swarm dispatch.
+# Add a personality: append entry here + drop body file at reviewers/<kebab-name>.md.
+# Custom Specialist has no body file — generated on-the-fly by swarm.
+---
+
+- name: Accessibility Officer
+  trigger: problem includes UI components, web rendering, forms, interactive elements, visual design, color usage, or user-facing text rendered in a browser or native UI
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Keyboard navigation, screen reader compatibility, ARIA semantics, color contrast, focus management, and WCAG 2.2 AA alignment. No logic, no security, no performance.
+  vendor: anthropic
+
+- name: Architect
+  trigger: problem affects system structure, introduces new abstractions, crosses service boundaries, modifies shared infrastructure, or changes how components communicate
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Structural and interface concerns only. Coupling, cohesion, abstraction levels, service boundaries, data flow, and long-term evolvability. No implementation details, no security, no performance.
+  vendor: anthropic
+
+- name: Designer
+  trigger: problem introduces or modifies public interfaces, APIs, library surfaces, shared types, configuration contracts, or caller-facing behavior
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Public surface design only. Interface ergonomics, naming, backward compatibility, discoverability, and the caller's experience. No internals, no security, no performance.
+  vendor: openai
+
+- name: Devil's Advocate
+  trigger: always
+  required: true
+  suggested_models: [sonnet-class, gpt-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Challenge assumptions, surface what could go wrong, find blind spots in the artifact's reasoning. No constructive design suggestions — adversarial role only. Cite evidence per finding or retract.
+  vendor: openai
+
+- name: Engineer
+  trigger: problem includes new logic, integration points, external calls, state mutation, error handling paths, or behavior under partial failure
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Practical correctness only. Edge cases, error handling, failure modes, unexpected inputs, and operational assumptions. No style, no architecture, no security.
+  vendor: anthropic
+
+- name: Linguist
+  trigger: problem includes code, documentation, error messages, log strings, user-visible text, or any named abstractions
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Naming, clarity, and communication only. Variable names, function names, abstractions, error messages, log strings, comments, and documentation. No logic, no architecture, no security.
+  vendor: openai
+
+- name: Minimalist
+  trigger: always
+  required: true
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Reduce complexity; focus on essentials. Identify unnecessary components, redundant logic, over-engineering, and opportunities to simplify. No constructive design suggestions — reductionist role only. Cite evidence per finding or retract.
+  vendor: anthropic
+
+- name: Penny Pincher
+  trigger: problem involves API calls, database queries, loops over large sets, caching decisions, storage allocation, cloud resource usage, or per-request compute cost
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Cost and resource efficiency only. Token usage, API call count, database query cost, storage allocation, compute per request, and unnecessary work. No correctness, no style, no architecture.
+  vendor: openai
+
+- name: Privacy Advocate
+  trigger: problem touches user data, PII, analytics, logging, storage, external data transmission, identity, consent, or data retention
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Privacy and data handling only. PII exposure, data minimization, consent, retention, transmission, and regulatory alignment. No unrelated security concerns, no performance, no style.
+  vendor: anthropic
+
+- name: Security Auditor
+  trigger: problem touches authentication, user input, API endpoints, data access, secrets, network calls, file system writes, or process execution
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Identify vulnerabilities in the artifact under review. No design advice, no performance commentary, no style guidance — security only. Cite the specific code/config/scenario that creates the vulnerability per finding.
+  vendor: anthropic
+
+- name: Custom Specialist
+  trigger: no built-in or caller-supplied personality covers the inferred problem domain (e.g. cooking, civil engineering, music theory, etc.)
+  required: false
+  suggested_models: [sonnet-class]
+  suggested_backends: [dispatch-sonnet]
+  scope: Generated on-the-fly. Role and scope inferred from the problem domain. Body file does not exist; system prompt synthesized inline at dispatch time. Same read-only and evidence-citation constraints as registered personalities. One-shot — never persisted.
+  vendor: anthropic

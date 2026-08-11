@@ -1,0 +1,27 @@
+Zero context. Locate the named skill via cache-first lookup. Return one result line. Modify nothing except the cache.
+
+Parse inputs: `query=<text>` `root=<path>`
+Skill-dir: directory containing this file.
+Scripts (Windows: `.ps1`; other: `.sh`):
+  `<skill-dir>/tools/lookup.sh` / `<skill-dir>/tools/lookup.ps1`
+  `<skill-dir>/tools/update.sh` / `<skill-dir>/tools/update.ps1`
+
+Normalize query → key: lowercase; replace `/`, `\`, `_`, whitespace runs with `-`; strip non-`[a-z0-9-]`; strip leading/trailing `-`.
+
+Step 1 — Cache lookup:
+Run: `<skill-dir>/tools/lookup.sh "<root>" "<key>"` or `lookup.ps1 "<root>" "<key>"`
+On script error: output `error: <message>`. Stop.
+| Output | Action |
+| --- | --- |
+| `hit: <path>` | Output `hit: <path>`. Stop. |
+| `url: <url>` | Output `hit: <url>`. Stop. |
+| `stale: <old>` | Record stale=true, old-path=<old>. Proceed to Step 2. |
+| `miss` | Record stale=false. Proceed to Step 2. |
+
+Step 2 — Crawl (one call, no retry):
+If `<skill-dir>/../crawling/SKILL.md` is missing: output `error: crawling sub-skill unavailable`. Stop.
+Follow `crawling` sub-skill at `<skill-dir>/../crawling/SKILL.md`. Input: `need=<key> root=<root>`
+| Crawl result | Action |
+| --- | --- |
+| `hit: <path>` | Run `update.sh "<root>" "<key>" "<path>"` or `update.ps1 ...`. On script error: output `error: <message>`. Stop. If stale=true: output `stale-updated: <path>`. Else: output `crawled: <path>`. Stop. |
+| `no match` | Output `not-found: <query>`. Next line: `suggest-register: <key> — not in index; if skill exists, add + rebuild.` Stop. |
