@@ -1,6 +1,6 @@
 # Dispatch Agent Files
 
-Canonical Dispatch agent definitions. This folder is the source of truth.
+Canonical Dispatch agent definitions. This folder is the source of truth; Claude Code loads the plugin-root `agents/` copy that the plugin build makes from it.
 
 | File | Environment | Role |
 | --- | --- | --- |

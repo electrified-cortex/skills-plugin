@@ -8,7 +8,7 @@ Input:
 `<prompt>` — verbatim prompt sent to sub-agent
 `<description>` — short run label shown by host
 `<tier>` — `fast-cheap` | `standard` (default) | `deep`
-`<model-override>` (optional) — concrete model or alias (e.g. `Claude Sonnet 4.6`, `GPT-5.4`, `gpt-5-codex`); bypasses tier lookup when set
+`<model-override>` (optional) — concrete model or alias: a Claude Code alias (`haiku`, `sonnet`, `opus`) or, for VS Code, the model's display name; bypasses tier lookup when set
 
 Derived:
 
@@ -34,7 +34,7 @@ Claude Model Aliases:
 
 `<dispatch-agent>` = first agent type in your available list:
 
-1. `Dispatch` — project or user install (`.claude/agents/`)
+1. `Dispatch` or `dispatch` — project or user install (`.claude/agents/`, `~/.claude/agents/`)
 2. `electrified-cortex-skills:dispatch` — shipped by the plugin
 3. none → Fallback
 
@@ -47,6 +47,8 @@ Agent({
   description: "<description>"
 })
 ```
+
+Omit `run_in_background` if the Agent tool has no such parameter (sub-agents then run in the background).
 
 VS Code / Copilot:
 
@@ -72,12 +74,12 @@ runSubagent({
 
 Fallback:
 
-If no Dispatch agent is available: omit `subagent_type` / `agentName` and continue — behavior is identical. The agent adds context isolation and consistent performance. Notify the host after completion: in Claude Code, installing the plugin adds the agent; in VS Code, see `installation.md`.
+If no Dispatch agent is available: omit `subagent_type` / `agentName` and continue. Tell the user after completion: in Claude Code, installing the plugin adds the agent; in VS Code, see `installation.md`.
 
 If the requested model is not available: stop and inform the caller; suggest an alternative.
 
 Return:
-Return (passthrough) sub-agent output to caller.
+Return (passthrough) sub-agent output to caller. If you need the result, wait for the completion notice before answering.
 
 Concurrency:
 When dispatching multiple instructions simultaneously, default max concurrent = 3. Use a rolling window: start up to 3, then as each returns dispatch the next pending instruction. Only exceed 3 if instructed by the caller.

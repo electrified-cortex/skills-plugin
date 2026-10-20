@@ -76,7 +76,7 @@ Correct decision:
 
 ## CLI Dispatch Examples
 
-Worked examples for CLI dispatch mode (see `spec.md §CLI Dispatch Mode` for normative requirements CDR1–CDR17).
+Worked examples for CLI dispatch mode (the normative requirements CDR1–CDR17 are in `spec.md §CLI Dispatch Mode` in the skill source repo; the file is not shipped in the plugin).
 
 ### Pattern: `claude -p` — Foreground, Read-Only Analysis
 

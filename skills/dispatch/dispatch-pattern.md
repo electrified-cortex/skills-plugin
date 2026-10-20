@@ -1,8 +1,7 @@
 # Dispatch Pattern
 
 Design rationale for the `dispatch` primitive. Canonical envelope is in
-`dispatch/SKILL.md` and `dispatch/uncompressed.md` — read those for the
-operational spec.
+`dispatch/SKILL.md` — read it for the operational spec.
 
 ## Why dispatch exists
 
@@ -40,8 +39,8 @@ Follow `dispatch` skill. See `../dispatch/SKILL.md`.
 
 Callers declare a tier (`fast-cheap`, `standard`, `deep`) instead of a
 model name. Dispatch resolves the tier to a concrete model per runtime.
-Model name changes require only one update (in `dispatch/SKILL.md`), not
-across every consumer skill.
+Model name changes are made in `dispatch/SKILL.md`, `setup/SKILL.md` and the
+VS Code agent files, never in consumer skills.
 
 ## Zero-context isolation
 
@@ -52,9 +51,9 @@ agent state from contaminating the sub-agent's reasoning.
 ## Install check and fallback
 
 In Claude Code the plugin ships the agent as `electrified-cortex-skills:dispatch`;
-a project or user agent named `Dispatch` takes priority. If no Dispatch agent
-is available on the host, dispatch falls back: omit `subagent_type` /
-`agentName` and continue, but notify the host after completion. This
+a project or user agent named `Dispatch` or `dispatch` takes priority. If no
+Dispatch agent is available on the host, dispatch falls back: omit
+`subagent_type` / `agentName` and continue, but tell the user after completion. This
 makes the primitive resilient across environments with different agent
 installations.
 

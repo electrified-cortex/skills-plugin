@@ -2,7 +2,8 @@
 
 ## Claude Code: nothing to install
 
-Installing the electrified-cortex-skills plugin installs the Dispatch agent.
+Installing the electrified-cortex-skills plugin (v0.9.0 or later) installs the
+Dispatch agent; it is picked up at the next session start.
 It appears in the agent list as `electrified-cortex-skills:dispatch`.
 
 ```bash
@@ -10,9 +11,10 @@ claude plugin marketplace add https://github.com/electrified-cortex/skills-plugi
 claude plugin install electrified-cortex-skills@electrified-cortex
 ```
 
-Optional override: a project or user agent named `Dispatch`
+Optional override: a project or user agent named `Dispatch` or `dispatch`
 (`.claude/agents/` or `~/.claude/agents/`) takes priority in the `dispatch`
-skill. Copy `agents/dispatch.md` there only to change its model or tools.
+skill. Copy `agents/dispatch.md` there, named `dispatch`, only to change its
+model or tools.
 
 ## VS Code (GitHub Copilot): manual copy
 
@@ -28,5 +30,6 @@ The agent name is `Dispatch`. See `setup/SKILL.md` for frontmatter rules.
 ## If no Dispatch agent is available
 
 The dispatch primitive still works: omit `subagent_type` / `agentName` and the
-host uses its default sub-agent type. The agent adds context isolation and
-consistent performance. Notify the host after completion.
+host uses its default sub-agent type. The agent only adds a minimal system
+prompt. Tell the user after completion that installing the plugin adds the
+agent.
