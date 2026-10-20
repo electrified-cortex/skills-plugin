@@ -92,6 +92,41 @@ containment-checked to the source root and subject to the deny and ignore lists.
 After the copy, the build asserts that no denied file and no ignored top-level
 name appears anywhere in the dist.
 
+### `agents/` tree
+
+Claude Code registers plugin agents only from the plugin-root `agents/` folder,
+not from inside a skill. A skill ships a Claude Code agent by placing it at
+`<skill>/agents/<name>.md` in the source repo. The build copies every such file
+(excluding `README.md`, denied files and subfolders) to `agents/<name>.md` here.
+Each agent loads under the scoped name `<plugin-name>:<frontmatter name>`, for
+example `electrified-cortex-skills:dispatch`.
+
+Subfolders of `<skill>/agents/` (such as `vscode/`) hold other runtimes' agent
+files. They stay inside the skill and are never copied to `agents/`, because
+Claude Code scans `agents/` recursively.
+
+The build blocks before the version bump when an agent file has no frontmatter,
+no `name` or `description`, a duplicate file name or agent name, or a `hooks`,
+`mcpServers` or `permissionMode` key. Plugin agents ignore those three keys, so a
+guard that depends on them must ship as a plugin-wide component instead.
+
+The skill keeps its own copy of the file as well, so a skill can point a fallback
+sub-agent at its agent file by relative path.
+
+Verified against Claude Code (2026-10-15):
+
+- A plugin's `.claude/agents/` folder is not read. Release 0.6.0 shipped agents
+  there and registered none.
+- Any `.md` file name works, including `name.agent.md`. The frontmatter `name`
+  sets the agent name. A file without one loads under its file name, suffix
+  included (`dispatch.agent.md` would load as `dispatch.agent`).
+- Only the scoped name resolves. `dispatch` alone does not reach
+  `electrified-cortex-skills:dispatch`.
+- `claude plugin details` lists agents by file name, not by agent name. To see
+  the registered names, run
+  `claude --plugin-dir <path> --agent <plugin>:none -p x`; the error lists every
+  available agent.
+
 ### Index files
 
 `skill.index` and `skill.index.md` files are preserved wherever they appear in the
@@ -112,10 +147,11 @@ tag body, together with the source commit SHA the release was built from.
 The following invariants are non-negotiable. Any change that violates them is a
 breaking change and requires explicit operator sign-off.
 
-### 1. `skills/` is build output — never edited by hand
+### 1. `skills/` and `agents/` are build output — never edited by hand
 
-All changes to skills flow from the electrified-cortex/skills source repo through
-the build pipeline. Manually editing files under `skills/` is prohibited. If a skill
+All changes to skills and agents flow from the electrified-cortex/skills source
+repo through the build pipeline. Manually editing files under `skills/` or
+`agents/` is prohibited. If a skill
 needs fixing, fix it upstream and re-run the build.
 
 ### 2. The plugin is a single SemVer release

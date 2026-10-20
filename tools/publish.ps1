@@ -34,6 +34,7 @@ $pluginRoot   = Split-Path -Parent $PSScriptRoot
 # Code reads when the plugin is installed. There is no second manifest.
 $pluginJson   = Join-Path $pluginRoot '.claude-plugin\plugin.json'
 $distRoot     = Join-Path $pluginRoot 'skills'
+$agentsDist   = Join-Path $pluginRoot 'agents'
 $manifestDir  = Join-Path $pluginRoot '.hash-record\publish'
 $manifestFile = Join-Path $manifestDir 'last-manifest.txt'
 
@@ -115,7 +116,7 @@ if (-not $BuildOnly) {
     Push-Location $pluginRoot
     $dirty = & git status --porcelain 2>$null |
         Where-Object { $_ -notmatch '^\?\?' } |                              # skip untracked
-        Where-Object { $_ -notmatch '^\s*\S+\s+(skills/|\.claude-plugin/)' }
+        Where-Object { $_ -notmatch '^\s*\S+\s+(skills/|agents/|\.claude-plugin/)' }
     Pop-Location
     if ($dirty) {
         Write-Error "Dirty working tree (unmanaged changes):`n$($dirty -join "`n")`nCommit or stash before publishing."
@@ -186,7 +187,55 @@ $skillFolders = Get-ChildItem -Path $sourceRoot -Recurse -Filter 'SKILL.md' |
     Where-Object { -not (Test-Ignored $_.Directory.FullName) } |
     Select-Object -ExpandProperty Directory | Sort-Object FullName
 
+# ── Plugin agents ─────────────────────────────────────────────────────────────
+# Claude Code registers plugin agents only from the plugin-root agents/ folder,
+# never from inside a skill. Source convention: <skill>/agents/<name>.md is a
+# Claude Code agent and is hoisted to agents/<name>.md. README.md and any
+# subfolder (e.g. agents/vscode/) stay with the skill only — Claude Code scans
+# agents/ recursively, so other runtimes' files must never land there.
+Write-Host "`n=== AGENTS ==="
+$agentFiles = @(foreach ($dir in $skillFolders) {
+    $agentDir = Join-Path $dir.FullName 'agents'
+    if (Test-Path $agentDir -PathType Container) {
+        Get-ChildItem -Path $agentDir -File -Filter '*.md' |
+            Where-Object { $_.Name -ne 'README.md' -and -not (Test-Denied $_) -and -not (Test-DotFile $_) }
+    }
+})
+$agentByFile = @{}; $agentByName = @{}; $agentErrors = @()
+foreach ($a in $agentFiles) {
+    $srcRel = $a.FullName.Substring($sourceRoot.Length).TrimStart('\/')
+    if ($agentByFile.ContainsKey($a.Name)) { $agentErrors += "duplicate agent file name '$($a.Name)': $srcRel and $($agentByFile[$a.Name])"; continue }
+    $agentByFile[$a.Name] = $srcRel
+    $text = (Get-Content $a.FullName -Raw) -replace "`r`n", "`n"
+    if ($text -notmatch '(?s)\A---\n(.*?)\n---\n') { $agentErrors += "$srcRel - missing YAML frontmatter"; continue }
+    $fm = $Matches[1]
+    $name = if ($fm -match '(?m)^name:\s*(\S.*?)\s*$') { $Matches[1] } else { $null }
+    # Without a name, a plugin agent loads under its file name (`x.agent.md` -> `x.agent`).
+    if (-not $name) { $agentErrors += "$srcRel - frontmatter has no 'name'"; continue }
+    $name = $name.Trim('"', "'")
+    if ($name.Contains(':')) { $agentErrors += "$srcRel - agent name '$name' contains ':'" }
+    if ($fm -notmatch '(?m)^description:\s*\S') { $agentErrors += "$srcRel - frontmatter has no 'description'" }
+    # Plugin agents silently ignore these; shipping them would hide a broken guard.
+    foreach ($k in 'hooks', 'mcpServers', 'permissionMode') {
+        if ($fm -match "(?m)^${k}:") { $agentErrors += "$srcRel - '$k' is ignored in plugin agents; ship it as a plugin-wide component instead" }
+    }
+    $key = $name.ToLowerInvariant()
+    if ($agentByName.ContainsKey($key)) { $agentErrors += "duplicate agent name '$name': $srcRel and $($agentByName[$key])" }
+    else { $agentByName[$key] = $srcRel }
+}
+if ($agentErrors) {
+    Write-Error "Agent validation failed:`n$($agentErrors -join "`n")"
+    exit 1
+}
+$pluginName = (Get-Content $pluginJson -Raw | ConvertFrom-Json).name
+foreach ($k in ($agentByName.Keys | Sort-Object)) { Write-Host "  ${pluginName}:$k  <- $($agentByName[$k])" }
+Write-Host "Agents: $($agentFiles.Count)"
+
 $newMap = [System.Collections.Generic.SortedDictionary[string,string]]::new([System.StringComparer]::Ordinal)
+foreach ($a in $agentFiles) {
+    $h = Get-BlobHash $a.FullName
+    if ($h) { $newMap["agents/$($a.Name)"] = $h }
+}
 foreach ($dir in $skillFolders) {
     $relDir = $dir.FullName.Substring($sourceRoot.Length).TrimStart('\/')
     Get-ChildItem -Path $dir.FullName -File -Recurse | ForEach-Object {
@@ -313,8 +362,12 @@ foreach ($idxName in @('skill.index', 'skill.index.md')) {
     if (Test-Path $src) { Copy-Item $src (Join-Path $distRoot $idxName) -Force; $totalCopied++ }
 }
 
+if (Test-Path $agentsDist) { Remove-Item -LiteralPath $agentsDist -Recurse -Force }
+New-Item -ItemType Directory -Path $agentsDist -Force | Out-Null
+foreach ($a in $agentFiles) { Copy-Item $a.FullName (Join-Path $agentsDist $a.Name) -Force; $totalCopied++ }
+
 # Validation — no denied files in dist
-$violations = Get-ChildItem -Path $distRoot -Recurse -File | Where-Object { (Test-Denied $_) -or (Test-DotFile $_) }
+$violations = Get-ChildItem -Path $distRoot, $agentsDist -Recurse -File | Where-Object { (Test-Denied $_) -or (Test-DotFile $_) }
 if ($violations) {
     Write-Error "Build validation failed — denied files in dist:`n$($violations.FullName -join "`n")"
     exit 1
@@ -327,7 +380,7 @@ if ($ignoredInDist) {
     exit 1
 }
 
-Write-Host "Dist: $($skillFolders.Count) skills | $totalCopied copied | $totalDenied denied"
+Write-Host "Dist: $($skillFolders.Count) skills | $($agentFiles.Count) agents | $totalCopied copied | $totalDenied denied"
 
 if ($BuildOnly) {
     Write-Host "`n=== DONE (build-only) ==="
@@ -344,7 +397,7 @@ Write-Host "Wrote $pluginJson -> $newVer"
 # ── Stage + commit ────────────────────────────────────────────────────────────
 Write-Host "`n=== COMMIT ==="
 Push-Location $pluginRoot
-& git add .claude-plugin/plugin.json skills/
+& git add -A -- .claude-plugin/plugin.json skills/ agents/
 & git commit -m "release: v$newVer"
 Write-Host "Committed: release v$newVer"
 

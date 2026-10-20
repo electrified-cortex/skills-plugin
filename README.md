@@ -15,6 +15,9 @@ claude plugin marketplace add https://github.com/electrified-cortex/skills-plugi
 claude plugin install electrified-cortex-skills@electrified-cortex
 ```
 
+This also installs the plugin's agents, such as `electrified-cortex-skills:dispatch`.
+No agent files need copying.
+
 ## Set me up in VS Code (GitHub Copilot)
 
 Skills use the [Agent Skills open standard](https://agentskills.io),
@@ -71,6 +74,7 @@ skills-plugin/
   build/          # deny-list + pre-publish validation gate
   tools/          # publish.ps1 release pipeline + helpers
   skills/         # distributed output tree (build output — never edit by hand)
+  agents/         # Claude Code agents hoisted from <skill>/agents/ (build output)
   .claude-plugin/ # plugin.json (version: mono SemVer) + marketplace.json
   README.md
   spec.md         # full contract: inputs, outputs, invariants

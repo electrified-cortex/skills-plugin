@@ -26,9 +26,9 @@ pwsh tools/publish.ps1 -Bump patch -Notes "description of what changed"
 2. Publish-ignore: loads `<source>/.publish-ignore` (required — the build fails closed if it is missing); listed top-level dirs never enter the dist
 3. Pre-publish validation: `build/pre-publish-check.sh` gates on BOM / frontmatter / Inheritance findings
 4. Change check: compares source hashes against `.hash-record/publish/last-manifest.txt` — exits early if nothing changed (skip with `-Force`)
-5. Build dist: clears `skills/`, mirrors source with deny-list applied, cross-folder refs resolved (containment-checked to the source root), then asserts no denied or ignored entries landed in the dist
+5. Build dist: clears `skills/`, mirrors source with deny-list applied, cross-folder refs resolved (containment-checked to the source root), then asserts no denied or ignored entries landed in the dist. Also rebuilds `agents/` from each skill's `agents/*.md` (Claude Code agents; validated before the bump)
 6. Bump `plugin.json` version + `built` date
-7. `git add .claude-plugin/plugin.json skills/` → `git commit -m "release: v<new>"`
+7. `git add -A -- .claude-plugin/plugin.json skills/ agents/` → `git commit -m "release: v<new>"`
 8. `git tag -a v<new>` — tag body carries the release notes and the source commit SHA
 9. Save new manifest to `.hash-record/publish/last-manifest.txt`
 10. `git push origin main && git push origin v<new>`
