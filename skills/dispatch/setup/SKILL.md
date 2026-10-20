@@ -11,10 +11,12 @@ This skill applies to VS Code (GitHub Copilot) and Cursor only.
 | Environment | Path |
 | --- | --- |
 | VS Code / Cursor | `.github/agents/dispatch.agent.md` |
-| Claude Code CLI | `.claude/agents/dispatch.agent.md` |
+| Claude Code CLI | none — the plugin ships it |
 
-VS Code can read `.claude/agents/` but tends to get permissions wrong and is generally true in reverse with `.github/agents/`
-The right thing to do is simply copy these to the correct location.
+Source to copy: `../agents/vscode/dispatch.agent.md`. Not `../agents/dispatch.md` — that is the Claude Code agent.
+
+VS Code 1.109+ also reads `.claude/agents/` (Claude format) but tends to get permissions and tools wrong; use the native `.github/agents/` file. Keep sub-agents beside it.
+Copy the source file to the path above.
 
 ## Required Frontmatter
 

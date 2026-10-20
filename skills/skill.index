@@ -15,6 +15,7 @@ pareto-rank: pareto front, rank by multiple dimensions, non-dominated sort, mult
 plan-audit-implement-verify: PAIV, plan a change, audit my plan, implement this plan, verify this change, no cowboy, before I delete
 prd-auditing: audit this PRD, review the PRD, check PRD quality, validate product requirements document, PRD audit
 prd-writing: write a PRD, draft product requirements, author a PRD, new product requirements document, create PRD
+scout: /scout, use scout, use haiku, look up, find out, who changed, check the status of, cheap look
 skill-auditing: audit this skill, check skill quality, review skill compliance, validate skill structure, skill audit
 skill-critique: critique this skill, skill quality, is this skill good, refine this skill, quality critique, skill critic
 skill-index/: discover skills, find available skill, skill discovery, read skill index, build skill index, find skill, skill lookup

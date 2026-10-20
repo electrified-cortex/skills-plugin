@@ -1,0 +1,10 @@
+runSubagent(agentName: "Dispatch", prompt: "...", description: "...")
+- prompt: full task instructions (or "read <path> and follow it") + all needed context (sub-agent sees nothing from this conversation)
+- description: 3-5 word label shown in UI (e.g. "Scan task queue")
+- model: omit = Sonnet (default); "Claude Haiku 4.5" or "GPT-5.4 mini" for simple/cheap tasks; "Claude Opus 4.6 " for critical/deep work
+Prompt must include: goal (1 sentence) + conversation context + output shape + scope.
+Prompt check: would a stranger reading cold know exactly what to do? If no, not ready.
+Skip passing: project docs, CLAUDE.md, memory — inherited automatically.
+Defer (don't dispatch): speculative, blocked, or low-priority work.
+Dispatch: everything else not needing live chat context. runSubagent is blocking — no background dispatch.
+Inline: <3 turns, or requires live context.

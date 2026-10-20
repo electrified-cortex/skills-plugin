@@ -80,10 +80,13 @@ skill-name/
 ├── SKILL.md            ← compressed runtime (what agents load)
 ├── instructions.txt    ← dispatch procedure (dispatch skills only)
 ├── uncompressed.md     ← human-readable baseline
+├── agents/             ← optional: agent files shipped with the skill
+├── installation.md     ← optional: install notes
 └── spec.md             ← normative spec (never at runtime)
 ```
 
 `instructions.txt` present = dispatch skill. Absent = inline.
+`agents/` present = skill ships agent; plugin build hoists it to plugin-root `agents/` folder.
 
 Inline Skill: `SKILL.md` IS full instruction set. Agent reads, applies directly.
 

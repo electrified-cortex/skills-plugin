@@ -20,6 +20,8 @@ If `<prompt>` instructs sub-agent to read a file, don't read it yourself — sub
 
 DO NOT DISPATCH SKILLS — read them. The skill itself tells you when (and how) to dispatch.
 
+Dispatching to verify/review prior work: exclude that agent's session id (e.g. a task's `executed_by` field, or equivalent) from being the dispatched agent. No eligible session — dispatch fresh.
+
 Claude Code:
 
 Claude Model Aliases:
@@ -30,9 +32,15 @@ Claude Model Aliases:
 | `standard` | sonnet-class | `sonnet` |
 | `deep` | opus-class | `opus` |
 
+`<dispatch-agent>` = first agent type in your available list:
+
+1. `Dispatch` — project or user install (`.claude/agents/`)
+2. `electrified-cortex-skills:dispatch` — shipped by the plugin
+3. none → Fallback
+
 ```tool
 Agent({
-  subagent_type: "Dispatch",
+  subagent_type: "<dispatch-agent>",
   prompt: "<prompt>",
   model: "<concrete-model>",
   run_in_background: true,
@@ -64,7 +72,7 @@ runSubagent({
 
 Fallback:
 
-If the "Dispatch" agent is not installed: omit `subagent_type` / `agentName` and continue — behavior is identical. The agent adds context isolation and consistent performance. Notify the host after completion.
+If no Dispatch agent is available: omit `subagent_type` / `agentName` and continue — behavior is identical. The agent adds context isolation and consistent performance. Notify the host after completion: in Claude Code, installing the plugin adds the agent; in VS Code, see `installation.md`.
 
 If the requested model is not available: stop and inform the caller; suggest an alternative.
 
@@ -75,4 +83,4 @@ Concurrency:
 When dispatching multiple instructions simultaneously, default max concurrent = 3. Use a rolling window: start up to 3, then as each returns dispatch the next pending instruction. Only exceed 3 if instructed by the caller.
 
 See also:
-`supplemental.md` — context inheritance, CLI dispatch, hash-record. `dispatch-pattern.md` — design rationale. `installation.md` — agent install. `setup/SKILL.md` — VS Code/Cursor setup.
+`supplemental.md` — context inheritance, CLI dispatch, hash-record. `dispatch-pattern.md` — design rationale. `installation.md` — agent install. `agents/` — agent sources. `setup/SKILL.md` — VS Code/Cursor setup.

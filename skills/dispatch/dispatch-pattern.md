@@ -51,8 +51,10 @@ agent state from contaminating the sub-agent's reasoning.
 
 ## Install check and fallback
 
-If the "Dispatch" agent is not installed on the host, dispatch falls back:
-omit `agentName` and continue, but notify the host after completion. This
+In Claude Code the plugin ships the agent as `electrified-cortex-skills:dispatch`;
+a project or user agent named `Dispatch` takes priority. If no Dispatch agent
+is available on the host, dispatch falls back: omit `subagent_type` /
+`agentName` and continue, but notify the host after completion. This
 makes the primitive resilient across environments with different agent
 installations.
 

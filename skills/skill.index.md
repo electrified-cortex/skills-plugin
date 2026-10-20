@@ -68,6 +68,10 @@ When auditing a Product Requirements Document for structure, scope, and complete
 
 When writing a new Product Requirements Document.
 
+## scout
+
+When read-only fact gathering (lookups, searches, sweeps, status checks, inventories) can go to a cheap Haiku investigator instead of the main session.
+
 ## skill-auditing
 
 When a skill file needs to be audited for quality, classification, and spec compliance.

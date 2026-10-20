@@ -1,39 +1,48 @@
 # Dispatch Agent Files
 
-Canonical Dispatch agent definitions, one per runtime environment.
-Each file lives at its install path — no separate copy step required.
+Canonical Dispatch agent definitions. This folder is the source of truth.
 
 | File | Environment | Role |
 | --- | --- | --- |
-| [.claude/agents/dispatch.agent.md](../../.claude/agents/dispatch.agent.md) | Claude Code CLI | Minimal executor — reads a file and follows it |
-| [.github/agents/dispatch.agent.md](../../.github/agents/dispatch.agent.md) | VS Code (GitHub Copilot) | Minimal executor — reads a file and follows it |
-| [.github/agents/orchestrator.agent.md](../../.github/agents/orchestrator.agent.md) | VS Code (GitHub Copilot) | Dispatch-first orchestrator — delegates to Dispatch |
-| [.github/agents/orchestration.txt](../../.github/agents/orchestration.txt) | VS Code (GitHub Copilot) | ultra-compressed how-to for the orchestrator |
+| `dispatch.md` | Claude Code | Minimal executor — reads a file and follows it |
+| `orchestrator.md` | Claude Code | Dispatch-first orchestrator, run as the main session agent |
+| `vscode/dispatch.agent.md` | VS Code (GitHub Copilot) | Minimal executor — reads a file and follows it |
+| `vscode/orchestrator.agent.md` | VS Code (GitHub Copilot) | Dispatch-first orchestrator — delegates to Dispatch |
+| `vscode/orchestration.txt` | VS Code (GitHub Copilot) | Ultra-compressed how-to for the orchestrator |
+
+## Claude Code: shipped by the plugin
+
+The `*.md` files directly in this folder (not `README.md`, not `vscode/`) are
+Claude Code agents. The skills-plugin publish script copies them to the
+plugin's root `agents/` folder, where Claude Code registers them on install.
+They load under the plugin's scoped names:
+
+- `electrified-cortex-skills:dispatch`
+- `electrified-cortex-skills:orchestrator`
+
+No copy step is needed. A project (`.claude/agents/`) or user (`~/.claude/agents/`)
+agent named `Dispatch` still works and is preferred when present.
+
+Plugin agents ignore `hooks`, `mcpServers` and `permissionMode` in frontmatter.
+Keep those out of these files.
+
+## VS Code: manual install
+
+VS Code reads agents from `.github/agents/` in the host project. Copy
+`vscode/dispatch.agent.md` to `.github/agents/dispatch.agent.md`. For the
+orchestrator mode, also copy `vscode/orchestrator.agent.md` and
+`vscode/orchestration.txt` into the same folder. See `../setup/SKILL.md`.
 
 ## Executor (Dispatch)
 
 Intentionally minimal — carries no context of its own. All behavior comes from
 the file it reads. General-purpose runner for any skill that defines its own procedure.
 
-Canonical path (Claude Code): `.claude/agents/dispatch.agent.md`
-Canonical path (VS Code): `.github/agents/dispatch.agent.md`
-
 ## Orchestrator
 
-A first-class VS Code agent mode — not a sub-agent. Select it from the VS Code
-chat panel agent picker just like any other mode. It handles all dispatch
-for you so your VS Code session requires no other wiring.
+A main-session agent, not a sub-agent. In VS Code, select it from the chat
+panel agent picker. In Claude Code, start a session with
+`claude --agent electrified-cortex-skills:orchestrator`.
 
 VS Code does not support nested sub-agents by default. Orchestrator is always
 the host. It dispatches to Dispatch one level down — that's the full depth.
-
-Companion `vscode-orchestration.txt` (same folder) — ultra-compressed how-to.
-
-Canonical path: `.github/agents/orchestrator.agent.md`
-
-Requires: Dispatch agent also installed at `.github/agents/dispatch.agent.md`
-
-## Source
-
-These files live at their canonical paths in `.claude/agents/` and `.github/agents/`.
-To use in a host project, copy the appropriate file to the matching path in that project.

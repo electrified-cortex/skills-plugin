@@ -1,19 +1,32 @@
 # Dispatch — Installation
 
-The dispatch skill requires a companion agent file installed in your project's agent directory.
+## Claude Code: nothing to install
 
-## Agent Files
+Installing the electrified-cortex-skills plugin installs the Dispatch agent.
+It appears in the agent list as `electrified-cortex-skills:dispatch`.
 
-Source: `dispatch/agents/`
-See `dispatch/agents/README.md` for agent file descriptions and install path details.
+```bash
+claude plugin marketplace add https://github.com/electrified-cortex/skills-plugin
+claude plugin install electrified-cortex-skills@electrified-cortex
+```
 
-| File | Environment | Install path |
-| --- | --- | --- |
-| `claude-dispatch.agent.md` | Claude Code CLI | `.claude/agents/dispatch.agent.md` |
-| `vscode-dispatch.agent.md` | VS Code (GitHub Copilot) | `.github/agents/dispatch.agent.md` |
+Optional override: a project or user agent named `Dispatch`
+(`.claude/agents/` or `~/.claude/agents/`) takes priority in the `dispatch`
+skill. Copy `agents/dispatch.md` there only to change its model or tools.
 
-Copy the appropriate file. The agent name is `Dispatch` in both environments.
+## VS Code (GitHub Copilot): manual copy
 
-## If Not Installed
+VS Code does not read Claude Code plugin agents. Copy the agent into the host
+project:
 
-The dispatch primitive works without the agent file — it omits `subagent_type` / `agentName` and dispatches using the default subagent type. Behavior is identical to when the agent is installed; the agent file adds context isolation and consistent performance. Install is strongly recommended for production use. Notify the host after completion if the agent file is absent.
+| Source | Install path |
+| --- | --- |
+| `agents/vscode/dispatch.agent.md` | `.github/agents/dispatch.agent.md` |
+
+The agent name is `Dispatch`. See `setup/SKILL.md` for frontmatter rules.
+
+## If no Dispatch agent is available
+
+The dispatch primitive still works: omit `subagent_type` / `agentName` and the
+host uses its default sub-agent type. The agent adds context isolation and
+consistent performance. Notify the host after completion.
