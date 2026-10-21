@@ -15,6 +15,13 @@ Optional override: a project or user agent named `scout` (`.claude/agents/` or
 `~/.claude/agents/`) takes priority in the skill. Copy `agents/scout.md` there
 only to change its model, tools or rules.
 
+## Explore: nothing to install
+
+The Explore branch of the skill uses Claude Code's built-in Explore agent. It
+needs no install, no plugin, no hook and no setting. Explore does not default
+to Haiku (it inherits the session's model), so the skill passes
+`model: "haiku"` on the call.
+
 ## Without the agent
 
 The skill still runs: it hands the brief to `Explore` or `general-purpose` with
