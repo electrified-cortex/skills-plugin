@@ -18,53 +18,55 @@ claude plugin install electrified-cortex-skills@electrified-cortex
 This also installs the plugin's agents, such as `electrified-cortex-skills:dispatch`.
 No agent files need copying.
 
+## Update in Claude Code
+
+To move an existing install to the latest release, refresh the marketplace,
+update the plugin, then restart Claude Code:
+
+```bash
+claude plugin marketplace update electrified-cortex
+claude plugin update electrified-cortex-skills@electrified-cortex
+```
+
+Installed at more than one scope (for example user and project)? Add
+`--scope user`, `--scope project` or `--scope local` and run the update once
+per scope. `claude plugin list` shows the installed version and scope.
+
 ## Set me up in VS Code (GitHub Copilot)
 
 Skills use the [Agent Skills open standard](https://agentskills.io),
 natively compatible with GitHub Copilot Chat in VS Code.
 
+Clone this repo somewhere outside your project, then copy the skill
+directories you want:
+
+```bash
+git clone https://github.com/electrified-cortex/skills-plugin
+```
+
 **Project install** — copy any skill directory into `.github/skills/`:
 
 ```bash
-cp -r .claude-plugins/ec-skills/skills/<skill-name> .github/skills/
+cp -r skills-plugin/skills/<skill-name> .github/skills/
 ```
 
 **User-level install** — cross-project personal access:
 
 ```bash
 # Linux / macOS
-cp -r .claude-plugins/ec-skills/skills/<skill-name> ~/.copilot/skills/
+cp -r skills-plugin/skills/<skill-name> ~/.copilot/skills/
 
 # Windows (PowerShell)
-Copy-Item -Recurse .claude-plugins\ec-skills\skills\<skill-name> $HOME\.copilot\skills\
+Copy-Item -Recurse skills-plugin\skills\<skill-name> $HOME\.copilot\skills\
 ```
 
 After copying, type `/skills` in Copilot Chat to confirm the skill appears.
 
-## Install (submodule)
-
-```bash
-git submodule add https://github.com/electrified-cortex/skills-plugin .claude-plugins/ec-skills
-git submodule update --init --recursive
-```
-
-Then reference in your Claude Code project config.
-
-## Agent reference pattern
-
-Skills are available at:
-
-```text
-<submodule>/skills/<skill-name>/SKILL.md
-```
-
-Example: `.claude-plugins/ec-skills/skills/compression/SKILL.md`
+To update, pull the clone and copy again.
 
 ## Consumer notes
 
-- No build step needed. The `skills/` tree is pre-built and ready to reference.
-- To update: `git submodule update --remote .claude-plugins/ec-skills`
-- Rollback: revert the submodule pointer to the previous commit.
+- No build step needed. The `skills/` tree is pre-built and ready to use.
 
 ## Structure
 
@@ -86,4 +88,4 @@ file.
 ## Versioning
 
 `plugin.json` carries a single `version` field — the plugin is the unit of release.
-Pin by git tag (`v<version>`) or submodule commit. No per-skill versioning.
+Releases are git tags (`v<version>`). No per-skill versioning.
