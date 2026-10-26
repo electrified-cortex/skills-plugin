@@ -1,31 +1,32 @@
 #!/usr/bin/env pwsh
 # result.ps1 — skill-critique result tool
-# Wraps hash-record/manifest and checks whether a Sonnet-tier critique has already
+# Wraps hash-record/manifest and checks whether a critique at <tier> has already
 # been run on the exact current content of the skill.
-# Usage: result <skill_dir>
+# Usage: result <skill_dir> <tier>
 # Outputs one of:
 #   PASS: <abs-path>    (HIT, cached critique report exists) (exit 0)
 #   MISS: <abs-path>    (no cache; this is the report path)  (exit 0)
 #   ERROR: <reason>     (argument or runtime error)          (exit 1)
 
-param(
-    [Parameter(Position=0)]
-    [string]$skill_dir,
-    [switch]$help,
-    [switch]$h
-)
+# Arguments are read from $args, not a param() block: with declared parameters pwsh
+# rejects a leading-dash value (such as -x) before this script runs.
+$skill_dir = if ($args.Count -ge 1) { [string]$args[0] } else { '' }
+$tier = if ($args.Count -ge 2) { [string]$args[1] } else { '' }
 
 $ErrorActionPreference = 'Stop'
 
-if ($help -or $h) {
+if ($skill_dir -ceq '--help' -or $skill_dir -ceq '-h') {
     [Console]::Out.Write(@"
-Usage: result <skill_dir>
+Usage: result <skill_dir> <tier>
 
-Wraps hash-record/manifest for skill-critique and checks whether a Sonnet-tier
-critique has already been run on the exact current content of the skill.
+Wraps hash-record/manifest for skill-critique and checks whether a critique at
+<tier> has already been run on the exact current content of the skill. Each tier
+has its own cache entry.
 
 Arguments:
   skill_dir        Absolute path to the skill folder being critiqued.
+  tier             fast-cheap | standard | deep | fast-cheap-x3 (whole value,
+                   case-sensitive).
 
 Options:
   --help / -h      Print usage, exit 0.
@@ -42,12 +43,19 @@ Exit codes:
     exit 0
 }
 
-if (-not $skill_dir) {
-    [Console]::Out.Write("ERROR: missing argument -- expected <skill_dir>`n")
+if ([string]::IsNullOrEmpty($skill_dir) -or [string]::IsNullOrEmpty($tier)) {
+    [Console]::Out.Write("ERROR: missing argument -- expected <skill_dir> <tier>`n")
     exit 1
 }
 
 $record_filename = 'report.md'
+
+# Whitelist: the whole value must equal one of the names below (case-sensitive).
+$valid_tiers = @('fast-cheap', 'standard', 'deep', 'fast-cheap-x3')
+if ($valid_tiers -cnotcontains $tier) {
+    [Console]::Out.Write("ERROR: invalid tier -- expected fast-cheap, standard, deep or fast-cheap-x3`n")
+    exit 1
+}
 
 if (-not (Test-Path -LiteralPath $skill_dir -PathType Container)) {
     [Console]::Out.Write("ERROR: skill_dir not found: $skill_dir`n")
@@ -73,8 +81,8 @@ if ($files.Count -eq 0) {
     exit 1
 }
 
-# Single canonical op_kind
-$op_kind = 'skill-critique/v1'
+# op_kind carries the tier: one cache entry per (skill hash, tier)
+$op_kind = "skill-critique/v2/$tier"
 
 # Locate sibling manifest tool
 $script_dir = Split-Path -Parent $PSCommandPath

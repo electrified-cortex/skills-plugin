@@ -9,6 +9,7 @@ Input:
 `<description>` — short run label shown by host
 `<tier>` — `fast-cheap` | `standard` (default) | `deep`
 `<model-override>` (optional) — concrete model or alias: a Claude Code alias (`haiku`, `sonnet`, `opus`) or, for VS Code, the model's display name; bypasses tier lookup when set
+`<effort>` (optional) — Claude Code only: `low` | `medium` | `high` | `xhigh` | `max`; unset = the call passes no `effort`
 
 Derived:
 
@@ -21,6 +22,16 @@ If `<prompt>` instructs sub-agent to read a file, don't read it yourself — sub
 DO NOT DISPATCH SKILLS — read them. The skill itself tells you when (and how) to dispatch.
 
 Dispatching to verify/review prior work: exclude that agent's session id (e.g. a task's `executed_by` field, or equivalent) from being the dispatched agent. No eligible session — dispatch fresh.
+
+Before dispatching ask: would a few searches do? If yes, do them inline.
+
+Read-only fact gathering (lookup, search, web read) goes to the scout skill. Dispatch is for bounded jobs that write or need judgment.
+
+Budget: every prompt states maximum tool calls, maximum minutes and a stop rule.
+
+In every dispatched prompt, include: on HTTP 403: use another source, never retry the same fetch, never spoof a browser identity or bypass a bot check, report the page as blocked.
+
+Judge progress by task status, never by the size of the output file (it can be a symlink).
 
 Claude Code:
 
@@ -43,12 +54,15 @@ Agent({
   subagent_type: "<dispatch-agent>",
   prompt: "<prompt>",
   model: "<concrete-model>",
+  effort: "<effort>",
   run_in_background: true,
   description: "<description>"
 })
 ```
 
 Omit `run_in_background` if the Agent tool has no such parameter (sub-agents then run in the background).
+
+Omit `effort` when `<effort>` is unset or the Agent tool has no `effort` parameter. Pass `effort` only when the caller's instructions name a level. Set it only through the `effort` parameter; naming a level in the prompt text is not the documented way.
 
 VS Code / Copilot:
 
@@ -71,6 +85,8 @@ runSubagent({
   description: "<description>"
 })
 ```
+
+`<effort>` is ignored here: this card passes no effort to `runSubagent`.
 
 Fallback:
 

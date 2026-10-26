@@ -1,0 +1,5 @@
+Edit a text file to fix specific rule violations only. Read <SRC>. Write the corrected full text to <DST>. Change ONLY the listed lines, and only as the fix requires; keep everything else byte-identical, keep all meaning, numbers, names, and the Label:/heading structure.
+Rules: remove articles (a, an, the) from prose and keep the sentence understandable; remove filler words (simply, really, basically, actually, essentially, and 'just' when used as filler); change multi-word negations to contractions (do not -> don't, must not -> mustn't, will not -> won't); at ultra level remove list bullet markers by joining items with semicolons or putting each on its own line; use 'Label:' instead of '## Heading'.
+Violations to fix:
+<LINT OUTPUT, one finding per line, exactly as lint.js prints it>
+Reply with one line: done.

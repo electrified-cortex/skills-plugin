@@ -18,6 +18,18 @@ Implication: don't waste tokens repeating project conventions in every prompt. T
 
 Both claims may drift between Claude Code releases. Re-verify if behavior seems off.
 
+## Empirical: Unbounded Briefs and Progress Checks
+
+Figures in this section are reported by the pod that ran the incident. They were not re-measured.
+
+A background helper was given an open-ended research prompt about a question that a few searches would have answered. The prompt carried no call limit, no time limit, no stop rule and no rule for HTTP 403 responses. The helper reported a run of 79 tool calls in 813.7 seconds, and the run met 9 HTTP 403 responses.
+
+The host judged progress by the size of the helper's output file. That file was a symlink, so its size was the size of the link, while the helper's transcript kept growing. The size check therefore said nothing about the work in progress.
+
+Two parallel scout runs given a stated budget in the brief answered the same question. They finished in 66 seconds and 74 seconds, as reported.
+
+Implication: the runtime card asks for an inline check first, routes read-only fact gathering to the scout skill, requires a budget in every prompt, requires the 403 rule in every dispatched prompt and judges progress by task status.
+
 ## System-Prompt Pollution
 
 A heavy `CLAUDE.md` (or any project-level system prompt) reduces dispatch effectiveness in ways that aren't immediately obvious from the runtime card.

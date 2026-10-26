@@ -14,15 +14,6 @@ skill-auditing" aside; never score it, never rule on it.
 
 Inputs: `skill_dir` (abs path to target skill), `--report-path <abs-path>`.
 
-Step 0 (Sonnet default pass only) — Cache check:
-Run result tool (co-located in skill-critique folder):
-  Bash: bash <skill-critique-dir>/result.sh <skill_dir>
-  PS7:  pwsh <skill-critique-dir>/result.ps1 <skill_dir>
-DON'T READ script source.
-If stdout is `MISS: <abs-path>` → bind <report_path> = <abs-path>, continue to Step 1.
-Any other stdout → emit verbatim; stop. (HIT or ERROR — no re-run for Sonnet pass.)
-Haiku and Opus passes skip Step 0 entirely — always proceed to Step 1.
-
 Step 1 — Read whichever exist in `skill_dir`: `SKILL.md`, `instructions.txt`,
 `uncompressed.md`, `instructions.uncompressed.md`, `spec.md`. None → emit
 `ERROR: no skill source files found at <skill_dir>` as the last line; stop; no
@@ -141,11 +132,6 @@ dimensions emit a 0–5 score; hard COUNT dimensions emit the raw count (e.g.
 `efficiency=1240`); decomposition emits the verdict token:
 
 CRITIQUE: <recommendation> | <dim>=<v> <dim>=<v> ... robustness=<n> decomposition=<v>
-
-Post-Step-5 (Sonnet default pass only) — Result write:
-Run result tool again (same call as Step 0). This registers the completed report in
-the hash-record so future Sonnet passes hit the cache. No action on the output.
-Haiku and Opus passes skip this step entirely.
 
 Don'ts: never combine the dimensions into a single number (they are a separate
 vector for version-to-version comparison); never score a hard COUNT dimension on the

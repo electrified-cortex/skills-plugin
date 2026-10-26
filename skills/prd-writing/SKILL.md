@@ -8,6 +8,10 @@ Parent skill: spec-writing
 
 PRD Writing
 
+## Inheritance
+
+This skill extends `spec-writing` — its parent. Every rule, content mode, and quality gate in the parent applies unless explicitly overridden by this skill's deltas below.
+
 PRD = spec at product layer. Read `spec-writing` first — it owns base workflow, content modes, quality discipline. This skill records deltas: additional sections, rules, anti-patterns distinguishing PRD from generic spec.
 
 Workflow:

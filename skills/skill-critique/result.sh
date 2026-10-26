@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # result.sh — skill-critique result tool
-# Usage: result.sh <skill_dir>
+# Usage: result.sh <skill_dir> <tier>
 # Outputs one of:
 #   PASS: <abs-path>    (HIT, cached critique report exists) (exit 0)
 #   MISS: <abs-path>    (no cache; this is the report path)  (exit 0)
@@ -9,13 +9,16 @@ set -e
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
   cat <<'USAGE'
-Usage: result.sh <skill_dir>
+Usage: result.sh <skill_dir> <tier>
 
-Wraps hash-record/manifest for skill-critique and checks whether a Sonnet-tier
-critique has already been run on the exact current content of the skill.
+Wraps hash-record/manifest for skill-critique and checks whether a critique at
+<tier> has already been run on the exact current content of the skill. Each tier
+has its own cache entry.
 
 Arguments:
   skill_dir        Absolute path to the skill folder being critiqued.
+  tier             fast-cheap | standard | deep | fast-cheap-x3 (whole value,
+                   case-sensitive).
 
 Options:
   --help / -h      Print usage, exit 0.
@@ -34,13 +37,23 @@ fi
 
 POSITIONAL=("$@")
 
-if [ "${#POSITIONAL[@]}" -lt 1 ]; then
-  echo "ERROR: missing argument -- expected <skill_dir>"
+if [ "${#POSITIONAL[@]}" -lt 2 ] || [ -z "${POSITIONAL[0]}" ] || [ -z "${POSITIONAL[1]}" ]; then
+  echo "ERROR: missing argument -- expected <skill_dir> <tier>"
   exit 1
 fi
 
 SKILL_DIR="${POSITIONAL[0]}"
+TIER="${POSITIONAL[1]}"
 RECORD_FILE="report.md"
+
+# Whitelist: the whole value must equal one of the names below (case-sensitive).
+case "$TIER" in
+  fast-cheap|standard|deep|fast-cheap-x3) ;;
+  *)
+    echo "ERROR: invalid tier -- expected fast-cheap, standard, deep or fast-cheap-x3"
+    exit 1
+    ;;
+esac
 
 if [ ! -d "$SKILL_DIR" ]; then
   echo "ERROR: skill_dir not found: $SKILL_DIR"
@@ -66,8 +79,8 @@ if [ "${#FILES[@]}" -eq 0 ]; then
   exit 1
 fi
 
-# Single canonical op_kind
-OP_KIND="skill-critique/v1"
+# op_kind carries the tier: one cache entry per (skill hash, tier)
+OP_KIND="skill-critique/v2/${TIER}"
 
 # Locate sibling manifest tool
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -84,7 +97,8 @@ normalize_path() {
 }
 
 # Invoke manifest
-MANIFEST_OUT=$(bash "$MANIFEST_SH" "$OP_KIND" "$RECORD_FILE" "${FILES[@]}")
+# "|| true": a failing manifest prints its ERROR line; relay it below, do not exit here under set -e
+MANIFEST_OUT=$(bash "$MANIFEST_SH" "$OP_KIND" "$RECORD_FILE" "${FILES[@]}") || true
 MANIFEST_OUT=$(normalize_path "$MANIFEST_OUT")
 
 case "$MANIFEST_OUT" in

@@ -13,29 +13,34 @@ before the conformity pass.
 
 Input:
 `<skill_dir>` — absolute path to the target skill folder.
+`<tier>` (optional) — `fast-cheap` (default) | `standard` | `deep`
 
 Inspect:
 `<instructions>` = `instructions.txt` (NEVER READ)
 `<instructions-abspath>` = absolute path to `<instructions>`
 `<report_path>` = absolute path for the critique report
 `<input-args>` = `skill_dir=<skill_dir> --report-path <report_path>`
-`<tier>` = `standard` (sonnet) by default — the best fit for this quality judgment. Reserve `deep` (opus) for a final pass, unless otherwise decided. `fast-cheap` (haiku) is not appropriate: haiku hallucinates and suits only quick, obvious passes.
+`<tier>` = the tier input, else `fast-cheap` (haiku). Reserve `deep` (opus) for a final pass, unless otherwise decided.
 `<description>` = `Critiquing skill: <skill_dir>`
 `<prompt>` = `Read and follow <instructions-abspath>; Input: <input-args>`
 
-Cache check (Sonnet default pass only — skip for Haiku/Opus):
-Run `result.sh <skill_dir>` (Bash) or `result.ps1 <skill_dir>` (PS7) from skill-critique folder.
+Size (no tier input only): in `<skill_dir>`, Bash `cat SKILL.md instructions.txt spec.md uncompressed.md instructions.uncompressed.md 2>/dev/null | wc -c`, PS7 `(Get-Item SKILL.md,instructions.txt,spec.md,uncompressed.md,instructions.uncompressed.md -EA 0 | Measure-Object Length -Sum).Sum`. Above 10240 → merge run, else single run. An explicit tier is always a single run.
+
+Cache check:
+Run `result.sh <skill_dir> <tier>` (Bash) or `result.ps1 <skill_dir> <tier>` (PS7) from skill-critique folder. A merge run uses `fast-cheap-x3` as `<tier>` here; its dispatch calls still use `fast-cheap`.
 `MISS: <abs-path>` → bind `<report_path>` = `<abs-path>`, dispatch.
 Any other stdout → emit verbatim; stop.
 
+Merge run (on MISS): dispatch three `fast-cheap` executors, each with its own `<report_path>` in a scratch directory (no result call for them). Write the merged report at `<abs-path>`: base = the run with the strictest recommendation (ITERATE, then BORDERLINE, then READY; ties run 1), kept whole, its `CRITIQUE:` line is this call's result; refinements = the union of the three lists, a defect found by several runs listed once.
+
 Follow dispatch skill. See `../dispatch/SKILL.md`.
 
-Post-execute (Sonnet default pass only): run result tool again to register the report in the hash-record.
+Post-execute: run the result call again, same args, to register the report in the hash-record.
 
 Returns (last line of stdout):
 `CRITIQUE: <READY|BORDERLINE|ITERATE> | <dim>=<v> <dim>=<v> ... robustness=<n> decomposition=<v>` (one token per dimension plus decomposition verdict, headline first; soft dimensions emit a 0–5 score, efficiency emits a raw count) or `ERROR: <reason>`.
 
-`ITERATE` → load `../dispatch/SKILL.md`, dispatch a `standard`-tier agent to apply the report's refinements, re-run this critique. Repeat until `READY` (or `BORDERLINE` accepted). Sonnet passes until exhausted, then one `deep` (opus) pass.
+`ITERATE` → load `../dispatch/SKILL.md`, dispatch a `standard`-tier agent to apply the report's refinements, re-run this critique with the same tier input. Repeat until `READY` (or `BORDERLINE` accepted); a final pass at `standard` or `deep` is the caller's choice.
 `ERROR: <reason>` → surface stdout, stop.
 
 Related: `skill-auditing` (conformity layer, runs after), `skill-writing` (invokes this as the quality-iteration phase), `skill-optimize` (compression), `dispatch` (launch).
