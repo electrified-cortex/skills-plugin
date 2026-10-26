@@ -37,49 +37,36 @@ per scope. `claude plugin list` shows the installed version and scope.
 Skills use the [Agent Skills open standard](https://agentskills.io),
 natively compatible with GitHub Copilot Chat in VS Code.
 
+Clone this repo somewhere outside your project, then copy the skill
+directories you want:
+
+```bash
+git clone https://github.com/electrified-cortex/skills-plugin
+```
+
 **Project install** — copy any skill directory into `.github/skills/`:
 
 ```bash
-cp -r .claude-plugins/ec-skills/skills/<skill-name> .github/skills/
+cp -r skills-plugin/skills/<skill-name> .github/skills/
 ```
 
 **User-level install** — cross-project personal access:
 
 ```bash
 # Linux / macOS
-cp -r .claude-plugins/ec-skills/skills/<skill-name> ~/.copilot/skills/
+cp -r skills-plugin/skills/<skill-name> ~/.copilot/skills/
 
 # Windows (PowerShell)
-Copy-Item -Recurse .claude-plugins\ec-skills\skills\<skill-name> $HOME\.copilot\skills\
+Copy-Item -Recurse skills-plugin\skills\<skill-name> $HOME\.copilot\skills\
 ```
 
 After copying, type `/skills` in Copilot Chat to confirm the skill appears.
 
-## Install (submodule)
-
-```bash
-git submodule add https://github.com/electrified-cortex/skills-plugin .claude-plugins/ec-skills
-git submodule update --init --recursive
-```
-
-Then reference in your Claude Code project config.
-
-## Agent reference pattern
-
-Skills are available at:
-
-```text
-<submodule>/skills/<skill-name>/SKILL.md
-```
-
-Example: `.claude-plugins/ec-skills/skills/compression/SKILL.md`
+To update, pull the clone and copy again.
 
 ## Consumer notes
 
-- No build step needed. The `skills/` tree is pre-built and ready to reference.
-- To update a submodule install: `git submodule update --remote .claude-plugins/ec-skills`
-  (Claude Code plugin installs: see "Update in Claude Code" above.)
-- Rollback (submodule install): revert the submodule pointer to the previous commit.
+- No build step needed. The `skills/` tree is pre-built and ready to use.
 
 ## Structure
 
@@ -101,4 +88,4 @@ file.
 ## Versioning
 
 `plugin.json` carries a single `version` field — the plugin is the unit of release.
-Pin by git tag (`v<version>`) or submodule commit. No per-skill versioning.
+Releases are git tags (`v<version>`). No per-skill versioning.
