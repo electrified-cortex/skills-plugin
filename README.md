@@ -18,6 +18,20 @@ claude plugin install electrified-cortex-skills@electrified-cortex
 This also installs the plugin's agents, such as `electrified-cortex-skills:dispatch`.
 No agent files need copying.
 
+## Update in Claude Code
+
+To move an existing install to the latest release, refresh the marketplace,
+update the plugin, then restart Claude Code:
+
+```bash
+claude plugin marketplace update electrified-cortex
+claude plugin update electrified-cortex-skills@electrified-cortex
+```
+
+Installed at more than one scope (for example user and project)? Add
+`--scope user`, `--scope project` or `--scope local` and run the update once
+per scope. `claude plugin list` shows the installed version and scope.
+
 ## Set me up in VS Code (GitHub Copilot)
 
 Skills use the [Agent Skills open standard](https://agentskills.io),
@@ -63,8 +77,9 @@ Example: `.claude-plugins/ec-skills/skills/compression/SKILL.md`
 ## Consumer notes
 
 - No build step needed. The `skills/` tree is pre-built and ready to reference.
-- To update: `git submodule update --remote .claude-plugins/ec-skills`
-- Rollback: revert the submodule pointer to the previous commit.
+- To update a submodule install: `git submodule update --remote .claude-plugins/ec-skills`
+  (Claude Code plugin installs: see "Update in Claude Code" above.)
+- Rollback (submodule install): revert the submodule pointer to the previous commit.
 
 ## Structure
 
