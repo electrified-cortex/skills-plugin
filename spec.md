@@ -45,6 +45,7 @@ list is defined in `build/deny-list.ps1` and covers the following categories:
 - `instructions.uncompressed.md`
 - `instructions.uncompressed.md.compressed`
 - `eval.md`
+- `README.md` (documentation, never needed at runtime)
 - `PLAN.md`
 - `RESULTS.md`
 - `CHANGES.md`

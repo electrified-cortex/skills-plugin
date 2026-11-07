@@ -14,6 +14,7 @@ $script:DenyFiles = [System.Collections.Generic.HashSet[string]]([System.StringC
     'instructions.uncompressed.md'
     'instructions.uncompressed.md.compressed'
     'eval.md'
+    'README.md'
     'PLAN.md'
     'RESULTS.md'
     'CHANGES.md'
