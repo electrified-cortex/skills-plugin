@@ -2,7 +2,7 @@
 name: Privacy Advocate
 trigger: problem touches user data, PII, analytics, logging, storage, external data transmission, identity, consent, or data retention
 required: false
-suggested_models: [sonnet-class]
+escalation_model: sonnet-class
 suggested_backends: [dispatch-sonnet]
 scope: Privacy and data handling only. PII exposure, data minimization, consent, retention, transmission, and regulatory alignment. No unrelated security concerns, no performance, no style.
 vendor: anthropic

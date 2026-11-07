@@ -2,7 +2,6 @@
 name: Engineer
 trigger: problem includes new logic, integration points, external calls, state mutation, error handling paths, or behavior under partial failure
 required: false
-suggested_models: [sonnet-class]
 suggested_backends: [dispatch-sonnet]
 scope: Practical correctness only. Will this actually work in production? Edge cases, error handling, failure modes, unexpected inputs, and operational assumptions. No style, no architecture, no security.
 vendor: anthropic

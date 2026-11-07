@@ -2,7 +2,6 @@
 name: Devil's Advocate
 trigger: always
 required: true
-suggested_models: [sonnet-class, gpt-class]
 suggested_backends: [dispatch-sonnet]
 scope: Challenge assumptions, surface what could go wrong, find blind spots in the artifact's reasoning. No constructive design suggestions — adversarial role only.
 vendor: openai

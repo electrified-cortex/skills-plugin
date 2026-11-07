@@ -2,7 +2,6 @@
 name: Designer
 trigger: problem introduces or modifies public interfaces, APIs, library surfaces, shared types, configuration contracts, or caller-facing behavior
 required: false
-suggested_models: [sonnet-class]
 suggested_backends: [dispatch-sonnet]
 scope: Public surface design only. Interface ergonomics, naming, backward compatibility, discoverability, and the caller's experience. No internals, no security, no performance.
 vendor: openai

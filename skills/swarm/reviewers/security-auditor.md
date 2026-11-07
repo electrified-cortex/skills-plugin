@@ -2,7 +2,7 @@
 name: Security Auditor
 trigger: problem touches authentication, user input, API endpoints, data access, secrets, network calls, file system writes, or process execution
 required: false
-suggested_models: [sonnet-class]
+escalation_model: sonnet-class
 suggested_backends: [dispatch-sonnet]
 scope: Identify vulnerabilities in the artifact under review. No design advice, no performance commentary, no style guidance — security only.
 vendor: anthropic

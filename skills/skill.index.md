@@ -110,7 +110,7 @@ When writing a new specification document with explicit, testable requirements.
 
 ## swarm
 
-When a change needs multi-personality parallel review with arbitrated synthesis.
+When anything needs checking from several angles at once: the current discussion (a bare "swarm" or /swarm), a file, a diff, a plan, or a concept. Cheap parallel reviewers, a skeptic for each, one result file.
 
 ## tool-auditing
 

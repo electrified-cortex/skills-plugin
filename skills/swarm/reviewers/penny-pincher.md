@@ -2,7 +2,6 @@
 name: Penny Pincher
 trigger: problem involves API calls, database queries, loops over large sets, caching decisions, storage allocation, cloud resource usage, or per-request compute cost
 required: false
-suggested_models: [sonnet-class]
 suggested_backends: [dispatch-sonnet]
 scope: Cost and resource efficiency only. Token usage, API call count, database query cost, storage allocation, compute per request, and unnecessary work. No correctness, no style, no architecture.
 vendor: openai

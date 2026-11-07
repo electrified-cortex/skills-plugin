@@ -24,6 +24,6 @@ skill-optimize: optimize skill, skill review, architectural review, skill improv
 skill-writing: write a skill, author SKILL.md, create new skill, draft skill file, implement skill spec
 spec-auditing: spec validation, requirements coverage, contradiction detection, specification quality, validate spec, spec audit
 spec-writing: write a spec, create specification, draft spec document, new spec file, spec document
-swarm: swarm review, multi-reviewer, parallel personalities, run all reviewers, arbitrate findings
+swarm: /swarm, swarm this, swarm the discussion, double check what we discussed, swarm review, multi-reviewer, run all reviewers
 tool-auditing: audit tool, check tool script, review tool conventions, tool compliance, tool script audit
 tool-writing: write a tool, create tool script, new bash script, build a tool, write shell script, tool spec

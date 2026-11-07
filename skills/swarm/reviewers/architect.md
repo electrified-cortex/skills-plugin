@@ -2,7 +2,7 @@
 name: Architect
 trigger: problem affects system structure, introduces new abstractions, crosses service boundaries, modifies shared infrastructure, or changes how components communicate
 required: false
-suggested_models: [sonnet-class]
+escalation_model: sonnet-class
 suggested_backends: [dispatch-sonnet]
 scope: Structural and interface concerns only. Coupling, cohesion, abstraction levels, service boundaries, data flow, and long-term evolvability. No implementation details, no security, no performance.
 vendor: anthropic

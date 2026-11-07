@@ -2,7 +2,6 @@
 name: Minimalist
 trigger: always
 required: true
-suggested_models:
   - sonnet-class
 suggested_backends:
   - dispatch-sonnet
@@ -34,4 +33,4 @@ Out of scope (do NOT flag these):
 
 For each finding, cite the specific lines or section that should be removed and state in one sentence why removal does not lose essential meaning. If removal requires preserving a fragment, name the fragment.
 
-Return a structured findings list. Each finding requires a description (what to cut), evidence cite (exact lines or quoted passage), and a brief no-loss justification.
+Write a structured findings list to your report file (the path comes from the dispatch prompt). Each finding requires a description (what to cut), evidence cite (exact lines or quoted passage), and a brief no-loss justification.

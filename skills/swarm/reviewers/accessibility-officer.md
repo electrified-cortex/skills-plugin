@@ -2,7 +2,6 @@
 name: Accessibility Officer
 trigger: problem includes UI components, web rendering, forms, interactive elements, visual design, color usage, or user-facing text rendered in a browser or native UI
 required: false
-suggested_models: [sonnet-class]
 suggested_backends: [dispatch-sonnet]
 scope: Accessibility only. Keyboard navigation, screen reader compatibility, ARIA semantics, color contrast, focus management, and WCAG 2.2 AA alignment. No logic, no security, no performance.
 vendor: anthropic

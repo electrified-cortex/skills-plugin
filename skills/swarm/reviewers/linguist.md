@@ -2,7 +2,6 @@
 name: Linguist
 trigger: problem includes code, documentation, error messages, log strings, user-visible text, or any named abstractions
 required: false
-suggested_models: [sonnet-class]
 suggested_backends: [dispatch-sonnet]
 scope: Naming, clarity, and communication only. Variable names, function names, abstractions, error messages, log strings, comments, and documentation. No logic, no architecture, no security.
 vendor: openai
