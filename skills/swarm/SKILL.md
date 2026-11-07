@@ -31,7 +31,7 @@ Key Terms:
 - Challenger: haiku-class sub-agent paired with one member. Reads packet + that member's report, adds no findings, writes verdict (CONFIRMED, REJECTED, UNSURE) per finding to challenge file. Follows `challenger-contract.md`.
 - RESULT.md: arbiter structured action list at `<run>/RESULT.md`. File host reads by default (Step 6 host options).
 - Generated persona: reviewer manifested inline when registry yields <3 suitable personalities. Name, critique lens, scope limiter, all domain-specific. Current invocation only; not cached; no `reviewers/` file.
-- Manifest hash: SHA-256 of manifest text: one line `<path> <SHA-256 of content>` per file, paths sorted bytewise, LF. Non-file artifacts (text, convo excerpts): SHA-256 of artifact content. Artifact key for per-persona hash-record entries.
+- Manifest hash: 40-char key `hash-record` prune re-derives: `git hash-object --stdin` of manifest text, one line `<workspace-relative path> <git hash-object of the file>` per file, paths sorted bytewise (`LC_ALL=C sort`), LF. Text subject (convo, plan, concept, or `problem` naming no files): `git hash-object --stdin` of subject text. Artifact key for per-persona hash-record entries.
 
 ## Personality Registry
 
@@ -96,7 +96,7 @@ Steps 1-8 run in order every invocation.
 
 ### Step 1 — Build review packet
 
-Cache key: extract file list from `problem` (deterministic parse, script, no LLM). Read files, compute manifest hash HASH (paths in `problem`, sorted, content SHA-256; or SHA-256 of artifact text if no files named). Use `sha256sum`; timestamps `date -u +%Y%m%dT%H%M%SZ`.
+Cache key: extract file list from `problem` (deterministic parse, script, no LLM). Compute manifest hash HASH (Key terms) with `git hash-object` (works outside a repo); timestamps `date -u +%Y%m%dT%H%M%SZ`. File subject: also write `.hash-record/XX/HASH/manifest.yaml` with `file_paths:` + one `  - <path>` line per file, so prune keeps entry while files unchanged. Text subject: no `manifest.yaml`; prune may remove it, harmless (never hits cache).
 
 Per-persona cache: `.hash-record/XX/HASH/swarm/v2/personas/<persona-name>-<model-class>-<persona_key>/` (XX = first 2 hex of HASH; D7 sets base) holds `review.md` + `challenge-<challenger_key>.md`.
 - `persona_key` = first 8 hex of SHA-256 of (persona file + `member-contract.md` + raw subject text (`problem` string or conversation excerpt)), concatenated in that order, no separator.
@@ -160,7 +160,7 @@ Use runtime dispatch per `dispatch` skill. `dispatch` agent type for personaliti
 
 Concurrency: haiku-class no cap; launch all at once (6-cap bounds). Other classes: rolling window of 3, dispatch next as each completes. Not returned within host-defined threshold (default 5 min member/arbiter, 3 min challenger) = timed out per B4. Tool-call budgets: 10 member/challenger; 2N+6 arbiter (reads N reports + N challenges).
 
-Reuse first: per persona compute dir (Step 1 key) at resolved class. Cached `review.md` ending `END OF REPORT` (not "No findings") satisfies persona: skip dispatch. Its `challenge-<challenger_key>.md` reused if present and ending `END OF REPORT`; else dispatch challenger only. Other-class reports don't satisfy. Two runs same subject share cache: never start second while one in flight.
+Reuse first: per persona compute dir (Step 1 key) at resolved class. Cached `review.md` ending `END OF REPORT` (not "No findings") satisfies persona: skip dispatch. Its `challenge-<challenger_key>.md` reused if present and ending `END OF REPORT`; else dispatch challenger only. Other-class reports don't satisfy. File subject: before dispatch claim it with `mkdir .hash-record/XX/HASH/swarm.lock` (atomic); exists and under 15 min old = tell operator a run is in flight, stop; older = remove and continue; remove at run end, also on failure. Text subject: no lock.
 
 Reports to files, not host. Member writes full report, replies exactly one line: `done: <path>`. Paths:
 - Built-in: `.hash-record/XX/HASH/swarm/v2/personas/<persona-name>-<model-class>-<persona_key>/review.md` (slug as Step 4; member creates missing dirs).
