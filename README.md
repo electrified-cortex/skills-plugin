@@ -18,21 +18,27 @@ steps in order. No further input is required. Needs Claude Code and `git`.
    ```
 
 2. `electrified-cortex-skills@electrified-cortex` not listed (the usual case)?
-   Install it. This adds it for you, across all your projects:
+   Install it for your user, so it works in every project (`--scope user` is
+   the default):
 
    ```bash
    claude plugin marketplace add https://github.com/electrified-cortex/skills-plugin
    claude plugin install electrified-cortex-skills@electrified-cortex
    ```
 
-   Already listed? Do not install again; use
-   [Update in Claude Code](#update-in-claude-code) instead.
+   Already listed? You are set up, so do not install again. Get the latest
+   release with [Update in Claude Code](#update-in-claude-code), once per scope
+   that `claude plugin list` shows, then continue with step 3. Listed but
+   disabled? Run `claude plugin enable electrified-cortex-skills@electrified-cortex`.
 
-3. Restart Claude Code. Skills and agents load only in a new session.
+3. Restart Claude Code: end the session and start a new one. Skills and agents
+   load only when a session starts.
 
 4. Verify: `claude plugin list` shows `electrified-cortex-skills@electrified-cortex`
    as enabled, and in the new session the skills appear with the
    `electrified-cortex-skills:` prefix (for example `electrified-cortex-skills:dispatch`).
+   The newest version is on the
+   [releases page](https://github.com/electrified-cortex/skills-plugin/releases/latest).
 
 The plugin also installs its agents (`dispatch`, `scout`, `orchestrator`). No
 agent files need copying.
