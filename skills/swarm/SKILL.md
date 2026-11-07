@@ -114,11 +114,11 @@ Build packet from `problem`. Self-contained: zero-context reader must grasp what
 - Conventions: applicable project conventions.
 - Artifacts: actual content under review (diffs, text, config; not description).
 
-Keep under ~50 KB: member Read calls cap ~25,000 tokens; trim artifact to what review needs.
+Artifacts = byte-exact copy made by shell, never retyped (costs host output tokens, can alter text): under `## Artifacts` heading append each file with POSIX `cat`, or diff with `git diff`, via Bash tool (paths quoted, forward slashes; PowerShell `cat` rewrites line endings, so there copy bytes). Each under `### FILE: <path>` line (path form of Files affected) inside fence of `~~~~~~` (longer than any fence in file), closing fence on own line. Trim by shell (`head`, `sed -n`, `git diff -U<n>`), never by hand. Subject with no file (conversation, plan, concept): write out verbatim. Keep under ~50 KB: member Read calls cap ~25,000 tokens; trim artifact to what review needs.
 
-Verify: Goal names artifact type + outcome evaluated (e.g., "evaluate diff for correctness and security"). Artifacts hold actual content, not refs. Gap: resolve from context. Never ask caller to fill. Unresolvable: E_PACKET_INCOMPLETE, halt.
+Verify: Goal names artifact type + outcome evaluated (e.g., "evaluate diff for correctness and security"). Artifacts hold actual content, not refs (file subject: each path readable, non-empty). Gap: resolve from context. Never ask caller to fill. Unresolvable: E_PACKET_INCOMPLETE, halt.
 
-Verified: create run folder (new path; see Run folder), write `<run>/packet.md`. Halt above leaves no folder.
+Verified: create run folder (new path; see Run folder), write `<run>/packet.md`: header fields, then Artifacts appended as above. Halt above leaves no folder.
 
 ### Step 2 — Select personalities
 
@@ -156,7 +156,7 @@ After swarm final (post-gating): absolute path per survivor `swarm/reviewers/<na
 
 ### Step 5 — Dispatch
 
-Use runtime dispatch per `dispatch` skill. `dispatch` agent type for personalities, NOT `scout` (read-only; reviewers must write report).
+Use runtime dispatch per `dispatch` skill. Agent type by role: every file-writing role (member, challenger, arbiter) = `swarm-worker` (`electrified-cortex-skills:swarm-worker` when plugin-installed) if among available agent types, else `dispatch`; NEVER `scout` (read-only). `scout` only for read-only prep you would otherwise do yourself (gather subject files or blast radius before packet); returns text, keep answer small. After dispatching members say one line, `Running <N> reviewers: <names>`; one more when arbiter starts.
 
 Concurrency: haiku-class no cap; launch all at once (6-cap bounds). Other classes: rolling window of 3, dispatch next as each completes. Not returned within host-defined threshold (default 5 min member/arbiter, 3 min challenger) = timed out per B4. Tool-call budgets: 10 member/challenger; 2N+6 arbiter (reads N reports + N challenges).
 
@@ -166,7 +166,7 @@ Reports to files, not host. Member writes full report, replies exactly one line:
 - Built-in: `.hash-record/XX/HASH/swarm/v2/personas/<persona-name>-<model-class>-<persona_key>/review.md` (slug as Step 4; member creates missing dirs).
 - Generated: `<run>/<persona-name>.md` (never in hash record).
 
-Challenge pass (member pair): on member return, dispatch its haiku-class challenger (`dispatch` agent type) async in background, without waiting for others. Host dispatches challengers (sub-agents cannot).
+Challenge pass (member pair): on member return, dispatch its haiku-class challenger (agent type per Step 5) async in background, without waiting for others. Host dispatches challengers (sub-agents cannot).
 
 Challenger prompt short: "Read and follow `challenger-contract.md`" (absolute path `swarm/challenger-contract.md`) + absolute paths of packet, member report, challenge file; same in-prompt sentence: writing challenge file is required deliverable; read-only (write only challenge file). Challenger adds no findings; verdict per finding (CONFIRMED, REJECTED with contradicting quote, UNSURE); replies `done: <path>`.
 
@@ -191,7 +191,7 @@ Report format, evidence shapes, severity vocab: `member-contract.md`.
 
 ### Step 6 — Arbiter consolidation
 
-After all members + challengers returned/failed/timed out: dispatch one arbiter with `arbiter_model` (default haiku-class; Inputs for upgrade), `dispatch` agent type. Prompt short: "Read and follow `swarm/arbiter-prompt.md`" (absolute path); run folder; each returned member (name, model class, report path); challenge path of each member that has one; each returned persona's `escalation_model` (if set); names of timed-out or no-usable-file; Unavailable personalities + homogeneity warning; tool-call budget; in-prompt sentence: writing `RESULT.md` is required deliverable; read-only (write only `RESULT.md`). `arbiter-prompt.md` holds verification, classification, confidence rule, `RESULT.md` format. Arbiter fails, or `RESULT.md` missing or not ending `END OF REPORT`: retry once, then E6.
+After all members + challengers returned/failed/timed out: dispatch one arbiter with `arbiter_model` (default haiku-class; Inputs for upgrade), agent type per Step 5. Prompt short: "Read and follow `swarm/arbiter-prompt.md`" (absolute path); run folder; each returned member (name, model class, report path); challenge path of each member that has one; each returned persona's `escalation_model` (if set); names of timed-out or no-usable-file; Unavailable personalities + homogeneity warning; tool-call budget; in-prompt sentence: writing `RESULT.md` is required deliverable; read-only (write only `RESULT.md`). `arbiter-prompt.md` holds verification, classification, confidence rule, `RESULT.md` format. Arbiter fails, or `RESULT.md` missing or not ending `END OF REPORT`: retry once, then E6.
 
 File-existence filter (discard findings citing file not in packet Files-affected list; skipped if none listed), B4 handling, timed-out file never read: all in `arbiter-prompt.md`. Run folder kept for drill-down; session scratch, no cleanup.
 

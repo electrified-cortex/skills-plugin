@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Tiered code review on a change set. Read-only. Never modifies code. Triggers - code review, security, correctness, code-quality, change-review, architectural-risk. Not for: specs, docs, config-only changes, lockfiles (use spec-auditing or markdown-hygiene).
+description: "Tiered code review on a change set. Read-only. Never modifies code. Triggers - code review, security, correctness, code-quality, change-review, architectural-risk. Not for: specs, docs, config-only changes, lockfiles (use spec-auditing or markdown-hygiene)."
 ---
 
 Cache Probe:
