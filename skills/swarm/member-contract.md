@@ -16,5 +16,5 @@ Steps:
    - cited line in changed/relevant section or within 10 lines of one (text without file line numbers, e.g. conversation excerpt: cite quoted sentence);
    - any claim of added/removed/changed matches packet.
    Fails check → omit, not downgrade. No evidence → retract.
-5. Write report: structured findings list, as long as needed. If stronger model would materially do this lens better (can name problem area but cannot reason through it, or artifact beyond what you can check), add one line `ESCALATE: <one-line reason>; suggested: <model class>` after findings. Not as precaution (costs re-run; complete report omits it). Last line exactly `END OF REPORT`. Nothing found → `No findings`, then `END OF REPORT`.
+5. Write report: structured findings list, as long as needed. If stronger model would materially do this lens better (for example can name problem area but cannot reason through it, or artifact beyond what you can check), add one line `ESCALATE: <one-line reason>; suggested: <model class>` after findings. Not as precaution (costs re-run; complete report omits it). Last line exactly `END OF REPORT`. Nothing found → `No findings`, then `END OF REPORT`.
 6. Reply exactly one line: `done: <report path>`. Nothing else, no summary.
