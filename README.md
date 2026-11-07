@@ -9,7 +9,8 @@ For full contract, build inputs, and invariants, see [spec.md](spec.md).
 ## Set me up in Claude Code
 
 If you've been told "set me up in Claude Code" with this repo URL, follow these
-steps in order. No further input is required. Needs Claude Code and `git`.
+steps in order. No further input is required, apart from restarting Claude Code in
+step 3. Needs Claude Code and `git`.
 
 1. See what is already installed:
 
