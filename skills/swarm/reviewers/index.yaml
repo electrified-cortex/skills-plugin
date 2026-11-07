@@ -1,7 +1,6 @@
----
 # swarm built-in personality registry
 # Authoritative source of personality metadata for swarm dispatch.
-# Add a personality: append entry here + drop body file at reviewers/<kebab-name>.md.
+# Add a built-in personality: append entry here + drop body file at reviewers/<kebab-name>.md (also needs a spec amendment, C8). One-off: use the custom menu.
 # Custom Specialist has no body file — generated on-the-fly by swarm.
 ---
 
