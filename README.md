@@ -8,15 +8,34 @@ For full contract, build inputs, and invariants, see [spec.md](spec.md).
 
 ## Set me up in Claude Code
 
-If you've been told "set me up in Claude Code" with this repo URL, run these two commands. No further input required:
+If you've been told "set me up in Claude Code" with this repo URL, follow these
+steps in order. No further input is required. Needs Claude Code and `git`.
 
-```bash
-claude plugin marketplace add https://github.com/electrified-cortex/skills-plugin
-claude plugin install electrified-cortex-skills@electrified-cortex
-```
+1. See what is already installed:
 
-This also installs the plugin's agents, such as `electrified-cortex-skills:dispatch`.
-No agent files need copying.
+   ```bash
+   claude plugin list
+   ```
+
+2. `electrified-cortex-skills@electrified-cortex` not listed (the usual case)?
+   Install it. This adds it for you, across all your projects:
+
+   ```bash
+   claude plugin marketplace add https://github.com/electrified-cortex/skills-plugin
+   claude plugin install electrified-cortex-skills@electrified-cortex
+   ```
+
+   Already listed? Do not install again; use
+   [Update in Claude Code](#update-in-claude-code) instead.
+
+3. Restart Claude Code. Skills and agents load only in a new session.
+
+4. Verify: `claude plugin list` shows `electrified-cortex-skills@electrified-cortex`
+   as enabled, and in the new session the skills appear with the
+   `electrified-cortex-skills:` prefix (for example `electrified-cortex-skills:dispatch`).
+
+The plugin also installs its agents (`dispatch`, `scout`, `orchestrator`). No
+agent files need copying.
 
 ## Update in Claude Code
 
