@@ -131,7 +131,7 @@ $pr.files | ForEach-Object {
 
 ## Scope
 
-Covers `markFileAsViewed` and `unmarkFileAsViewed` GraphQL mutations only. Does not submit PR reviews, post comments, or manage review threads — see `review/` and `inline-comment/`.
+Covers `markFileAsViewed` and `unmarkFileAsViewed` GraphQL mutations only. Does not submit PR reviews, post comments, or manage review threads — see `../review/` and `../inline-comment/`.
 
 ## Inputs
 

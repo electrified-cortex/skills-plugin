@@ -92,7 +92,7 @@ Fallback (no dispatch): Skip 3b. Read `topics/_index.md` for priority order. Ass
 
 Step 4 — Topic Analysis (Dispatched):
 
-Dispatch Sonnet-class sub-agent. Pass: source files (Step 1), `topics/<slug>.spec.md`, `topics/<slug>.md` (if exists).
+Dispatch Sonnet-class sub-agent. Pass: source files (Step 1), `topics/<slug>.md` (the assessment procedure), and `topics/<slug>.spec.md` if it exists (the plugin does not ship specs).
 
 ```md
 You are a skill optimizer running a focused topic analysis.

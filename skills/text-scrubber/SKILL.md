@@ -35,9 +35,16 @@ Pass `--help` / `-h` to print usage.
 Auto-fixes only high-confidence patterns (curly quotes/dashes/ellipsis/
 bullets and 7 specific mojibake byte-sequences). One low-confidence
 mojibake pattern (stray `Â` before a space) is always reported, never
-auto-fixed — see `scrub.spec.md` for the full replacement table,
-rationale, and a manual fallback procedure for applying every rule by
-hand when neither script can be run.
+auto-fixed.
+
+If neither script can be run, apply the rules by hand in this order (mojibake first, because its sequences end in a curly quote):
+
+1. Mojibake: U+00E2 U+20AC U+2122 and U+00E2 U+20AC U+02DC to `'`; U+00E2 U+20AC U+0153 to `"`; U+00E2 U+20AC U+201C to `-`; U+00E2 U+20AC U+201D to `--`; U+00E2 U+20AC U+00A2 to `-`; U+00E2 U+20AC U+00A6 to `...`. Flag, never replace, U+00C2 followed by a space.
+2. Arrows: U+2192 to `->`, U+2190 to `<-`, U+2191 to `^`, U+2193 to `v`, U+2194 to `<->`, U+21D2 to `=>`, U+21D0 to `<=`, U+21D4 to `<=>`.
+3. Dashes: U+2014 to `--`, U+2013 to `-`.
+4. Quotes: U+2018 and U+2019 to `'`, U+201C and U+201D to `"`.
+5. Ellipsis: U+2026 to `...`.
+6. Bullets: U+2022, U+25E6, U+2023, U+25CF, U+25AA and U+25AB to `-`.
 
 **Scripts** (relative to this folder):
 
@@ -45,7 +52,6 @@ hand when neither script can be run.
 - `scrub.ps1` — PowerShell 7+ implementation. Byte-identical stdout to
   `scrub.sh` for the same input.
 
-Not wired into `markdown-hygiene` or any pre-commit hook — see
-`scrub.spec.md`'s "Out of scope" section for that follow-up.
+Not wired into `markdown-hygiene` or any pre-commit hook.
 
 Related: `tool-writing`, `tool-auditing`, `hash-record/check`.

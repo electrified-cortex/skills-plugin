@@ -14,7 +14,7 @@ The solution: never let the agent parse the file. Use a script to filter it and 
 
 ## Lookup Mechanism
 
-The `finding/` directory ships a helper script: `lookup.ps1`.
+The `finding/tools/` directory ships a helper script: `tools/lookup.ps1`.
 
 ```
 lookup.ps1 <root> <query>

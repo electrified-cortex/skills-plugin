@@ -3,7 +3,7 @@ name: rust-engineering
 description: When writing, reviewing, or refactoring Rust and you want well-engineered code, not just code that compiles — the judgment layer above the borrow checker. Covers type-driven design, error architecture, ownership over shared-mutability, API-guideline conventions, async correctness, and wielding the compiler/clippy as a correction loop. Triggers - write Rust, review Rust, refactor Rust, idiomatic Rust, is this good Rust, Rust code quality, Rust best practices, Rust engineering guide, fix a borrow-checker error properly, Rust API design, async Rust pitfalls, avoid clone/unwrap, Box dyn vs impl Trait.
 ---
 
-Write well-engineered Rust, not code that merely compiles. The characteristic agent failure: satisfying the compiler with the cheapest local edit — `.clone()`, `Rc<RefCell>`, `Box<dyn>`, `.unwrap()` — which compiles but engineers badly. Apply the judgment below; read the compiler and clippy, don't just silence them. When a rule here is one you can't apply from its terse form, open `uncompressed.md` for its worked before/after; for a category not covered below (serde, testing, macros, docs, observability, project structure, naming), consult `reference.md`. If a companion file isn't present, apply the terse rule directly.
+Write well-engineered Rust, not code that merely compiles. The characteristic agent failure: satisfying the compiler with the cheapest local edit — `.clone()`, `Rc<RefCell>`, `Box<dyn>`, `.unwrap()` — which compiles but engineers badly. Apply the judgment below; read the compiler and clippy, don't just silence them. For a category not covered below (serde, testing, macros, docs, observability, project structure, naming), consult `reference.md`. If a companion file isn't present, apply the terse rule directly.
 
 When these practices conflict, prefer correctness and robustness over idiom, and idiom over brevity. A project's own established conventions win over these defaults for idiom and style — never over a correctness or robustness practice (a codebase that `.unwrap()`s everywhere is not a license to add more). Apply them to code you're writing or already changing, not as a repo-wide sweep.
 
@@ -16,7 +16,7 @@ Reviewing rather than writing: first scan the diff against the failure-modes lis
 
 ## Ownership before escape hatches
 
-- `.clone()` to end a borrow error is a smell — restructure by symptom (worked before/after: `uncompressed.md` §2.1):
+- `.clone()` to end a borrow error is a smell — restructure by symptom:
   - single value trapped behind `&mut` → `mem::take`/`replace`
   - two fields borrowed together → split/partial borrows
   - borrow ends too early → collect the owned result first, then mutate

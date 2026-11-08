@@ -1,6 +1,6 @@
 # Rust engineering reference — category checklist
 
-A scannable, category-organized checklist of idiomatic-Rust rules to consult as a lookup; deep rationale and worked examples for the starred topics live in `uncompressed.md`.
+A scannable, category-organized checklist of idiomatic-Rust rules to consult as a lookup.
 
 ## 1. Ownership & borrowing
 - Prefer `&T`/`&mut T` over cloning; clone only when ownership must genuinely transfer or outlive the borrow (guide §2.1).
