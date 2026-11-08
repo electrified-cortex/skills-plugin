@@ -158,7 +158,7 @@ After swarm final (post-gating): absolute path per survivor `swarm/reviewers/<na
 
 Use runtime dispatch per `dispatch` skill. Agent type by role: every file-writing role (member, challenger, arbiter) = `swarm-worker` (`electrified-cortex-skills:swarm-worker` when plugin-installed) if among available agent types, else `dispatch`; NEVER `scout` (read-only). `scout` only for read-only prep you would otherwise do yourself (gather subject files or blast radius before packet); returns text, keep answer small. After dispatching members say one line, `Running <N> reviewers: <names>`; one more when arbiter starts.
 
-Concurrency: haiku-class no cap; launch all at once (6-cap bounds). Other classes: rolling window of 3, dispatch next as each completes. Not returned within host-defined threshold (default 5 min member/arbiter, 3 min challenger) = timed out per B4. Tool-call budgets: 10 member/challenger; 2N+6 arbiter (reads N reports + N challenges).
+Concurrency: no limit, any model class: send all members in one message, start each challenger as its member returns, never batch, queue or hold any back, overriding `dispatch` skill's default of 3 (6-cap bounds swarm size). Not returned within host-defined threshold (default 5 min member/arbiter, 3 min challenger) = timed out per B4. Tool-call budgets: 10 member/challenger; 2N+6 arbiter (reads N reports + N challenges).
 
 Reuse first: per persona compute dir (Step 1 key) at resolved class. Cached `review.md` ending `END OF REPORT` (not "No findings") satisfies persona: skip dispatch. Its `challenge-<challenger_key>.md` reused if present and ending `END OF REPORT`; else dispatch challenger only. Other-class reports don't satisfy. File subject: before dispatch claim it with `mkdir .hash-record/XX/HASH/swarm.lock` (atomic); exists and under 15 min old = tell operator a run is in flight, stop; older = remove and continue; remove at run end, also on failure. Text subject: no lock.
 
@@ -306,7 +306,7 @@ D1. Default `personality_filter`: none (all registry entries eval'd).
 
 D2. Default class: haiku-class for every personality (first pass). Callers override via `model_overrides`; escalation = Step 6 option 4.
 
-D3. Dispatch: haiku-class all at once (no cap); other classes rolling window of 3 (never >3 in flight).
+D3. Dispatch: all at once, any model class, no limit (overrides `dispatch` skill's default of 3); 6-cap bounds size.
 
 D3b. Member reports + arbiter reply: no word limit; reply and `RESULT.md` brief.
 
@@ -323,7 +323,7 @@ D7. `.hash-record/` base: workspace root (repo/project root containing reviewed 
 - F1: load reviewer prompts only after swarm final + gated (Step 4); host never reads them.
 - F2: failed probe drops personality; never fails swarm (Step 3).
 - F3: C2 read-only + write-the-file sentence in every dispatch prompt.
-- F4: never dispatch one at a time: haiku-class all at once, others window of 3 (Step 5).
+- F4: never dispatch one at a time, never throttle: all members at once, any model class (Step 5).
 - F5: host voice; keep per-finding source personalities, not persona narrative.
 - ANTI-PATTERN: `personality_filter: ["Security Auditor"]` runs only Security Auditor (+ safety-critical additions); name every wanted personality, Devil's Advocate included.
 
