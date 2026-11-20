@@ -1,6 +1,6 @@
 ---
 name: skill-writing
-description: How to write skills. Decision tree for inline vs dispatch, structure, quality criteria. Triggers — write a skill, author SKILL.md, create new skill, draft skill file, implement skill spec.
+description: How to write skills. Decision tree for inline vs dispatch, structure, quality criteria. Triggers - write a skill, author SKILL.md, create new skill, draft skill file, implement skill spec.
 ---
 
 Create skills agents can discover, invoke, rely on.
@@ -10,12 +10,12 @@ Workflow: new skill — follow order. NEVER skip steps.
 
 1. Spec first — write `spec.md` via `spec-writing`. Defines what skill does, requirements, constraints, acceptance criteria. Simple inline skill under ~30 lines with no design decisions worth recording may omit `spec.md` entirely.
 2. Write uncompressed — write `uncompressed.md` derived from spec. Human-readable baseline.
-3. Markdown hygiene — run `markdown-hygiene` on every uncompressed source file (`uncompressed.md`, `instructions.uncompressed.md` if present). Zero errors required before proceeding.
+3. Markdown hygiene — run `markdown-hygiene` on every uncompressed source file (`uncompressed.md`, `instructions.uncompressed.md` if present). `CLEAN` required from every source before proceeding.
 4. Intermediate audit — dispatch `skill-auditing --uncompressed` on skill. FAIL → fix all findings → re-audit. Repeat until PASS.
 5. Compress — use `compression` skill (source→target mode: `--source uncompressed.md --target SKILL.md`). `SKILL.md` = compressed runtime agents load.
-6. Quality iteration — run `skill-critique` (dispatch skill) on draft. Iterate on refinements until READY: sonnet (standard-tier) passes until exhausted, then one opus-class final pass. THEN proceed to final audit.
-7. Final audit — dispatch `skill-auditing` (standard mode) on `SKILL.md`. FAIL → fix all findings → recompress → re-audit. Repeat until PASS.
-8. Eval verification (MANDATORY GATE) — dispatch haiku-class sub-agent (via `dispatch`) against known-good input; ask whether skill did what it says (yes/no); record run in `eval.md`. Required before skill complete (R-EV-1).
+6. Quality iteration — run `skill-critique` (dispatch skill) on draft. Iterate on refinements until READY: standard-tier passes until exhausted, then one deep-tier final pass. THEN proceed to final audit.
+7. Final audit — dispatch `skill-auditing` (default mode) on `SKILL.md`. FAIL → fix all findings → recompress → re-audit. Repeat until PASS.
+8. Eval verification (MANDATORY GATE) — dispatch haiku-class sub-agent (via `dispatch`) against known-good input; ask whether skill did what it says (yes/no); record run in `eval.md`. `no` verdict fails step: fix source, recompress, append new run (never rewrite earlier runs). Required before skill complete (R-EV-1).
 
 Dispatch skills: also write companion instruction source file (see Dispatch Skill section).
 
@@ -50,14 +50,14 @@ High-frequency (many files per run or many dispatches per session): invest in ha
 Low-frequency / one-off (once per skill, once per file, infrequent): sonnet-class fine; `eval.md` still carries mandatory R-EV-1 entry; L1/L2 comparison rounds not required.
 Examples: markdown-hygiene, code-review = high-frequency (haiku-readiness justified); compression = low-frequency (sonnet fine).
 
-Completion Gate: skill not done until Intermediate, Quality, Final, Eval gates all pass.
+Completion Gate: skill not done until Intermediate (step 4), Quality (step 6), Final (step 7), Eval (step 8) gates all pass.
 
-Intermediate gate (step 4): `skill-auditing --uncompressed` on `uncompressed.md` must PASS before compression runs. FAIL → fix → re-audit. NEVER compress failing `uncompressed.md`.
-Quality gate (step 6): `skill-critique` must return READY (or accepted BORDERLINE) before final audit runs. ITERATE → apply refinements → recompress → re-critique.
-Final gate (step 7): `skill-auditing` (standard) on `SKILL.md` must PASS. FAIL → fix source (`uncompressed.md`) → recompress → re-audit.
-Eval gate (step 8): `eval.md` must document at least one dispatch run + verdict (R-EV-1). No exception for low-frequency skills — see Eval Readiness for what's optional vs mandatory.
+Intermediate: `skill-auditing --uncompressed` on `uncompressed.md` must PASS before compression. NEVER compress failing `uncompressed.md`.
+Quality: `skill-critique` must return READY (or accepted BORDERLINE) before final audit. ITERATE → apply refinements → recompress → re-critique.
+Final: `skill-auditing` (default mode) on `SKILL.md` must PASS. FAIL → fix source (`uncompressed.md`) → recompress → re-audit.
+Eval: `eval.md` must document at least one dispatch run with `yes` verdict (R-EV-1); `no` → fix source, recompress, append new run. No exception for low-frequency skills — see Eval Readiness for what's optional vs mandatory.
 
-DO NOT declare skill complete, commit it, or hand off until final standard-mode PASS verdict AND `eval.md` run both in hand. No exceptions. Receiving FAIL and stopping work = workflow violation.
+DO NOT declare skill complete, commit it, or hand off until final default-mode PASS AND `eval.md` run both in hand. Receiving FAIL and stopping work = workflow violation.
 
 Revising existing skill: ALWAYS update spec first. Exception: changes limited to non-normative content (README, examples, typo fixes in informational sections) — skip to step 2. Then update `uncompressed.md` → hygiene → intermediate audit (`--uncompressed`) → compress → critique → final audit → eval (if revision bumped version or changed behavior, refresh `eval.md`, R-EV-1). NEVER modify `SKILL.md` directly — compiled artifact.
 
@@ -65,7 +65,7 @@ Error Handling:
 
 Duplicate name: check existing skills before writing (step 1). Skill already exists with proposed name → use revision workflow instead of creating new one.
 Audit never reaches PASS: don't silently accept stalled audit — report blockage, escalate. Never ship skill with unresolved CRIT/HIGH findings.
-Dispatch unavailable: no dispatch channel reachable → record exception; host may self-execute steps 2–4; triage routing defect afterward.
+Dispatch unavailable: no dispatch channel reachable → record exception; host may self-execute steps 2–3 only; steps 4, 6, 7, 8 need fresh-context run, so record them blocked and escalate; triage routing defect afterward.
 Sign-off regression: new CRIT/HIGH findings during Final gate (step 7) return to iteration — don't declare complete until clean.
 
 Inline vs Dispatch: "Could someone with no context do this from just inputs?" Yes → dispatch. No → inline.
@@ -115,25 +115,17 @@ No "why": rationale belongs in `spec.md`; skills state what, not why.
 Decision trees not prose: conditional logic uses tables or decision trees, not paragraphs.
 Breadcrumbs: end with related skills (verified, not stale).
 No secrets.
-No cross-file-path references to sibling skill internals (R-FM-11).
+Cross-skill references by canonical name; a relative path pointer may follow the name (R-FM-11).
 
-R-FM-11 — No Cross-File-Path References: skill files MUST NOT reference another skill's `uncompressed.md` or `spec.md` by file path. Every such pointer is load invitation — even uncompressed-to-uncompressed references compound bloat.
+R-FM-11 — Cross-Skill References by Name: reference another skill by its canonical `name`; a relative path pointer MAY follow the name (e.g. the `compression` skill (`../compression`)). Path-only references are forbidden. Prefer pointing at the skill folder or the sub-file the reader needs over a sibling's `uncompressed.md` or `spec.md` (load invitations).
 
-Allowed: own `instructions.txt`, sub-instructions, `tooling.md` in same folder; sibling skill by name (`"see the compression skill"`).
+Allowed: own `instructions.txt`, sub-instructions, `tooling.md` in same folder; sibling skill by name, optionally with folder or specific-file pointer.
 
-Forbidden:
+Forbidden: path with no name, e.g. `See ../compression/uncompressed.md for details.`
 
-```text
-See `../compression/uncompressed.md` for details.
-Consult `../spec-writing/spec.md` for the format.
-```
+R-FM-12 — no absolute filesystem paths in any artifact body (SKILL.md, uncompressed.md, instructions, spec.md, embedded examples): use repo-relative paths. Stdout values that emit paths are exempt.
 
-Allowed:
-
-```text
-Read and follow `instructions.txt` (in this directory).
-For dispatch mechanics, read the `dispatch` skill.
-```
+R-SS-1 — sub-skill input isolation: a sub-skill accepts only the primary resource and its own configuration parameters, never a sibling sub-skill's output path, result token or artifact; the parent orchestrator owns sequencing and result passing.
 
 Footgun Mirroring: if companion spec has `Footguns` section, mirror in `uncompressed.md`/`SKILL.md`: preserve all F#: entries, Mitigation: lines, ANTI-PATTERN: examples.
 
