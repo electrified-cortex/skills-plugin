@@ -43,14 +43,17 @@ DECISION=''
 BODY_FILE=''
 REVIEW_ID=''
 
+# A value flag as the last argument must fail with exit 2, not abort under set -u.
+need_value() { [[ $# -ge 2 ]] || { printf 'USAGE_ERROR: %s requires a value\n' "$1" >&2; exit 2; }; }
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --owner)      OWNER="$2";     shift 2 ;;
-    --repo)       REPO="$2";      shift 2 ;;
-    --pr)         PR="$2";        shift 2 ;;
-    --decision)   DECISION="$2";  shift 2 ;;
-    --body-file)  BODY_FILE="$2"; shift 2 ;;
-    --review-id)  REVIEW_ID="$2"; shift 2 ;;
+    --owner)      need_value "$@"; OWNER="$2";     shift 2 ;;
+    --repo)       need_value "$@"; REPO="$2";      shift 2 ;;
+    --pr)         need_value "$@"; PR="$2";        shift 2 ;;
+    --decision)   need_value "$@"; DECISION="$2";  shift 2 ;;
+    --body-file)  need_value "$@"; BODY_FILE="$2"; shift 2 ;;
+    --review-id)  need_value "$@"; REVIEW_ID="$2"; shift 2 ;;
     --help|-h)    usage; exit 0 ;;
     *)
       printf 'USAGE_ERROR: unknown flag: %s\n' "$1" >&2
@@ -163,10 +166,10 @@ fi
 # ---------------------------------------------------------------------------
 pr_url=''
 url_exit=0
-pr_url=$(gh pr view "$PR" --repo "${OWNER}/${REPO}" --json url --jq '.url' 2>&1) || url_exit=$?
+pr_url=$(gh pr view "$PR" --repo "${OWNER}/${REPO}" --json url --jq '.url' 2>"$tmp_err") || url_exit=$?
 
 if [[ $url_exit -ne 0 ]]; then
-  printf '%s\n' "$pr_url" >&2
+  cat "$tmp_err" >&2
   exit 4
 fi
 

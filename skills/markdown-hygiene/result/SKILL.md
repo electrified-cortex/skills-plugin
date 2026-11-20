@@ -5,10 +5,10 @@ description: Check cache state of a markdown-hygiene sub-document. Returns path 
 
 Run `result.sh` / `result.ps1` from `result/`, whichever your runtime has. DON'T READ the script source.
 
-- Bash: `bash <result-skill-dir>/result.sh <markdown_file_path> <filename>.md`
-- PS7: `pwsh <result-skill-dir>/result.ps1 <markdown_file_path> <filename>.md`
+- Bash: `bash <result-skill-dir>/result.sh <markdown_file_path> <filename>`
+- PS7: `pwsh <result-skill-dir>/result.ps1 <markdown_file_path> <filename>`
 
-`<filename>` is the bare sub-document name to probe: `report`, `lint`, or `analysis`.
+`<filename>` is the bare sub-document name to probe: `report`, `lint`, or `analysis` (no `.md` extension; names containing `.`, `/` or `\` are rejected).
 
 Branch on the one-line stdout:
 

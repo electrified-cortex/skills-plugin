@@ -16,7 +16,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-if (-not (Test-Path $FilePath -PathType Leaf)) {
+if (-not (Test-Path -LiteralPath $FilePath -PathType Leaf)) {
     [Console]::Error.WriteLine("ERROR: file not found: $FilePath")
     exit 1
 }

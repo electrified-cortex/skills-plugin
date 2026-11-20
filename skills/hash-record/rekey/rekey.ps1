@@ -8,7 +8,6 @@
 #   NOT_FOUND: no record for <op_kind>/<record_filename>   (per-file)
 #   NOT_FOUND: no record for <file-rel-path>               (folder)
 #   AMBIGUOUS: <n> records found -- manual resolution required
-#   MANIFEST_UPDATED: <manifest-path>:<entry-id>
 #   SUMMARY: rekeyed=<n> current=<n> manifest_updated=<n> not_found=<n> errors=<n>
 #   ERROR: <reason>
 
@@ -47,9 +46,9 @@ Folder-mode output (stdout, one line per record, then summary):
   REKEYED: <abs-path>
   CURRENT: <abs-path>
   NOT_FOUND: no record for <file-rel-path>
-  MANIFEST_UPDATED: <manifest-path>:<entry-id>
   ERROR: <reason>
   SUMMARY: rekeyed=<n> current=<n> manifest_updated=<n> not_found=<n> errors=<n>
+    (multi-file records report as REKEYED/CURRENT; manifest_updated is always 0)
 
 Exit codes:
   0   Success (or --dry-run with no errors).
@@ -73,7 +72,7 @@ function Get-FrontmatterPaths ([string]$RecordFile) {
     $paths = [System.Collections.Generic.List[string]]::new()
     $pastOpen = $false
     $collectingList = $false
-    foreach ($line in [System.IO.File]::ReadLines($RecordFile)) {
+    foreach ($line in [System.IO.File]::ReadAllLines($RecordFile)) {
         $line = $line.TrimEnd("`r")
         if (-not $pastOpen) {
             if ($line -eq '---') { $pastOpen = $true }
@@ -152,6 +151,11 @@ function Get-ManifestHash ([string]$RecordFile, [string]$RepoRoot) {
     # in edge cases and yields an incompatible hash.
     $pairs = @()
     foreach ($fpath in $paths) {
+        # Reject members that could leave the repo root (".." path segment).
+        if (("/" + ($fpath -replace '\\', '/') + "/") -like '*/../*') {
+            [Console]::Error.WriteLine("ERROR: rejected file_paths entry with "".."" segment in $($RecordFile): $fpath")
+            return $null
+        }
         $absPath = "$RepoRoot/$fpath"
         $blobHash = Get-LfBlobHash $absPath
         if (-not $blobHash) { return $null }
@@ -210,7 +214,8 @@ if (Test-Path -LiteralPath $firstArg -PathType Container) {
     # =======================================================================
     # FOLDER MODE
     # =======================================================================
-    $folderPath = ConvertTo-ForwardSlash $firstArg
+    # Resolve to an absolute path so include/exclude/prefix matching works.
+    $folderPath = ConvertTo-ForwardSlash (Resolve-Path -LiteralPath $firstArg).ProviderPath
     $includes   = [System.Collections.Generic.List[string]]::new()
     $excludes   = [System.Collections.Generic.List[string]]::new()
     $dryRun     = $false
@@ -316,7 +321,7 @@ if (Test-Path -LiteralPath $firstArg -PathType Container) {
     # Collect files under folder_path, sorted
     # -----------------------------------------------------------------------
     $files = Get-ChildItem -Path $folderPath -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '[/\\]\.git[/\\]' } |
+        Where-Object { $_.FullName -notmatch '[/\\]\.(git|hash-record)[/\\]' } |
         Sort-Object FullName -CaseSensitive
 
     # Deferred multi-file records: hashtable rec.Path -> rec object
@@ -628,6 +633,16 @@ if (Test-Path -LiteralPath $firstArg -PathType Container) {
         }
 
         $old_record = $found[0]
+    }
+
+    # A multi-file record is keyed by its manifest hash, not by one member's blob hash.
+    if ((Get-FrontmatterPaths $old_record.Path).Count -gt 1) {
+        $new_hash = Get-ManifestHash $old_record.Path $repo_root
+        if (-not $new_hash) {
+            [Console]::Out.Write("ERROR: manifest hash computation failed for: $($old_record.Path)`n")
+            exit 1
+        }
+        $new_shard = $new_hash.Substring(0, 2)
     }
 
     if ($old_record.Hash -eq $new_hash) {

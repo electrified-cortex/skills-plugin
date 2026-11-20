@@ -15,8 +15,8 @@ pwsh rekey.ps1 <file_path> <op_kind> <record_filename> [source_hash]
 **Folder mode** (pass a directory instead of a file):
 
 ```bash
-bash rekey.sh <folder_path> [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests]
-pwsh rekey.ps1 <folder_path> [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests]
+bash rekey.sh <folder_path> [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests <true|false>]
+pwsh rekey.ps1 <folder_path> [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests <true|false>]
 ```
 
 Pass `--help` / `-h` to print usage.
@@ -28,12 +28,14 @@ Pass `--help` / `-h` to print usage.
 - `record_filename` — leaf filename, e.g. `claude-haiku.md`. No path separators or `..`.
 - `source_hash` — (optional) known old 40-char hex hash; bypasses full-tree scan and prevents AMBIGUOUS.
 
+A record whose frontmatter lists several `file_paths` is a multi-file record: it is moved to its manifest hash, not to `file_path`'s blob hash. `file_paths` entries containing a `..` segment are rejected with ERROR.
+
 **Folder-mode flags:**
 
 - `--include <glob>` — restrict scope to matching files (repeatable).
 - `--exclude <glob>` — skip matching files (repeatable).
 - `--dry-run` — report without making changes.
-- `--manifests` — include manifest files (default: true).
+- `--manifests <true|false>` — include multi-file (manifest) records (default: true).
 
 **Output — per-file mode** (one line, stdout):
 
@@ -52,8 +54,7 @@ Pass `--help` / `-h` to print usage.
 | `REKEYED: <abs-path>` | Record moved. |
 | `CURRENT: <abs-path>` | Hash unchanged. |
 | `NOT_FOUND: no record for <file-rel-path>` | No record for this file. |
-| `MANIFEST_UPDATED: <manifest-path>:<entry-id>` | Manifest entry rekeyed. |
-| `SUMMARY: rekeyed=<n> current=<n> manifest_updated=<n> not_found=<n> errors=<n>` | Aggregate. |
+| `SUMMARY: rekeyed=<n> current=<n> manifest_updated=<n> not_found=<n> errors=<n>` | Aggregate. `manifest_updated` is always 0; multi-file records report as REKEYED/CURRENT. |
 | `ERROR: <reason>` | Per-record failure. |
 
 Exit: 0 = success; 1 = runtime error; 2 = invocation error (bad path or flags).

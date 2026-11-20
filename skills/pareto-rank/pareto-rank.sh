@@ -199,7 +199,7 @@ cmd_rank() {
   done
 
   local sorted_indices
-  sorted_indices=$(printf '%s\n' "${sort_lines[@]}" | sort -t$'\t' -k1,1n -k2,2n -k3,3 | awk -F'\t' '{print $4}')
+  sorted_indices=$(printf '%s\n' "${sort_lines[@]}" | sort -t$'\t' -k1,1n -k2,2g -k3,3 | awk -F'\t' '{print $4}')
 
   # Emit header
   local header
@@ -211,7 +211,7 @@ cmd_rank() {
     local row="${IDS[$idx]}"
     local d
     for (( d=0; d<NUM_DIMS; d++ )); do
-      row+=",$( printf '%g' "${DIMS_FLAT[$((idx * NUM_DIMS + d))]}" )"
+      row+=",${DIMS_FLAT[$((idx * NUM_DIMS + d))]}"
     done
     row+=",${ranks[$idx]}"
     echo "$row"
@@ -268,7 +268,7 @@ cmd_top() {
   local row="${IDS[$best_idx]}"
   local d
   for (( d=0; d<NUM_DIMS; d++ )); do
-    row+=",$( printf '%g' "${DIMS_FLAT[$((best_idx * NUM_DIMS + d))]}" )"
+    row+=",${DIMS_FLAT[$((best_idx * NUM_DIMS + d))]}"
   done
   echo "$row"
 }

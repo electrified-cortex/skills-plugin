@@ -56,12 +56,13 @@ exit_code=0
 for pattern in "$@"; do
   # Check if pattern is a glob (contains * or ?)
   if [[ "$pattern" == *'*'* || "$pattern" == *'?'* ]]; then
-    # Expand glob; if no match, nullglob silently skips
-    shopt -s nullglob
-    for f in $pattern; do
+    # Expand glob (quoted, so spaces in the pattern are not word-split);
+    # if no match, compgen yields nothing and the pattern is silently skipped
+    matches=()
+    mapfile -t matches < <(compgen -G "$pattern" || true)
+    for f in "${matches[@]}"; do
       lint_file "$f" || exit_code=1
     done
-    shopt -u nullglob
   else
     lint_file "$pattern" || exit_code=1
   fi

@@ -7,7 +7,11 @@ set -e
 # ---------------------------------------------------------------------------
 # Help
 # ---------------------------------------------------------------------------
-if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+show_help=0
+for _arg in "$@"; do
+  case "$_arg" in --help|-h) show_help=1; break ;; esac
+done
+if [ "$show_help" = "1" ]; then
   cat <<'USAGE'
 Usage: prune.sh <repo_root> [--target <glob>] [--dry-run] [--limit <N>]
 
@@ -276,11 +280,16 @@ glob_match() {
   # Expand ** by trying all possible depths (0..N path segments).
   # We do this by converting the glob to a regex in pure bash.
   local regex
+  # Backslashes are path separators (as in prune.ps1). Escape ERE metachars,
+  # then: ** -> .* (via a \001 placeholder), * -> [^/]*, ? -> [^/].
+  glob="${glob//\\//}"
+  path="${path//\\//}"
   regex=$(printf '%s' "$glob" | sed \
-    -e 's/[.^$+{}|()\\]/\\&/g' \
-    -e 's/\*\*/.*/g' \
-    -e 's/\*\([^.]*\)/[^\/]*/g' \
-    -e 's/?/[^\/]/g')
+    -e 's/[].^$+{}|()[\\]/\\&/g' \
+    -e "s/\*\*/$(printf '\001')/g" \
+    -e 's/\*/[^\/]*/g' \
+    -e 's/?/[^\/]/g' \
+    -e "s/$(printf '\001')/.*/g")
   # Anchor full path
   regex="^${regex}$"
   [[ "$path" =~ $regex ]]
@@ -441,7 +450,7 @@ done < <(find "$HASH_RECORD_DIR" -mindepth 1 -depth -type d -empty -print0 2>/de
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-if [ "$deleted" -eq 0 ]; then
+if [ "$deleted" -eq 0 ] && [ "$orphan_count" -eq 0 ]; then
   echo "CLEAN"
 else
   echo "pruned: $deleted"

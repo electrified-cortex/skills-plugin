@@ -123,9 +123,17 @@ if (Test-Path -LiteralPath $gitmodules -PathType Leaf) {
 # ---------------------------------------------------------------------------
 $valid_hashes = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 
-$ls_output = (& git -C $repo_root ls-files --cached --others --exclude-standard 2>$null)
+# -z: NUL-separated, unquoted paths (non-ASCII / special-char names are not C-quoted).
+# Decode git's UTF-8 output explicitly (the console codepage may not be UTF-8).
+$prev_enc = [Console]::OutputEncoding
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+try {
+    $ls_output = (& git -C $repo_root ls-files -z --cached --others --exclude-standard 2>$null)
+} finally {
+    [Console]::OutputEncoding = $prev_enc
+}
 if ($ls_output) {
-    foreach ($rel_path in ($ls_output -split "`n" | Where-Object { $_ -ne '' })) {
+    foreach ($rel_path in (($ls_output -join "`n") -split "`0" | Where-Object { $_ -ne '' })) {
         # Skip .worktrees/ paths
         if ($rel_path -match '^\.worktrees/') { continue }
 
@@ -190,8 +198,9 @@ function Test-ManifestValid {
         $pairs.Add("$fpath $($fblob.Trim())")
     }
 
-    # Sort lexically (case-sensitive, byte-order — matches bash LC_ALL=C sort)
-    $sorted = $pairs | Sort-Object -CaseSensitive -Culture ''
+    # Sort lexically, ordinal (UTF-16 code-unit order: equals bash LC_ALL=C byte order except for characters above U+FFFF)
+    $sorted = $pairs.ToArray()
+    [System.Array]::Sort($sorted, [System.StringComparer]::Ordinal)
 
     # Build manifest text with explicit LF endings (no CRLF)
     $manifest_text = ''
@@ -411,7 +420,7 @@ foreach ($dir in $all_dirs) {
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-if ($deleted -eq 0) {
+if ($deleted -eq 0 -and $orphan_count -eq 0) {
     [Console]::Out.Write("CLEAN`n")
 } else {
     [Console]::Out.Write("pruned: $deleted`n")

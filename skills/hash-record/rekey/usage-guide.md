@@ -89,11 +89,11 @@ them in bulk.
 Invocation:
 
 ```bash
-bash rekey.sh  /path/to/folder [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests]
+bash rekey.sh  /path/to/folder [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests <true|false>]
 ```
 
 ```powershell
-pwsh rekey.ps1 /path/to/folder [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests]
+pwsh rekey.ps1 /path/to/folder [--include <glob>] [--exclude <glob>] [--dry-run] [--manifests <true|false>]
 ```
 
 Flags:
@@ -101,7 +101,7 @@ Flags:
 - `--include <glob>` — restrict to files matching the glob (repeatable).
 - `--exclude <glob>` — skip files matching the glob (repeatable).
 - `--dry-run` — report what would be rekeyed without making changes.
-- `--manifests` — also rekey manifest files (default: true).
+- `--manifests <true|false>` — also rekey manifest files (default: true).
 
 Folder-mode output is one line per record, plus a final summary:
 

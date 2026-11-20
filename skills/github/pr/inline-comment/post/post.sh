@@ -44,16 +44,19 @@ LINE=''
 SIDE='RIGHT'
 BODY_FILE=''
 
+# A value flag as the last argument must fail with exit 2, not abort under set -u.
+need_value() { [[ $# -ge 2 ]] || { printf 'USAGE_ERROR: %s requires a value\n' "$1" >&2; exit 2; }; }
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --owner)       OWNER="$2";      shift 2 ;;
-    --repo)        REPO="$2";       shift 2 ;;
-    --pr)          PR="$2";         shift 2 ;;
-    --commit-sha)  COMMIT_SHA="$2"; shift 2 ;;
-    --file)        FILE="$2";       shift 2 ;;
-    --line)        LINE="$2";       shift 2 ;;
-    --side)        SIDE="$2";       shift 2 ;;
-    --body-file)   BODY_FILE="$2";  shift 2 ;;
+    --owner)       need_value "$@"; OWNER="$2";      shift 2 ;;
+    --repo)        need_value "$@"; REPO="$2";       shift 2 ;;
+    --pr)          need_value "$@"; PR="$2";         shift 2 ;;
+    --commit-sha)  need_value "$@"; COMMIT_SHA="$2"; shift 2 ;;
+    --file)        need_value "$@"; FILE="$2";       shift 2 ;;
+    --line)        need_value "$@"; LINE="$2";       shift 2 ;;
+    --side)        need_value "$@"; SIDE="$2";       shift 2 ;;
+    --body-file)   need_value "$@"; BODY_FILE="$2";  shift 2 ;;
     --help|-h)     usage; exit 0 ;;
     *)
       printf 'USAGE_ERROR: unknown flag: %s\n' "$1" >&2
@@ -108,8 +111,8 @@ gh_args=(
   api
   --method POST
   "repos/${OWNER}/${REPO}/pulls/${PR}/comments"
-  --field "commit_id=${COMMIT_SHA}"
-  --field "path=${FILE}"
+  --raw-field "commit_id=${COMMIT_SHA}"
+  --raw-field "path=${FILE}"
   --field "line=${LINE}"
   --field "side=${SIDE}"
   --field "body=@${BODY_FILE}"

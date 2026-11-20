@@ -69,7 +69,7 @@ case "$CHECK_OUT" in
             echo "ERROR: cache record vanished at: $RECORD_PATH"
             exit 1
         fi
-        RESULT_VALUE=$(grep -m1 '^result:' "$RECORD_PATH" 2>/dev/null | awk '{print $2}')
+        RESULT_VALUE=$(grep -m1 '^result:' "$RECORD_PATH" 2>/dev/null | awk '{print $2}') || true
         case "$RESULT_VALUE" in
             clean)
                 if [ "$FILENAME" = "report" ]; then

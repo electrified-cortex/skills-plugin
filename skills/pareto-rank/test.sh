@@ -23,6 +23,7 @@
 # Then gamma at rank 2.
 
 set -euo pipefail
+FAILED=0
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TOOL="$SCRIPT_DIR/pareto-rank.sh"
@@ -107,13 +108,13 @@ id,x,y
 good,5,3
 bad,4,oops
 EOF
-bash "$TOOL" rank "$WORK"/pareto_bad.csv && echo "UNEXPECTED SUCCESS" || echo "(error expected — exit non-zero)"
+bash "$TOOL" rank "$WORK"/pareto_bad.csv && { echo "UNEXPECTED SUCCESS"; FAILED=1; } || echo "(error expected — exit non-zero)"
 
 echo ""
 echo "========================================="
 echo "TEST 11: error — unknown dimension name in top"
 echo "========================================="
-bash "$TOOL" top nonexistent "$CSV" && echo "UNEXPECTED SUCCESS" || echo "(error expected — exit non-zero)"
+bash "$TOOL" top nonexistent "$CSV" && { echo "UNEXPECTED SUCCESS"; FAILED=1; } || echo "(error expected — exit non-zero)"
 
 echo ""
 echo "========================================="
@@ -124,7 +125,7 @@ id
 alpha
 beta
 EOF
-bash "$TOOL" rank "$WORK"/pareto_onecol.csv && echo "UNEXPECTED SUCCESS" || echo "(error expected — exit non-zero)"
+bash "$TOOL" rank "$WORK"/pareto_onecol.csv && { echo "UNEXPECTED SUCCESS"; FAILED=1; } || echo "(error expected — exit non-zero)"
 
 echo ""
 echo "========================================="
@@ -148,7 +149,7 @@ id,x,y
 a,1e3,5
 b,4,3
 EOF
-bash "$TOOL" rank "$WORK"/pareto_sci.csv && echo "UNEXPECTED SUCCESS" || echo "(error expected — exit non-zero)"
+bash "$TOOL" rank "$WORK"/pareto_sci.csv && { echo "UNEXPECTED SUCCESS"; FAILED=1; } || echo "(error expected — exit non-zero)"
 
 echo ""
 echo "========================================="
@@ -157,6 +158,7 @@ echo "========================================="
 out=$(bash "$TOOL" top value "$CSV")
 if echo "$out" | grep -q 'rank'; then
   echo "FAIL: rank column found in top output"
+  FAILED=1
 else
   echo "PASS: no rank column in top output"
 fi
@@ -172,8 +174,66 @@ if [[ "$rank_out" == "$next_out" ]]; then
   echo "PASS: next output identical to rank"
 else
   echo "FAIL: next output differs from rank"
+  FAILED=1
   diff <(echo "$rank_out") <(echo "$next_out")
 fi
 
 echo ""
+echo "========================================="
+echo "TEST 17: rank echoes input values unchanged"
+echo "========================================="
+printf 'id,x,y\na,1234567,1\nb,2,3\n' > "$WORK"/pareto_big.csv
+out=$(bash "$TOOL" rank "$WORK"/pareto_big.csv)
+if echo "$out" | grep -q '^a,1234567,1,1$'; then
+  echo "PASS: value 1234567 echoed unchanged"
+else
+  echo "FAIL: value was rewritten"
+  echo "$out"
+  FAILED=1
+fi
+
+echo ""
+echo "========================================="
+echo "TEST 18: tie-break by descending dimension sum"
+echo "========================================="
+printf 'id,x,y\nb,0,3\na,20000000000,0\n' > "$WORK"/pareto_sum.csv
+first=$(bash "$TOOL" rank "$WORK"/pareto_sum.csv | sed -n '2p')
+if [[ "$first" == a,* ]]; then
+  echo "PASS: row with the larger dimension sum comes first"
+else
+  echo "FAIL: expected a first, got: $first"
+  FAILED=1
+fi
+
+echo ""
+echo "========================================="
+echo "TEST 19: tie-break by dimension sum works for very small values"
+echo "========================================="
+printf 'id,x,y\na,0.00000000001,0\nb,0,0.00000000002\n' > "$WORK"/pareto_small.csv
+first=$(bash "$TOOL" rank "$WORK"/pareto_small.csv | sed -n '2p')
+if [[ "$first" == b,* ]]; then
+  echo "PASS: row with the larger tiny sum comes first"
+else
+  echo "FAIL: expected b first, got: $first"
+  FAILED=1
+fi
+
+echo ""
+echo "========================================="
+echo "TEST 20: decimal-equal sums tie (0.3 vs 0.1+0.2), id breaks the tie"
+echo "========================================="
+printf 'id,x,y\nb,0.1,0.2\na,0.3,0\n' > "$WORK"/pareto_tie.csv
+first=$(bash "$TOOL" rank "$WORK"/pareto_tie.csv | sed -n '2p')
+if [[ "$first" == a,* ]]; then
+  echo "PASS: equal sums fall back to id order"
+else
+  echo "FAIL: expected a first, got: $first"
+  FAILED=1
+fi
+
+echo ""
+if [[ "$FAILED" -ne 0 ]]; then
+  echo "SOME TESTS FAILED"
+  exit 1
+fi
 echo "All tests complete."

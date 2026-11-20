@@ -42,14 +42,17 @@ BODY_FILE=''
 LABEL=''
 DRAFT=0
 
+# A value flag as the last argument must fail with exit 2, not abort under set -u.
+need_value() { [[ $# -ge 2 ]] || { printf 'USAGE_ERROR: %s requires a value\n' "$1" >&2; exit 2; }; }
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --owner)      OWNER="$2";     shift 2 ;;
-    --repo)       REPO="$2";      shift 2 ;;
-    --base)       BASE="$2";      shift 2 ;;
-    --title)      TITLE="$2";     shift 2 ;;
-    --body-file)  BODY_FILE="$2"; shift 2 ;;
-    --label)      LABEL="$2";     shift 2 ;;
+    --owner)      need_value "$@"; OWNER="$2";     shift 2 ;;
+    --repo)       need_value "$@"; REPO="$2";      shift 2 ;;
+    --base)       need_value "$@"; BASE="$2";      shift 2 ;;
+    --title)      need_value "$@"; TITLE="$2";     shift 2 ;;
+    --body-file)  need_value "$@"; BODY_FILE="$2"; shift 2 ;;
+    --label)      need_value "$@"; LABEL="$2";     shift 2 ;;
     --draft)      DRAFT=1;        shift   ;;
     --help|-h)    usage; exit 0 ;;
     *)

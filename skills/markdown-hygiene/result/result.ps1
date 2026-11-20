@@ -76,11 +76,11 @@ if ($CheckOut -like 'ERROR: *') {
 }
 if ($CheckOut -like 'HIT: *') {
     $RecordPath = $CheckOut -replace '^HIT: ', ''
-    if (-not (Test-Path $RecordPath)) {
+    if (-not (Test-Path -LiteralPath $RecordPath)) {
         [Console]::Out.Write("ERROR: cache record vanished at: $RecordPath`n")
         exit 1
     }
-    $ResultLine = (Get-Content $RecordPath -ErrorAction SilentlyContinue) |
+    $ResultLine = (Get-Content -LiteralPath $RecordPath -ErrorAction SilentlyContinue) |
         Where-Object { $_ -match '^result:' } | Select-Object -First 1
     if (-not $ResultLine) {
         [Console]::Out.Write("ERROR: malformed cache record at $RecordPath`n")

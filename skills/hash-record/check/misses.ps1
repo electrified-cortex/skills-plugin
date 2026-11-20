@@ -61,8 +61,28 @@ $repoRoot = $repoRoot.Trim().TrimEnd('/', '\').Replace('\', '/')
 # Parallel probe — output file path for every MISS, sorted for deterministic order
 $files | ForEach-Object -Parallel {
     $f = $_.FullName
-    $hash = (& git hash-object $f 2>$null)
-    if ($LASTEXITCODE -ne 0 -or -not $hash) { return }
+    # LF-normalized blob hash (CRLF/CR -> LF), identical to Get-LfBlobHash in check.ps1.
+    # Inlined: functions from the parent scope are not visible inside -Parallel runspaces.
+    try { $bytes = [System.IO.File]::ReadAllBytes($f) } catch { return }
+    $norm = [System.Collections.Generic.List[byte]]::new($bytes.Length)
+    $i = 0
+    while ($i -lt $bytes.Length) {
+        if ($bytes[$i] -eq 13) {
+            $norm.Add(10)
+            if ($i + 1 -lt $bytes.Length -and $bytes[$i + 1] -eq 10) { $i++ }
+        } else {
+            $norm.Add($bytes[$i])
+        }
+        $i++
+    }
+    $tmp = [System.IO.Path]::GetTempFileName()
+    try {
+        [System.IO.File]::WriteAllBytes($tmp, $norm.ToArray())
+        $hash = (& git hash-object $tmp 2>$null)
+        if ($LASTEXITCODE -ne 0 -or -not $hash) { return }
+    } finally {
+        Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue
+    }
     $hash = $hash.Trim()
     $shard = $hash.Substring(0, 2)
     $cachePath = "$($using:repoRoot)/.hash-record/$shard/$hash/$($using:OpKind)/$($using:RecordFilename)"

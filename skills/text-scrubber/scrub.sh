@@ -94,13 +94,20 @@ while [ $# -gt 0 ]; do
         echo "ERROR: missing value for --ignore"
         exit 1
       fi
-      IFS=',' read -ra _cats <<< "$2"
-      for _c in "${_cats[@]}"; do
+      # Split on every comma, keeping empty segments, so '' and 'a,' are rejected
+      # (like scrub.ps1): every segment must be a known category.
+      _list="$2"
+      while :; do
+        _c="${_list%%,*}"
         if ! is_valid_category "$_c"; then
           echo "ERROR: invalid category: $_c"
           exit 1
         fi
         IGNORE_CATS="$IGNORE_CATS $_c"
+        case "$_list" in
+          *,*) _list="${_list#*,}" ;;
+          *) break ;;
+        esac
       done
       shift 2
       ;;

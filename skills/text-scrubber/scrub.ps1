@@ -17,6 +17,9 @@ $ErrorActionPreference = 'Continue'
 
 if ($null -eq $RawArgs) { $RawArgs = @() }
 
+# Input is processed as a byte-per-char (Latin-1) string so bytes that are not
+# valid UTF-8 survive --fix / --stdout-only unchanged (matches scrub.sh/sed).
+$Latin1 = [System.Text.Encoding]::Latin1
 $StdoutStream = [Console]::OpenStandardOutput()
 function Write-Out([string]$Text) {
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
@@ -164,7 +167,7 @@ try {
     else {
         $bytes = [System.IO.File]::ReadAllBytes($FilePath)
     }
-    $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+    $content = $Latin1.GetString($bytes)
 }
 catch {
     Fail "cannot read file: $FilePath"
@@ -226,6 +229,8 @@ $ReplaceCodePoints = @(
 )
 $Patterns = @($PatternCodePoints | ForEach-Object { ConvertFrom-CodePoints $_ })
 $Replaces = @($ReplaceCodePoints | ForEach-Object { ConvertFrom-CodePoints $_ })
+# Patterns as the Latin-1 view of their UTF-8 bytes, for matching against $content.
+$MatchPatterns = @($Patterns | ForEach-Object { $Latin1.GetString([System.Text.Encoding]::UTF8.GetBytes($_)) })
 $ManualMarker = '(manual review -- no safe auto-fix)'
 
 function Count-Occurrences([string]$Line, [string]$Pattern) {
@@ -247,6 +252,7 @@ $totalFixCount = 0
 
 for ($idx = 0; $idx -lt $Patterns.Count; $idx++) {
     $pat = $Patterns[$idx]
+    $mpat = $MatchPatterns[$idx]
     $rep = $Replaces[$idx]
     $cat = $Categories[$idx]
     $af = $AutoFixes[$idx]
@@ -258,7 +264,7 @@ for ($idx = 0; $idx -lt $Patterns.Count; $idx++) {
     $dispRep = if ($af) { $rep } else { $ManualMarker }
 
     for ($li = 0; $li -lt $lines.Count; $li++) {
-        $occ = Count-Occurrences $lines[$li] $pat
+        $occ = Count-Occurrences $lines[$li] $mpat
         if ($occ -gt 0) {
             $matchCount += $occ
             $lineNo = $li + 1
@@ -271,7 +277,7 @@ for ($idx = 0; $idx -lt $Patterns.Count; $idx++) {
 
     if ($af -and $matchCount -gt 0) {
         $totalFixCount += $matchCount
-        $content = $content.Replace($pat, $rep)
+        $content = $content.Replace($mpat, $rep)
     }
 }
 
@@ -281,14 +287,15 @@ $totalFindingCount = $findings.Count
 # Output
 # -----------------------------------------------------------------------
 if ($StdoutOnly) {
-    Write-Out $content
+    $outBytes = $Latin1.GetBytes($content)
+    $StdoutStream.Write($outBytes, 0, $outBytes.Length)
     Exit-Clean 0
 }
 
 if ($Fix) {
     if ($totalFixCount -gt 0) {
         try {
-            [System.IO.File]::WriteAllBytes($FilePath, [System.Text.Encoding]::UTF8.GetBytes($content))
+            [System.IO.File]::WriteAllBytes($FilePath, $Latin1.GetBytes($content))
         }
         catch {
             Fail "failed to write file: $FilePath"

@@ -10,7 +10,7 @@ Inline result check:
 Run `result` tool (this folder) per runtime. DON'T READ script source — before, during, or after. Run it, branch on stdout, move on.
 Bash: `bash result.sh <skill_dir>`; PS7: `pwsh result.ps1 <skill_dir>`
 
-If stdout is `MISS: <abs-path>` -> bind `<report_path>` = `<abs-path>`, continue to Preparation.
+If stdout is `MISS: <abs-path>` -> bind `<report_path>` = `<abs-path>`, continue to Inspect.
 Otherwise -> emit stdout verbatim, stop.
 
 Inspect:

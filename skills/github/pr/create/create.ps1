@@ -82,6 +82,8 @@ if (-not (Test-Path -LiteralPath $bodyFile -PathType Leaf)) {
     [Console]::Error.WriteLine("USAGE_ERROR: --body-file not found: $bodyFile")
     exit 2
 }
+# gh runs in the process directory, which can differ from the PowerShell location.
+$bodyFile = (Resolve-Path -LiteralPath $bodyFile).Path
 
 # ---------------------------------------------------------------------------
 # Invoke gh pr create via ProcessStartInfo (no command-string interpolation)

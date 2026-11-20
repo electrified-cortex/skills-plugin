@@ -35,6 +35,12 @@ if (-not $Name) {
     exit 1
 }
 
+# Names are single path segments: no separators, not '.' or '..'
+if ($Name -match '[/\\]' -or $Name -eq '.' -or $Name -eq '..') {
+    [Console]::Error.WriteLine("Invalid inbox name: '$Name' (must not contain '/' or '\', or be '.' or '..')")
+    exit 1
+}
+
 $inboxDir   = Join-Path $Workspace '.inbox' $Name
 $archiveDir = Join-Path $inboxDir 'archive'
 $signalPath = Join-Path $inboxDir '.signal'

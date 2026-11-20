@@ -137,7 +137,15 @@ case "$PATH_ARG" in
         ;;
 esac
 
-if (( DEBOUNCE < 0 || DEBOUNCE > 60 )); then
+for _opt in TIMEOUT DEBOUNCE HEARTBEAT; do
+    if [[ ! "${!_opt}" =~ ^0*[0-9]{1,9}$ ]]; then
+        echo "watch.sh: --${_opt,,} must be a non-negative integer of at most 9 significant digits. Got: ${!_opt}" >&2
+        exit 1
+    fi
+    printf -v "$_opt" %s "$((10#${!_opt}))"  # base 10: "08" is not octal
+done
+
+if (( DEBOUNCE > 60 )); then
     echo "watch.sh: --debounce must be 0..60 seconds. Got: $DEBOUNCE" >&2
     exit 1
 fi

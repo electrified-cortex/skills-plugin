@@ -103,7 +103,7 @@ $hunk_re     = '^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@'
 
 foreach ($line in $patch_lines) {
     if ($line.StartsWith('diff --git ')) {
-        $in_file = ($line -eq $diff_header)
+        $in_file = ($line -ceq $diff_header)
         if ($in_file) { $found_file = $true }
         continue
     }

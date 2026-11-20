@@ -44,6 +44,18 @@ if [[ ${#missing[@]} -gt 0 ]]; then
     exit 1
 fi
 
+# Names are single path segments: no separators, not '.' or '..'
+case "$FROM" in
+    */*|*\\*|.|..)
+        echo "Invalid --from name: '$FROM' (must not contain '/' or '\\', or be '.' or '..')" >&2
+        exit 1 ;;
+esac
+case "$TO" in
+    */*|*\\*|.|..)
+        echo "Invalid --to name: '$TO' (must not contain '/' or '\\', or be '.' or '..')" >&2
+        exit 1 ;;
+esac
+
 if [[ "$FROM" == "$TO" ]]; then
     echo "Cannot post to own inbox: --from and --to are both '$FROM'" >&2
     exit 1
@@ -79,11 +91,30 @@ if [[ -z "$msg_path" ]]; then
 fi
 
 # Assemble JSON message
-# Use printf to safely escape values (replace \ and ")
-body_escaped=$(printf '%s' "$BODY" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g')
-from_escaped=$(printf '%s' "$FROM" | sed 's/\\/\\\\/g; s/"/\\"/g')
+# Escape values for a JSON string: backslash, quote, and the control characters
+# that may not appear raw (newline, carriage return, tab, backspace, form feed).
+json_escape() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    s="${s//$'\b'/\\b}"
+    s="${s//$'\f'/\\f}"
+    # Any other control character (U+0001-U+001F) becomes a \u00XX escape.
+    local c ch esc
+    for ((c = 1; c < 32; c++)); do
+        printf -v ch "\\x$(printf '%02x' "$c")"
+        printf -v esc '\\u%04x' "$c"
+        s="${s//"$ch"/$esc}"
+    done
+    printf '%s' "$s"
+}
+body_escaped=$(json_escape "$BODY")
+from_escaped=$(json_escape "$FROM")
 if [[ -n "$SUBJECT" ]]; then
-    subject_escaped=$(printf '%s' "$SUBJECT" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    subject_escaped=$(json_escape "$SUBJECT")
     content="{\"from\":\"${from_escaped}\",\"sent\":\"${ts_full}\",\"subject\":\"${subject_escaped}\",\"body\":\"${body_escaped}\"}"
 else
     content="{\"from\":\"${from_escaped}\",\"sent\":\"${ts_full}\",\"body\":\"${body_escaped}\"}"

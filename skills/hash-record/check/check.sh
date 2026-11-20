@@ -46,14 +46,14 @@ RECORD_FILENAME="$3"
 
 # Reject path traversal in op_kind and record_filename
 case "$OP_KIND" in
-  *..* | *\*)
+  *..* | *\\* | *\*)
     echo "ERROR: invalid op_kind: $OP_KIND"
     exit 1
     ;;
 esac
 
 case "$RECORD_FILENAME" in
-  *..* | */* | *\*)
+  *..* | */* | *\\* | *\*)
     echo "ERROR: invalid record_filename: $RECORD_FILENAME"
     exit 1
     ;;
@@ -62,10 +62,17 @@ esac
 # ---------------------------------------------------------------------------
 # Helper: compute LF-normalized blob hash (CRLF/CR -> LF before hashing).
 # Produces identical hash regardless of platform git config or CWD location.
+# Known difference: this script drops every CR; check.ps1 turns a lone CR into LF.
+# They agree on LF and CRLF files; a file with a lone CR hashes differently (undecided).
+# Fails (non-zero) if the file is unreadable or any pipeline stage fails.
 # ---------------------------------------------------------------------------
 lf_blob_hash() {
   local file="$1"
-  tr -d '\r' < "$file" | git hash-object --stdin 2>/dev/null
+  [ -f "$file" ] || return 1
+  (
+    set -o pipefail
+    tr -d '\r' < "$file" | git hash-object --stdin 2>/dev/null
+  )
 }
 
 # ---------------------------------------------------------------------------
@@ -81,7 +88,7 @@ fi
 # ---------------------------------------------------------------------------
 # Compute git blob hash (LF-normalized for cross-platform determinism)
 # ---------------------------------------------------------------------------
-HASH=$(lf_blob_hash "$FILE_PATH")
+HASH=$(lf_blob_hash "$FILE_PATH") || HASH=""
 if [ -z "$HASH" ]; then
   echo "ERROR: git hash-object failed for: $FILE_PATH"
   exit 1

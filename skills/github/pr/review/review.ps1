@@ -111,6 +111,10 @@ if ($bodyFile -and -not (Test-Path -LiteralPath $bodyFile -PathType Leaf)) {
     [Console]::Error.WriteLine("USAGE_ERROR: --body-file not found: $bodyFile")
     exit 2
 }
+if ($bodyFile) {
+    # gh runs in the process directory, which can differ from the PowerShell location.
+    $bodyFile = (Resolve-Path -LiteralPath $bodyFile).Path
+}
 
 # ---------------------------------------------------------------------------
 # Map --decision to gh flag

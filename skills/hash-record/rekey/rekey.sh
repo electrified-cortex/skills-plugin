@@ -8,7 +8,6 @@
 #   NOT_FOUND: no record for <op_kind>/<record_filename>   (per-file)
 #   NOT_FOUND: no record for <file-rel-path>               (folder)
 #   AMBIGUOUS: <n> records found -- manual resolution required
-#   MANIFEST_UPDATED: <manifest-path>:<entry-id>
 #   SUMMARY: rekeyed=<n> current=<n> manifest_updated=<n> not_found=<n> errors=<n>
 #   ERROR: <reason>
 set -euo pipefail
@@ -45,9 +44,9 @@ _print_help() {
   printf '  REKEYED: <abs-path>\n'
   printf '  CURRENT: <abs-path>\n'
   printf '  NOT_FOUND: no record for <file-rel-path>\n'
-  printf '  MANIFEST_UPDATED: <manifest-path>:<entry-id>\n'
   printf '  ERROR: <reason>\n'
   printf '  SUMMARY: rekeyed=<n> current=<n> manifest_updated=<n> not_found=<n> errors=<n>\n'
+  printf '    (multi-file records report as REKEYED/CURRENT; manifest_updated is always 0)\n'
   printf '\n'
   printf 'Exit codes:\n'
   printf '  0   Success (or --dry-run with no errors).\n'
@@ -59,6 +58,134 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
   _print_help
   exit 0
 fi
+
+# ---------------------------------------------------------------------------
+# Helper: extract file_path / file_paths from YAML frontmatter
+# Prints one repo-relative path per line.
+# ---------------------------------------------------------------------------
+_get_frontmatter_paths() {
+  local rec_file="$1"
+  local past_open=0
+  local collecting_list=0
+  while IFS= read -r line; do
+    # Strip CR for Windows line endings
+    line="${line%$'\r'}"
+    line="${line#$'\xef\xbb\xbf'}"         # strip UTF-8 BOM if present
+    if [ "$past_open" -eq 0 ]; then
+      [ "$line" = "---" ] && past_open=1
+      continue
+    fi
+    # End of frontmatter
+    [ "$line" = "---" ] && break
+    # file_path: single value
+    if [[ "$line" =~ ^file_path:[[:space:]]+(.+)$ ]]; then
+      collecting_list=0
+      printf '%s\n' "${BASH_REMATCH[1]}"
+    # file_paths: list start
+    elif [[ "$line" =~ ^file_paths:[[:space:]]*$ ]]; then
+      collecting_list=1
+    # list item under file_paths
+    elif [ "$collecting_list" -eq 1 ] && [[ "$line" =~ ^[[:space:]]+-[[:space:]]+(.+)$ ]]; then
+      printf '%s\n' "${BASH_REMATCH[1]}"
+    else
+      # Any other top-level key resets list mode
+      if [[ "$line" =~ ^[a-z_]+: ]]; then
+        collecting_list=0
+      fi
+    fi
+  done < "$rec_file"
+}
+
+# ---------------------------------------------------------------------------
+# Helper: compute manifest hash for a multi-file record
+# git-blob hash (SHA-1, 40-char hex) of the sorted "<blob_hash> <path>\n"
+# manifest string. Matches `hash-record-manifest/manifest.ps1` semantics
+# exactly: write manifest text to a temp file, run `git hash-object` on
+# it. The result tools also use `git hash-object` to compute lookups, so
+# using SHA-1-via-git keeps rekey output and result-tool input in sync.
+# Prints 40-char hex hash to stdout. Returns 1 on error.
+# ---------------------------------------------------------------------------
+# Helper: compute LF-normalized blob hash (CRLF/CR -> LF before hashing).
+# Produces identical hash regardless of platform git config or CWD location.
+_lf_blob_hash() {
+  local file="$1"
+  tr -d '\r' < "$file" | git hash-object --stdin 2>/dev/null
+}
+
+_compute_manifest_hash() {
+  local rec_path="$1"
+  local repo_root="$2"
+
+  local -a paths=()
+  while IFS= read -r fpath; do
+    fpath="${fpath%$'\r'}"
+    fpath="${fpath## }"; fpath="${fpath%% }"
+    if [ -n "$fpath" ]; then
+      # Reject members that could leave the repo root (".." path segment).
+      case "/${fpath//\\//}/" in
+        */../*)
+          printf 'ERROR: rejected file_paths entry with ".." segment in %s: %s\n' "$rec_path" "$fpath" >&2
+          return 1
+          ;;
+      esac
+      paths+=("$fpath")
+    fi
+  done < <(_get_frontmatter_paths "$rec_path" 2>/dev/null)
+
+  if [ "${#paths[@]}" -eq 0 ]; then
+    printf 'ERROR: no file_paths found in: %s\n' "$rec_path" >&2
+    return 1
+  fi
+
+  # Build pairs first ("<path> <blob_hash>"), then sort the FULL pair
+  # strings — exact mirror of hash-record-manifest/manifest.ps1
+  # (lines 99 + 106). Sorting only by path can produce a different order
+  # in edge cases and yields an incompatible hash.
+  local -a pairs=() fpath blob_hash
+  for fpath in "${paths[@]}"; do
+    blob_hash=$(_lf_blob_hash "$repo_root/$fpath")
+    [ -z "$blob_hash" ] && {
+      printf 'ERROR: git hash-object failed for manifest member: %s\n' "$fpath" >&2
+      return 1
+    }
+    # Format MUST match manifest.ps1: `<path> <blob_hash>` (path first).
+    pairs+=("${fpath} ${blob_hash}")
+  done
+
+  # Same sort as manifest.ps1: ordinal, byte-order. LC_ALL=C ensures
+  # bash `sort` matches PowerShell `Sort-Object -CaseSensitive -Culture ''`.
+  local -a sorted_pairs
+  IFS=$'\n' read -r -d '' -a sorted_pairs \
+    < <(printf '%s\n' "${pairs[@]}" | LC_ALL=C sort; printf '\0') || true
+
+  local manifest_str="" pair
+  for pair in "${sorted_pairs[@]}"; do
+    manifest_str="${manifest_str}${pair}"$'\n'
+  done
+
+  # Write manifest to a temp file and run `git hash-object`. Direct
+  # sha256sum would produce a different, incompatible 64-char hex; the
+  # result tools cannot find that path. Use git's content-blob hash so
+  # rekey paths and result-tool lookups agree.
+  local tmpf
+  tmpf=$(mktemp) || {
+    printf 'ERROR: mktemp failed\n' >&2
+    return 1
+  }
+  printf '%s' "$manifest_str" > "$tmpf"
+  local manifest_hash
+  manifest_hash=$(git hash-object "$tmpf" 2>/dev/null) || {
+    rm -f "$tmpf"
+    printf 'ERROR: git hash-object failed for manifest tmp file\n' >&2
+    return 1
+  }
+  rm -f "$tmpf"
+  [ -z "$manifest_hash" ] && {
+    printf 'ERROR: git hash-object returned empty manifest hash\n' >&2
+    return 1
+  }
+  printf '%s\n' "$manifest_hash"
+}
 
 # ---------------------------------------------------------------------------
 # Detect mode: folder vs per-file
@@ -74,7 +201,9 @@ if [ -d "$FIRST_ARG" ]; then
   # =========================================================================
   # FOLDER MODE
   # =========================================================================
-  FOLDER_PATH="$FIRST_ARG"
+  # Resolve to an absolute path (pwd -W yields a drive-letter path under Git Bash,
+  # matching git's rev-parse form) so include/exclude/prefix matching works.
+  FOLDER_PATH=$(cd "$FIRST_ARG" && { pwd -W 2>/dev/null || pwd; })
   shift
 
   INCLUDES=()
@@ -121,125 +250,6 @@ if [ -d "$FIRST_ARG" ]; then
   FOLDER_PATH_FWD="${FOLDER_PATH_FWD%/}"
 
   HASH_RECORD_ROOT="$REPO_ROOT_FWD/.hash-record"
-
-  # ---------------------------------------------------------------------------
-  # Helper: extract file_path / file_paths from YAML frontmatter
-  # Prints one repo-relative path per line.
-  # ---------------------------------------------------------------------------
-  _get_frontmatter_paths() {
-    local rec_file="$1"
-    local past_open=0
-    local collecting_list=0
-    while IFS= read -r line; do
-      # Strip CR for Windows line endings
-      line="${line%$'\r'}"
-      line="${line#$'\xef\xbb\xbf'}"         # strip UTF-8 BOM if present
-      if [ "$past_open" -eq 0 ]; then
-        [ "$line" = "---" ] && past_open=1
-        continue
-      fi
-      # End of frontmatter
-      [ "$line" = "---" ] && break
-      # file_path: single value
-      if [[ "$line" =~ ^file_path:[[:space:]]+(.+)$ ]]; then
-        collecting_list=0
-        printf '%s\n' "${BASH_REMATCH[1]}"
-      # file_paths: list start
-      elif [[ "$line" =~ ^file_paths:[[:space:]]*$ ]]; then
-        collecting_list=1
-      # list item under file_paths
-      elif [ "$collecting_list" -eq 1 ] && [[ "$line" =~ ^[[:space:]]+-[[:space:]]+(.+)$ ]]; then
-        printf '%s\n' "${BASH_REMATCH[1]}"
-      else
-        # Any other top-level key resets list mode
-        if [[ "$line" =~ ^[a-z_]+: ]]; then
-          collecting_list=0
-        fi
-      fi
-    done < "$rec_file"
-  }
-
-  # ---------------------------------------------------------------------------
-  # Helper: compute manifest hash for a multi-file record
-  # git-blob hash (SHA-1, 40-char hex) of the sorted "<blob_hash> <path>\n"
-  # manifest string. Matches `hash-record-manifest/manifest.ps1` semantics
-  # exactly: write manifest text to a temp file, run `git hash-object` on
-  # it. The result tools also use `git hash-object` to compute lookups, so
-  # using SHA-1-via-git keeps rekey output and result-tool input in sync.
-  # Prints 40-char hex hash to stdout. Returns 1 on error.
-  # ---------------------------------------------------------------------------
-  # Helper: compute LF-normalized blob hash (CRLF/CR -> LF before hashing).
-  # Produces identical hash regardless of platform git config or CWD location.
-  _lf_blob_hash() {
-    local file="$1"
-    tr -d '\r' < "$file" | git hash-object --stdin 2>/dev/null
-  }
-
-  _compute_manifest_hash() {
-    local rec_path="$1"
-    local repo_root="$2"
-
-    local -a paths=()
-    while IFS= read -r fpath; do
-      fpath="${fpath%$'\r'}"
-      fpath="${fpath## }"; fpath="${fpath%% }"
-      [ -n "$fpath" ] && paths+=("$fpath")
-    done < <(_get_frontmatter_paths "$rec_path" 2>/dev/null)
-
-    if [ "${#paths[@]}" -eq 0 ]; then
-      printf 'ERROR: no file_paths found in: %s\n' "$rec_path" >&2
-      return 1
-    fi
-
-    # Build pairs first ("<path> <blob_hash>"), then sort the FULL pair
-    # strings — exact mirror of hash-record-manifest/manifest.ps1
-    # (lines 99 + 106). Sorting only by path can produce a different order
-    # in edge cases and yields an incompatible hash.
-    local -a pairs=() fpath blob_hash
-    for fpath in "${paths[@]}"; do
-      blob_hash=$(_lf_blob_hash "$repo_root/$fpath")
-      [ -z "$blob_hash" ] && {
-        printf 'ERROR: git hash-object failed for manifest member: %s\n' "$fpath" >&2
-        return 1
-      }
-      # Format MUST match manifest.ps1: `<path> <blob_hash>` (path first).
-      pairs+=("${fpath} ${blob_hash}")
-    done
-
-    # Same sort as manifest.ps1: ordinal, byte-order. LC_ALL=C ensures
-    # bash `sort` matches PowerShell `Sort-Object -CaseSensitive -Culture ''`.
-    local -a sorted_pairs
-    IFS=$'\n' read -r -d '' -a sorted_pairs \
-      < <(printf '%s\n' "${pairs[@]}" | LC_ALL=C sort; printf '\0') || true
-
-    local manifest_str="" pair
-    for pair in "${sorted_pairs[@]}"; do
-      manifest_str="${manifest_str}${pair}"$'\n'
-    done
-
-    # Write manifest to a temp file and run `git hash-object`. Direct
-    # sha256sum would produce a different, incompatible 64-char hex; the
-    # result tools cannot find that path. Use git's content-blob hash so
-    # rekey paths and result-tool lookups agree.
-    local tmpf
-    tmpf=$(mktemp) || {
-      printf 'ERROR: mktemp failed\n' >&2
-      return 1
-    }
-    printf '%s' "$manifest_str" > "$tmpf"
-    local manifest_hash
-    manifest_hash=$(git hash-object "$tmpf" 2>/dev/null) || {
-      rm -f "$tmpf"
-      printf 'ERROR: git hash-object failed for manifest tmp file\n' >&2
-      return 1
-    }
-    rm -f "$tmpf"
-    [ -z "$manifest_hash" ] && {
-      printf 'ERROR: git hash-object returned empty manifest hash\n' >&2
-      return 1
-    }
-    printf '%s\n' "$manifest_hash"
-  }
 
   # ---------------------------------------------------------------------------
   # Helper: glob match (bash case-based)
@@ -426,7 +436,7 @@ if [ -d "$FIRST_ARG" ]; then
       cnt_not_found=$((cnt_not_found + 1))
     fi
 
-  done < <(find "$FOLDER_PATH" -type f -not -path '*/.git/*' 2>/dev/null | LC_ALL=C sort)
+  done < <(find "$FOLDER_PATH" -type f -not -path '*/.git/*' -not -path '*/.hash-record/*' 2>/dev/null | LC_ALL=C sort)
 
   # ---------------------------------------------------------------------------
   # Process deferred multi-file (manifest) records
@@ -552,7 +562,6 @@ else
 
   NEW_HASH=$(tr -d '\r' < "$FILE_PATH" | git hash-object --stdin 2>/dev/null)
   [ -z "$NEW_HASH" ] && { printf 'ERROR: git hash-object failed for: %s\n' "$FILE_PATH"; exit 1; }
-  NEW_SHARD="${NEW_HASH:0:2}"
 
   HASH_RECORD_ROOT="$REPO_ROOT/.hash-record"
 
@@ -571,7 +580,11 @@ else
   else
     FOUND=()
     while IFS= read -r -d '' candidate; do
-      FOUND+=("$candidate")
+      # Anchor to <shard>/<hash>/<op_kind>/<record_filename> under the record root.
+      _cand_rest="${candidate#"${HASH_RECORD_ROOT}"/}"
+      _cand_rest="${_cand_rest#*/}"      # strip shard
+      _cand_rest="${_cand_rest#*/}"      # strip hash
+      [ "$_cand_rest" = "${OP_KIND}/${RECORD_FILENAME}" ] && FOUND+=("$candidate")
     done < <(find "$HASH_RECORD_ROOT" -type f -path "*/${OP_KIND}/${RECORD_FILENAME}" -print0 2>/dev/null)
 
     COUNT="${#FOUND[@]}"
@@ -592,6 +605,20 @@ else
     AFTER_SHARD="${AFTER_PREFIX#*/}"
     OLD_HASH="${AFTER_SHARD%%/*}"
   fi
+
+  # A multi-file record is keyed by its manifest hash, not by one member's blob hash.
+  _rec_paths=()
+  while IFS= read -r _fp; do
+    _fp="${_fp%$'\r'}"; _fp="${_fp## }"; _fp="${_fp%% }"
+    [ -n "$_fp" ] && _rec_paths+=("$_fp")
+  done < <(_get_frontmatter_paths "$OLD_RECORD_PATH" 2>/dev/null)
+  if [ "${#_rec_paths[@]}" -gt 1 ]; then
+    NEW_HASH=$(_compute_manifest_hash "$OLD_RECORD_PATH" "$REPO_ROOT") || {
+      printf 'ERROR: manifest hash computation failed for: %s\n' "$OLD_RECORD_PATH"
+      exit 1
+    }
+  fi
+  NEW_SHARD="${NEW_HASH:0:2}"
 
   if [ "$OLD_HASH" = "$NEW_HASH" ]; then
     printf 'CURRENT: %s\n' "$OLD_RECORD_PATH"

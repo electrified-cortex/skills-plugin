@@ -30,6 +30,13 @@ if [[ -z "$INBOX" ]]; then
     exit 1
 fi
 
+# Names are single path segments: no separators, not '.' or '..'
+case "$INBOX" in
+    */*|*\\*|.|..)
+        echo "Invalid inbox name: '$INBOX' (must not contain '/' or '\\', or be '.' or '..')" >&2
+        exit 1 ;;
+esac
+
 inbox_dir="${WORKSPACE}/.inbox/${INBOX}"
 archive_dir="${inbox_dir}/archive"
 

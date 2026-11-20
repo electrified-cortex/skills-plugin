@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Continue'
 # ---------------------------------------------------------------------------
 # Help
 # ---------------------------------------------------------------------------
-if ($help -or $h) {
+if ($help -or $h -or $file_path -eq '--help' -or $file_path -eq '-h') {
     $usage = "Usage: check <file_path> <op_kind> <record_filename>`n" +
         "`n" +
         "Probe the hash-record cache for <file_path>.`n" +
@@ -67,7 +67,11 @@ if ($record_filename -match '\.\.' -or $record_filename -match '[/\\]') {
 # of platform git config, gitattributes, or calling CWD location.
 # ---------------------------------------------------------------------------
 function Get-LfBlobHash([string]$FilePath) {
-    $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+    try {
+        $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+    } catch {
+        return $null
+    }
     $out = [System.Collections.Generic.List[byte]]::new($bytes.Length)
     $i = 0
     while ($i -lt $bytes.Length) {

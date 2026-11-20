@@ -18,6 +18,7 @@ Concepts:
 `Archive` — `.inbox/<agent-name>/archive/`. Drained msgs moved here after reading. No protocol role; may be purged freely.
 `Claim` — exclusive reservation `drain` takes on msg file; prevents concurrent drain reading same msg.
 `Name claim` — atomic dir creation `init` performs. Only one caller can create `.inbox/<name>/`; others get "already registered." Establishes agent identity.
+`Agent name` — single path segment, kebab-case (e.g. `code-review-worker`). `init`, `post`, `drain` reject any name containing `/` or `\`, or equal to `.` or `..`: exit 1, error on `stderr`.
 `Status` — lightweight read-only probe. Wire to Monitor as signal-change callback; counts unclaimed msgs, outputs pending count. Doesn't claim or modify files.
 `Msg file` — `.json` file in inbox. Filename: `YYYYMMDDTHHmmssZ-<nonce>.json`. Example: `20260508T143022Z-a3f91b.json`.
 

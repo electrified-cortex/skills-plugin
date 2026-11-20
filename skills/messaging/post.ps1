@@ -44,6 +44,16 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
+# Names are single path segments: no separators, not '.' or '..'
+if ($From -match '[/\\]' -or $From -eq '.' -or $From -eq '..') {
+    [Console]::Error.WriteLine("Invalid --from name: '$From' (must not contain '/' or '\', or be '.' or '..')")
+    exit 1
+}
+if ($To -match '[/\\]' -or $To -eq '.' -or $To -eq '..') {
+    [Console]::Error.WriteLine("Invalid --to name: '$To' (must not contain '/' or '\', or be '.' or '..')")
+    exit 1
+}
+
 if ($From -eq $To) {
     [Console]::Error.WriteLine("Cannot post to own inbox: --from and --to are both '$From'")
     exit 1

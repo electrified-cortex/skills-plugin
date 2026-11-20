@@ -92,8 +92,14 @@ normalize_path() {
 }
 
 # Invoke manifest
-MANIFEST_OUT=$(bash "$MANIFEST_SH" "$OP_KIND" "$RECORD_FILE" "${FILES[@]}")
+# The manifest exits non-zero after printing "ERROR: <reason>"; capture the
+# output regardless so set -e does not swallow the reason.
+MANIFEST_OUT=$(bash "$MANIFEST_SH" "$OP_KIND" "$RECORD_FILE" "${FILES[@]}") || true
 MANIFEST_OUT=$(normalize_path "$MANIFEST_OUT")
+if [ -z "$MANIFEST_OUT" ]; then
+  echo "ERROR: hash-record/manifest returned no output for: $SKILL_DIR"
+  exit 1
+fi
 
 case "$MANIFEST_OUT" in
   "MISS: "*)

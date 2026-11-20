@@ -12,7 +12,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Invoke-LintFile([string]$FilePath) {
-    if (-not (Test-Path $FilePath -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $FilePath -PathType Leaf)) {
         [Console]::Error.WriteLine("ERROR: file not found: $FilePath")
         return $false
     }
@@ -26,7 +26,9 @@ function Invoke-LintFile([string]$FilePath) {
     # Split on LF; handle CRLF by stripping CR per line
     $rawLines = $rawText -split "`n"
     # Drop trailing empty element when file ends with LF
-    if ($rawLines.Count -gt 0 -and $rawLines[-1] -eq '') {
+    if ($rawText -eq '') {
+        $rawLines = @()   # zero-byte input: no lines (matches lint.sh, which writes zero bytes)
+    } elseif ($rawLines.Count -gt 0 -and $rawLines[-1] -eq '') {
         $rawLines = $rawLines[0..($rawLines.Count - 2)]
     }
 

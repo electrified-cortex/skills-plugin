@@ -126,7 +126,7 @@ if ($manifest_out -like 'HIT: *') {
         exit 1
     }
     # Parse frontmatter result: line.
-    $result_line = (Get-Content $report_path -ErrorAction SilentlyContinue) | Where-Object { $_ -match '^result:' } | Select-Object -First 1
+    $result_line = (Get-Content -LiteralPath $report_path -ErrorAction SilentlyContinue) | Where-Object { $_ -match '^result:' } | Select-Object -First 1
     if (-not $result_line) {
         [Console]::Out.Write("ERROR: malformed cache record at $report_path`n")
         exit 1
